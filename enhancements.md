@@ -208,34 +208,53 @@ Track what you paid when you bought each foreign currency so you can see your ga
 
 ---
 
-## 23. Bonds — ORI Tracker (Active + Matured)
+## 23. Government Bonds Tracker (Active + Matured)
 
-Track Indonesian government retail bonds (ORI / SR) — when coupons arrive, when bonds mature, and a full archive of past bonds.
+Track Indonesian government retail bonds of any type (ORI, SR, ST, SBR) — monthly coupon income, maturity countdowns, and a full archive of past bonds.
+
+**Example fields (generic):**
+| Field | Example |
+|---|---|
+| Series | ST00X |
+| Face value | Rp 00,000,000 |
+| Coupon rate | 7.00% |
+| Tax (Pajak) | 10% |
+| First coupon | YYYY-MM-DD |
+| Maturity | YYYY-MM-DD |
+| Duration | X months |
+| Net monthly coupon | derived |
+| Total coupons earned | derived |
 
 **Data model** — new array `DATA.bonds`:
 ```
-{ id, series, faceValue, couponRate, issueDate, maturityDate, matured }
+{ id, series, faceValue, couponRate, taxRate, settlementDate, firstCouponDate, maturityDate, matured }
 ```
-- `series` — "ORI024", "ORI025", etc.
-- `faceValue` — IDR principal invested (e.g. 5000000)
-- `couponRate` — annual rate as decimal (e.g. 0.0625 for 6.25%)
-- `issueDate` — settlement/start date "YYYY-MM-DD"
-- `maturityDate` — end date "YYYY-MM-DD"
-- `matured` — boolean (manually marked or auto from date)
+- `series` — "ST005", "ORI024", "SR020", etc.
+- `faceValue` — IDR principal (e.g. 100000000)
+- `couponRate` — annual gross rate as decimal (e.g. 0.074 for 7.40%)
+- `taxRate` — withholding tax as decimal (e.g. 0.10 for 10%) — varies per bond
+- `settlementDate` — actual purchase/settlement date "YYYY-MM-DD"
+- `firstCouponDate` — date of first coupon payment (usually 1 month after settlement)
+- `maturityDate` — when principal is returned "YYYY-MM-DD"
+- `matured` — boolean
 
-**Derived calculations:**
-- Monthly coupon = `faceValue × couponRate / 12`
-- Total coupons received = months elapsed since issue × monthly coupon
-- Remaining coupons = months until maturity × monthly coupon
-- Days to maturity → feeds the **upcoming** sidebar tab as a reminder
+**Derived calculations (all from stored fields):**
+- Gross monthly coupon = `faceValue × couponRate / 12`
+- Net monthly coupon = gross × `(1 − taxRate)`
+- Annual net = net monthly × 12
+- Duration months = months from firstCouponDate to maturityDate (inclusive)
+- Total net coupons = net monthly × duration months
+- Coupons received so far = net monthly × months elapsed since firstCouponDate
+- Remaining = total − received
 
-**Display** — new section in the Savings view below Currencies:
-- Active bonds: card per bond with series, face value, coupon rate, monthly income, countdown to maturity
-- "Total monthly coupon income" summary line across all active bonds
-- Matured bonds: collapsed archive section, shows what was earned
-- "+ add bond" modal: series, face value, coupon %, issue date, maturity date
+**Display** — new "government bonds" section in the Savings view below Currencies:
+- Active bonds: card per bond — series, face value, coupon %, net monthly income, countdown to maturity, coupons received vs total
+- Summary line: total net monthly income across all active bonds
+- Matured archive: collapsed section showing each matured bond and total earned
+- "+ add bond" modal: series, face value, coupon %, tax %, settlement date, first coupon date, maturity date
+- Maturity dates feed the **upcoming** sidebar tab as reminders
 
-**Scope** — medium-high. New section, new modal, countdown math, archive toggle. Maturity dates also optionally appear in the upcoming sidebar tab.
+**Scope** — medium-high. New section + modal, month-diff math, archive toggle, upcoming integration.
 
 ---
 
@@ -265,4 +284,4 @@ Track Indonesian government retail bonds (ORI / SR) — when coupons arrive, whe
 | 20 | Currency Cards — Rate Label Respects Base Currency | ✅ |
 | 21 | Day View — Condensed Time Grid | ⏳ pending |
 | 22 | Currency — Purchase Lots & P&L Tracking | ⏳ pending |
-| 23 | Bonds — ORI Tracker (Active + Matured) | ⏳ pending |
+| 23 | Government Bonds Tracker (Active + Matured) | ⏳ pending |
