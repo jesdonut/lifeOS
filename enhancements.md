@@ -44,7 +44,7 @@ Removed the spend bar chart and category breakdown panel from below the monthly 
 
 ---
 
-## 8. Color System — 8 Fixed Swatches
+## ~~8. Color System — 8 Fixed Swatches~~ ✅ Complete
 
 Replace all free color pickers with a palette of exactly 8 colors rendered as clickable circles:
 `#2d5a3d` green · `#2c4a6e` navy · `#8b2c2c` brick · `#8b5e3c` brown · `#5a3c7a` purple · `#7a6830` olive · `#3c6b6b` teal · `#888888` grey
@@ -53,7 +53,7 @@ Apply everywhere a color is chosen: add event modal, category labels, countdowns
 
 ---
 
-## 9. Spend Categories — User-Configurable
+## ~~9. Spend Categories — User-Configurable~~ ✅ Complete
 
 Each of the 8 spend categories maps to one of the 8 swatches. A Settings modal lets the user rename any category and reassign its color. Default mapping (Food=green, Transport=navy, etc.) unchanged on fresh start.
 

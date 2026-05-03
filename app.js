@@ -5,6 +5,22 @@ const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec
 const HOURS=[]; const HLABELS=[];
 for(let h=4;h<=23;h++){HOURS.push(h);HLABELS.push(h<12?h+'am':h===12?'12pm':(h-12)+'pm');}
 
+const PALETTE=['#2d5a3d','#2c4a6e','#8b2c2c','#8b5e3c','#5a3c7a','#7a6830','#3c6b6b','#888888'];
+function buildSwatches(inputId,selected){
+  return '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px">'+
+    PALETTE.map(function(c){
+      return '<span onclick="selectSwatch(\''+c+'\',\''+inputId+'\')" data-swatch="'+inputId+'" data-color="'+c+'" style="display:inline-block;width:22px;height:22px;border-radius:50%;background:'+c+';cursor:pointer;outline:'+(c===selected?'2.5px solid var(--text)':'2px solid transparent')+';outline-offset:2px;transition:.1s"></span>';
+    }).join('')+
+    '<input type="hidden" id="'+inputId+'" value="'+(selected||PALETTE[0])+'">'+
+  '</div>';
+}
+function selectSwatch(color,inputId){
+  var inp=document.getElementById(inputId);if(inp)inp.value=color;
+  document.querySelectorAll('[data-swatch="'+inputId+'"]').forEach(function(s){
+    s.style.outline=s.dataset.color===color?'2.5px solid var(--text)':'2px solid transparent';
+  });
+}
+
 const CATS=[
   {key:'food',label:'Food',color:'#a0697a'},
   {key:'transport',label:'Transport',color:'#2c4a6e'},
@@ -38,7 +54,7 @@ let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
 
 const SEED_EVENTS=[
   {date:'2026-05-08',text:'Driving license exam',color:'#2c4a6e'},
@@ -70,6 +86,7 @@ function fd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
 function isToday(d){return fd(d)===fd(today);}
 function getMon(d){let day=d.getDay(),diff=day===0?-6:1-day,m=new Date(d);m.setDate(m.getDate()+diff);return m;}
 function catLabel(k){return DATA.catLabels[k]||CATS.find(c=>c.key===k).label;}
+function catColor(k){return(DATA.catColors&&DATA.catColors[k])||CATS.find(c=>c.key===k).color;}
 
 function getRate(code){return(DATA.currencyRates&&DATA.currencyRates[code]!=null)?DATA.currencyRates[code]:CURRENCIES.find(function(c){return c.code===code;}).rate;}
 function fmtSpend(jpyVal){
@@ -292,11 +309,9 @@ function openAddEventModal(key){
   openModal(
     '<div class="modal-title">add event — '+d+'</div>'+
     '<input id="evt-text" placeholder="event name..." autofocus>'+
-    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">'+
-      '<label style="font-size:12px;color:var(--text2)">colour:</label>'+
-      '<input type="color" id="evt-color" value="#c2607a" style="width:32px;height:28px;border:1px solid var(--border);border-radius:4px;padding:2px;background:none;cursor:pointer">'+
-      '<input id="evt-date" type="date" value="'+d+'" style="flex:1;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none">'+
-    '</div>'+
+    '<input id="evt-date" type="date" value="'+d+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
+    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    buildSwatches('evt-color','#2c4a6e')+
     '<div class="modal-row">'+
       '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
       '<button class="modal-btn primary" onclick="submitAddEvent()">add event</button>'+
@@ -387,7 +402,7 @@ function renderDay(panel,d){
     const hasB=rw&&(rw.includes('+')||rw.includes('-')||rw.includes('*')||rw.includes('/'));
     return '<div class="spend-cat">'+
       '<div class="spend-cat-label">'+
-        '<span class="spend-cat-dot" style="background:'+cat.color+'"></span>'+
+        '<span class="spend-cat-dot" style="background:'+catColor(cat.key)+'"></span>'+
         '<span ondblclick="renameCat(\''+cat.key+'\')" title="double-click to rename" style="cursor:default">'+catLabel(cat.key)+'</span>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:3px">'+
@@ -438,9 +453,26 @@ function renderDay(panel,d){
 }
 
 function renameCat(catKey){
-  const cur=catLabel(catKey);
-  const n=prompt('Rename "'+cur+'" to:',cur);
-  if(n&&n.trim()){DATA.catLabels[catKey]=n.trim();render();}
+  const curLabel=catLabel(catKey),curColor=catColor(catKey);
+  openModal(
+    '<div class="modal-title">edit category</div>'+
+    '<input id="cat-label" value="'+curLabel+'" placeholder="category name" autofocus style="margin-bottom:10px">'+
+    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    buildSwatches('cat-color',curColor)+
+    '<div class="modal-row">'+
+      '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
+      '<button class="modal-btn primary" onclick="submitRenameCat(\''+catKey+'\')">save</button>'+
+    '</div>'
+  );
+  setTimeout(function(){const el=document.getElementById('cat-label');if(el)el.focus();},50);
+}
+function submitRenameCat(catKey){
+  const lbl=document.getElementById('cat-label').value.trim();
+  const col=document.getElementById('cat-color').value;
+  if(lbl) DATA.catLabels[catKey]=lbl;
+  if(!DATA.catColors) DATA.catColors={};
+  DATA.catColors[catKey]=col;
+  closeModal();render();
 }
 
 // ── WEEK VIEW ─────────────────────────────────────────────────────────
@@ -834,7 +866,7 @@ function renderSidebar(){
         const hasB=rw&&(rw.includes('+')||rw.includes('-'));
         return '<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+
           '<div style="display:flex;justify-content:space-between;align-items:center">'+
-            '<span style="display:flex;align-items:center;gap:5px;font-size:12px"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+cat.color+'"></span>'+catLabel(cat.key)+'</span>'+
+            '<span style="display:flex;align-items:center;gap:5px;font-size:12px"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+catColor(cat.key)+'"></span>'+catLabel(cat.key)+'</span>'+
             '<span style="font-family:var(--mono);font-size:12px">'+(v?fmtSpend(v):'—')+'</span>'+
           '</div>'+
           (hasB&&v?'<div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-align:right">'+rw+'</div>':'')+
@@ -888,13 +920,14 @@ function loadFile(event){
 }
 
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
   seedData();
   startApp();
 }
 
 function startApp(){
   migrateSlots();
+  if(!DATA.catColors) DATA.catColors={};
   if(!DATA.currencyRates) DATA.currencyRates={};
   if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
   if(!DATA.nisa.lumpSumByYear){
