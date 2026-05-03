@@ -90,6 +90,12 @@ function catLabel(k){return DATA.catLabels[k]||CATS.find(c=>c.key===k).label;}
 function catColor(k){return(DATA.catColors&&DATA.catColors[k])||CATS.find(c=>c.key===k).color;}
 
 function getRate(code){return(DATA.currencyRates&&DATA.currencyRates[code]!=null)?DATA.currencyRates[code]:CURRENCIES.find(function(c){return c.code===code;}).rate;}
+function setRate(code,displayedVal){
+  var v=parseFloat(displayedVal);if(!v||isNaN(v))return;
+  if(!DATA.currencyRates)DATA.currencyRates={};
+  DATA.currencyRates[code]=DATA.baseCurrency==='IDR'?v*getRate('IDR'):v;
+  render();
+}
 function fmtSpend(jpyVal){
   if(DATA.baseCurrency==='IDR'){
     const idrRate=getRate('IDR');
@@ -591,8 +597,8 @@ function renderYear(panel,year){
     const goalRows=[0,1,2].map(function(n){
       const gkey=year+'-'+(m+1)+'-'+n;
       return '<div class="ymb-goal-row">'+
-        '<span class="ymb-goal-icon">'+(n===0?'→':n===1?'◎':'·')+'</span>'+
-        '<input class="ymb-goal-input" placeholder="'+(n===0?'goal...':n===1?'milestone...':'note...')+'" value="'+(DATA.goals[gkey]||'')+'" onchange="DATA.goals[\''+gkey+'\']=this.value" />'+
+        '<span class="ymb-goal-icon">'+(n===0?'★':n===1?'▶':'—')+'</span>'+
+        '<input class="ymb-goal-input" placeholder="'+(n===0?'aim...':n===1?'checkpoint...':'note...')+'" value="'+(DATA.goals[gkey]||'')+'" onchange="DATA.goals[\''+gkey+'\']=this.value" />'+
         (DATA.goals[gkey]?'<button class="icon-btn" onclick="DATA.goals[\''+gkey+'\']=\'\';this.closest(\'.ymb-goal-row\').querySelector(\'input\').value=\'\'">×</button>':'')+
       '</div>';
     }).join('');
@@ -739,14 +745,18 @@ function renderSavings(panel){
     var amt=DATA.currencies[c.code]||'';
     var rate=getRate(c.code);
     var jpyEq=amt?Math.round(parseFloat(amt)*rate):0;
+    var idrBase=DATA.baseCurrency==='IDR';
+    var idrRate=getRate('IDR');
+    var displayRate=idrBase?Math.round(rate/idrRate*100)/100:rate;
+    var rateLabel=idrBase?'Rp':'¥';
     return '<div class="curr-card">'+
       '<div style="font-size:16px;margin-bottom:2px">'+c.flag+'</div>'+
       '<div class="curr-code">'+c.code+'</div>'+
       '<input class="curr-input" type="number" placeholder="0" value="'+amt+'" onchange="DATA.currencies[\''+c.code+'\']=this.value;render()" />'+
       '<div style="display:flex;align-items:center;gap:4px;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'+
         '<span style="font-size:9px;color:var(--text3)">1'+c.code+'=</span>'+
-        '<input type="number" step="0.001" value="'+rate+'" onchange="if(!DATA.currencyRates)DATA.currencyRates={};DATA.currencyRates[\''+c.code+'\']=parseFloat(this.value)||'+rate+';render()" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
-        '<span style="font-size:9px;color:var(--text3)">¥</span>'+
+        '<input type="number" step="any" value="'+displayRate+'" onchange="setRate(\''+c.code+'\',this.value)" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
+        '<span style="font-size:9px;color:var(--text3)">'+rateLabel+'</span>'+
       '</div>'+
       (jpyEq?'<div class="curr-jpy">≈ '+fmtSpend(jpyEq)+'</div>':'')+
     '</div>';
@@ -813,7 +823,7 @@ function renderSavings(panel){
       '<div style="font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">year snapshots</div>'+
       '<div class="nisa-projections">'+projCards+'</div>'+
       '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">+ add year</button>'+
-      '<div style="margin-top:10px;font-size:10px;color:var(--text3);line-height:1.6">Lifetime cap ¥18M = つみたて max ¥12M + 成長 max ¥12M (shared ¥18M pool). Numbers shown are contributions only — no return rate estimates.</div>'+
+      '<div style="margin-top:10px;font-size:10px;color:var(--text3);line-height:1.6">Lifetime cap ¥18M shared — つみたて ¥1.2M/yr max · 成長 ¥2.4M/yr max · up to ¥3.6M/yr combined. Contributions only — no return rate estimates.</div>'+
     '</div>'+
     '<div class="savings-card">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+

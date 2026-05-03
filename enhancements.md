@@ -135,7 +135,7 @@ Also added a **total held** row below the currency grid that updates with the ba
 
 ---
 
-## 18. Bug Fix — NISA Lifetime Cap Description
+## ~~18. Bug Fix — NISA Lifetime Cap Description~~ ✅ Complete
 
 The info text in the savings view says "つみたて max ¥12M + 成長 max ¥12M (shared ¥18M pool)" which is wrong. Correct rules:
 - つみたて投資枠: ¥1.2M/year max
@@ -147,7 +147,7 @@ The calculation logic already enforces the correct caps (¥1.2M and ¥2.4M per y
 
 ---
 
-## 19. Year View — Clearer Goal Row Labels and Icons
+## ~~19. Year View — Clearer Goal Row Labels and Icons~~ ✅ Complete
 
 Current icons and labels in the year view monthly blocks:
 - `→` + placeholder `goal...`
@@ -163,7 +163,7 @@ Small change — a few string replacements inside `renderYear()`.
 
 ---
 
-## 20. Currency Cards — Rate Label Respects Base Currency
+## ~~20. Currency Cards — Rate Label Respects Base Currency~~ ✅ Complete
 
 Each currency card shows `1[CODE] = [rate] ¥`. The `¥` is hardcoded — when IDR is the base currency the label still says ¥ instead of Rp.
 
@@ -206,8 +206,8 @@ Medium complexity — involves changing the `HOURS`/`HLABELS` constants or addin
 | 15 | Countdowns — Since/Until + Smart Elapsed | ✅ |
 | 16 | Countdown Modal — Contextual Hints | ✅ |
 | 17 | Bug Fix — Currency Toggle + Amount Input | ✅ |
-| 18 | Bug Fix — NISA Lifetime Cap Description | ⏳ pending |
-| 19 | Year View — Clearer Goal Row Labels + Icons | ⏳ pending |
-| 20 | Currency Cards — Rate Label Respects Base Currency | ⏳ pending |
+| 18 | Bug Fix — NISA Lifetime Cap Description | ✅ |
+| 19 | Year View — Clearer Goal Row Labels + Icons | ✅ |
+| 20 | Currency Cards — Rate Label Respects Base Currency | ✅ |
 | 21 | Day View — Condensed Time Grid | ⏳ pending |
 | 10 | Day View — No-Scroll Fixed-Height Grid (full rewrite) | ⏳ on hold |
