@@ -38,7 +38,7 @@ let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{}};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
 
 const SEED_EVENTS=[
   {date:'2026-05-08',text:'Driving license exam',color:'#2c4a6e'},
@@ -70,6 +70,15 @@ function fd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
 function isToday(d){return fd(d)===fd(today);}
 function getMon(d){let day=d.getDay(),diff=day===0?-6:1-day,m=new Date(d);m.setDate(m.getDate()+diff);return m;}
 function catLabel(k){return DATA.catLabels[k]||CATS.find(c=>c.key===k).label;}
+
+function getRate(code){return(DATA.currencyRates&&DATA.currencyRates[code]!=null)?DATA.currencyRates[code]:CURRENCIES.find(function(c){return c.code===code;}).rate;}
+function fmtSpend(jpyVal){
+  if(DATA.baseCurrency==='IDR'){
+    const idrRate=getRate('IDR');
+    return 'Rp '+(idrRate>0?Math.round(jpyVal/idrRate):0).toLocaleString();
+  }
+  return '¥'+Math.round(jpyVal).toLocaleString();
+}
 
 // ── TIME GRID ─────────────────────────────────────────────────────────
 const TG_ROWS=40,TG_ROW_H=28; // 4:00–23:30, 40 half-hour slots
@@ -240,7 +249,7 @@ function commitSpend(input,dayKey,catKey){
   const hint=input.closest('.spend-cat').querySelector('.spend-breakdown');
   if(hint){hint.textContent=hasB&&val?raw+' = '+Math.round(val).toLocaleString():'';hint.style.display=hasB&&val?'block':'none';}
   const tot=document.getElementById('day-spend-total');
-  if(tot) tot.textContent='¥'+Math.round(daySpendTotal(dayKey)).toLocaleString();
+  if(tot) tot.textContent=fmtSpend(daySpendTotal(dayKey));
   renderSidebar();
 }
 
@@ -421,7 +430,7 @@ function renderDay(panel,d){
           '<div class="day-spend-col">'+
             '<div class="day-spend-title">spend</div>'+
             '<div class="spend-day-grid">'+spendHtml+'</div>'+
-            '<div class="spend-total-row"><span style="font-size:11px;color:var(--text2)">total today</span><span id="day-spend-total" style="font-family:var(--mono);font-size:14px;font-weight:500">¥'+Math.round(total).toLocaleString()+'</span></div>'+
+            '<div class="spend-total-row"><span style="font-size:11px;color:var(--text2)">total today</span><span id="day-spend-total" style="font-family:var(--mono);font-size:14px;font-weight:500">'+fmtSpend(total)+'</span></div>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -476,12 +485,12 @@ function renderWeek(panel,mon){
         taskHtml+
         '<input class="wc-task-input" placeholder="+ task" onkeydown="if(event.key===\'Enter\'&&this.value.trim()){addTask(\''+key+'\',this.value);this.value=\'\';render()}" />'+
         '<button onclick="openAddEventModal(\''+key+'\')" style="background:none;border:1px dashed var(--border2);border-radius:10px;padding:2px 6px;font-size:10px;color:var(--text3);cursor:pointer;width:100%">+ event</button>'+
-        (spend?'<div class="wc-spend">¥'+Math.round(spend).toLocaleString()+'</div>':'')+
+        (spend?'<div class="wc-spend">'+fmtSpend(spend)+'</div>':'')+
       '</div>';
   }
   panel.innerHTML=
     '<div class="week-grid">'+cols+'</div>'+
-    '<div style="text-align:right;padding:6px 2px;font-family:var(--mono);font-size:11px;color:var(--text2)">week total ¥'+Math.round(weekTotal).toLocaleString()+'</div>';
+    '<div style="text-align:right;padding:6px 2px;font-family:var(--mono);font-size:11px;color:var(--text2)">week total '+fmtSpend(weekTotal)+'</div>';
 }
 
 // ── MONTH VIEW ────────────────────────────────────────────────────────
@@ -508,7 +517,7 @@ function renderMonth(panel,d){
         evts.slice(0,2).map(function(e){return '<div class="mc-item" style="background:'+e.color+'18;color:'+e.color+'">'+e.text+'</div>';}).join('')+
         tasks.slice(0,1).map(function(t){return '<div class="mc-item" style="background:#e8e0f5;color:#9b7ec8">'+t.text+'</div>';}).join('')+
         (firstBlock?'<div class="mc-item" style="background:#e8eef5;color:#2c4a6e">'+firstBlock.text+'</div>':'')+
-        (spend?'<div class="mc-spend">¥'+Math.round(spend).toLocaleString()+'</div>':'')+
+        (spend?'<div class="mc-spend">'+fmtSpend(spend)+'</div>':'')+
       '</div>';
   }
 
@@ -555,7 +564,7 @@ function renderYear(panel,year){
         '<div class="ymb-head">'+
           '<span class="ymb-month-name" onclick="jumpMonth('+year+','+m+')" style="cursor:pointer" title="go to month">'+MS[m]+'</span>'+
           '<div style="display:flex;gap:8px;align-items:center">'+
-            (mTotal?'<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">¥'+Math.round(mTotal).toLocaleString()+'</span>':'')+
+            (mTotal?'<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">'+fmtSpend(mTotal)+'</span>':'')+
             '<button onclick="openAddEventModal(\''+ year+'-'+String(m+1).padStart(2,'0')+'-01\')" style="background:none;border:1px dashed var(--border2);border-radius:8px;padding:1px 8px;font-size:10px;color:var(--text3);cursor:pointer">+ event</button>'+
           '</div>'+
         '</div>'+
@@ -591,7 +600,7 @@ function renderMultiYear(panel){
           '<div class="my-month-name">'+MS[m]+'</div>'+
           '<div class="my-month-content">'+
             items.map(function(t){return '<div class="my-month-item">'+t+'</div>';}).join('')+
-            (mTotal?'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">¥'+Math.round(mTotal).toLocaleString()+'</div>':'')+
+            (mTotal?'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">'+fmtSpend(mTotal)+'</div>':'')+
           '</div>'+
         '</div>';
     }
@@ -687,13 +696,19 @@ function renderSavings(panel){
     '</div>';
   }).join('');
 
-  var currCards=CURRENCIES.map(function(c){
+  var currCards=CURRENCIES.filter(function(c){return c.code!=='JPY';}).map(function(c){
     var amt=DATA.currencies[c.code]||'';
-    var jpyEq=amt?Math.round(parseFloat(amt)*c.rate):0;
+    var rate=getRate(c.code);
+    var jpyEq=amt?Math.round(parseFloat(amt)*rate):0;
     return '<div class="curr-card">'+
       '<div style="font-size:16px;margin-bottom:2px">'+c.flag+'</div>'+
       '<div class="curr-code">'+c.code+'</div>'+
       '<input class="curr-input" type="number" placeholder="0" value="'+amt+'" onchange="DATA.currencies[\''+c.code+'\']=this.value;renderSidebar()" />'+
+      '<div style="display:flex;align-items:center;gap:4px;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'+
+        '<span style="font-size:9px;color:var(--text3)">1'+c.code+'=</span>'+
+        '<input type="number" step="0.001" value="'+rate+'" onchange="if(!DATA.currencyRates)DATA.currencyRates={};DATA.currencyRates[\''+c.code+'\']=parseFloat(this.value)||'+rate+';render()" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
+        '<span style="font-size:9px;color:var(--text3)">¥</span>'+
+      '</div>'+
       (jpyEq?'<div class="curr-jpy">≈ ¥'+jpyEq.toLocaleString()+'</div>':'')+
     '</div>';
   }).join('');
@@ -761,7 +776,18 @@ function renderSavings(panel){
       '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">+ add year</button>'+
       '<div style="margin-top:10px;font-size:10px;color:var(--text3);line-height:1.6">Lifetime cap ¥18M = つみたて max ¥12M + 成長 max ¥12M (shared ¥18M pool). Numbers shown are contributions only — no return rate estimates.</div>'+
     '</div>'+
-    '<div class="savings-card"><div class="savings-title">currencies — enter amounts you hold</div><div class="curr-grid">'+currCards+'</div><div style="margin-top:10px;font-size:10px;color:var(--text3)">Exchange rates approx. May 2026.</div></div>'+
+    '<div class="savings-card">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+        '<div class="savings-title" style="margin-bottom:0">currencies — enter amounts you hold</div>'+
+        '<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">'+
+          'base:'+
+          '<button onclick="DATA.baseCurrency=\'JPY\';render()" style="padding:3px 10px;border-radius:10px;border:1px solid var(--border);background:'+(DATA.baseCurrency==='JPY'?'var(--accent)':'none')+';color:'+(DATA.baseCurrency==='JPY'?'#fff':'var(--text2)')+';font-size:11px;cursor:pointer;font-family:var(--sans)">JPY</button>'+
+          '<button onclick="DATA.baseCurrency=\'IDR\';render()" style="padding:3px 10px;border-radius:10px;border:1px solid var(--border);background:'+(DATA.baseCurrency==='IDR'?'var(--accent)':'none')+';color:'+(DATA.baseCurrency==='IDR'?'#fff':'var(--text2)')+';font-size:11px;cursor:pointer;font-family:var(--sans)">IDR</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="curr-grid">'+currCards+'</div>'+
+      '<div style="margin-top:10px;font-size:10px;color:var(--text3)">Rates are editable — click the number next to a currency to update.</div>'+
+    '</div>'+
     '</div>';
 }
 
@@ -809,13 +835,13 @@ function renderSidebar(){
         return '<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+
           '<div style="display:flex;justify-content:space-between;align-items:center">'+
             '<span style="display:flex;align-items:center;gap:5px;font-size:12px"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+cat.color+'"></span>'+catLabel(cat.key)+'</span>'+
-            '<span style="font-family:var(--mono);font-size:12px">'+( v?'¥'+Math.round(v).toLocaleString():'—')+'</span>'+
+            '<span style="font-family:var(--mono);font-size:12px">'+(v?fmtSpend(v):'—')+'</span>'+
           '</div>'+
           (hasB&&v?'<div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-align:right">'+rw+'</div>':'')+
         '</div>';
       }).join('')+
-      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:500"><span style="font-size:12px">day total</span><span style="font-family:var(--mono);font-size:13px">¥'+Math.round(total).toLocaleString()+'</span></div>'+
-      '<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--border);color:var(--text2)"><span style="font-size:11px">month total</span><span style="font-family:var(--mono);font-size:12px">¥'+Math.round(mTotal).toLocaleString()+'</span></div>';
+      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:500"><span style="font-size:12px">day total</span><span style="font-family:var(--mono);font-size:13px">'+fmtSpend(total)+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--border);color:var(--text2)"><span style="font-size:11px">month total</span><span style="font-family:var(--mono);font-size:12px">'+fmtSpend(mTotal)+'</span></div>';
   } else if(stab==='fx'){
     const allJpy=CURRENCIES.reduce(function(s,c){return s+(parseFloat(DATA.currencies[c.code]||0)*c.rate);},0);
     sc.innerHTML=
@@ -862,13 +888,15 @@ function loadFile(event){
 }
 
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{}};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
   seedData();
   startApp();
 }
 
 function startApp(){
   migrateSlots();
+  if(!DATA.currencyRates) DATA.currencyRates={};
+  if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
   if(!DATA.nisa.lumpSumByYear){
     DATA.nisa.lumpSumByYear={};
     if(DATA.nisa.lumpSumYearly) DATA.nisa.lumpSumByYear[DATA.nisa.startYear]=DATA.nisa.lumpSumYearly;

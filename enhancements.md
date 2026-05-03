@@ -84,7 +84,7 @@ Replace the single yearly lump sum field with a per-year table. Each row has an 
 
 ---
 
-## 13. Currency — Manual Rate Editing + Base Currency Toggle
+## ~~13. Currency — Manual Rate Editing + Base Currency Toggle~~ ✅ Complete
 
 All currency cards show the exchange rate with an editable input. Toggle at top: "base currency: JPY | IDR" — when IDR is selected all totals show in IDR. Rates stored in `DATA.currencyRates = {USD: 149.5, ...}` (JPY base = 1).
 
