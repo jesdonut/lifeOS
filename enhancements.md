@@ -111,6 +111,20 @@ Add a `mode` field (`'until'` | `'since'`) to each countdown entry. Data model: 
 
 ---
 
+## ~~16. Countdown Modal — Contextual Hints for Type Toggle and Yearly~~ ✅ Complete
+
+When the `until / since` toggle is switched, show a one-line hint below it:
+- `until` → "counts down to this date"
+- `since` → "tracks time elapsed from this date"
+
+The "repeat yearly" label also gets a contextual sub-note that updates with the toggle:
+- `until` + yearly → "(recurring event)"
+- `since` + yearly → "(birthday / anniversary mode)"
+
+Both hints update live as the toggle changes via `cdSetMode()`.
+
+---
+
 ## Implementation Order (remaining)
 
 1. **#8 + #9** Color swatches + category settings — do together, tightly coupled

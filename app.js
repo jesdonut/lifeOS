@@ -969,9 +969,10 @@ function openAddCountdownModal(){
       '<button id="cd-mode-since" type="button" onclick="cdSetMode(\'since\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:none;color:var(--text2)">← since</button>'+
     '</div>'+
     '<input type="hidden" id="cd-mode" value="until">'+
+    '<div id="cd-mode-hint" style="font-size:11px;color:var(--text3);margin:-8px 0 10px">counts down to this date</div>'+
     '<input id="cd-date" type="date" value="'+fd(today)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
     '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
-      '<input id="cd-yearly" type="checkbox" style="width:auto;margin:0;flex-shrink:0"> repeat yearly'+
+      '<input id="cd-yearly" type="checkbox" style="width:auto;margin:0;flex-shrink:0"> repeat yearly <span id="cd-yearly-hint" style="font-size:10px;color:var(--text3);font-weight:400">(recurring event)</span>'+
     '</label>'+
     '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
     buildSwatches('cd-color',PALETTE[0])+
@@ -1005,9 +1006,10 @@ function openEditCountdownModal(id){
       '<button id="cd-mode-since" type="button" onclick="cdSetMode(\'since\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:'+(m==='since'?'var(--text)':'none')+';color:'+(m==='since'?'#fff':'var(--text2)')+'">← since</button>'+
     '</div>'+
     '<input type="hidden" id="cd-mode" value="'+m+'">'+
+    '<div id="cd-mode-hint" style="font-size:11px;color:var(--text3);margin:-8px 0 10px">'+(m==='until'?'counts down to this date':'tracks time elapsed from this date')+'</div>'+
     '<input id="cd-date" type="date" value="'+c.date+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
     '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
-      '<input id="cd-yearly" type="checkbox"'+(c.yearly?' checked':'')+' style="width:auto;margin:0;flex-shrink:0"> repeat yearly'+
+      '<input id="cd-yearly" type="checkbox"'+(c.yearly?' checked':'')+' style="width:auto;margin:0;flex-shrink:0"> repeat yearly <span id="cd-yearly-hint" style="font-size:10px;color:var(--text3);font-weight:400">'+(m==='until'?'(recurring event)':'(birthday / anniversary mode)')+'</span>'+
     '</label>'+
     '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
     buildSwatches('cd-color',c.color)+
@@ -1037,6 +1039,10 @@ function cdSetMode(m){
   var bu=document.getElementById('cd-mode-until'),bs=document.getElementById('cd-mode-since');
   if(bu){bu.style.background=m==='until'?'var(--text)':'none';bu.style.color=m==='until'?'#fff':'var(--text2)';}
   if(bs){bs.style.background=m==='since'?'var(--text)':'none';bs.style.color=m==='since'?'#fff':'var(--text2)';}
+  var mh=document.getElementById('cd-mode-hint');
+  if(mh)mh.textContent=m==='until'?'counts down to this date':'tracks time elapsed from this date';
+  var yh=document.getElementById('cd-yearly-hint');
+  if(yh)yh.textContent=m==='until'?'(recurring event)':'(birthday / anniversary mode)';
 }
 function cdElapsed(dateStr){
   var d=new Date(dateStr+'T00:00:00');
