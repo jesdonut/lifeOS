@@ -96,7 +96,7 @@ Remove the 💾 save button. On first start/load, prompt once with `showSaveFile
 
 ---
 
-## 15. Countdowns — Since/Until Mode + Smart Elapsed Display
+## ~~15. Countdowns — Since/Until Mode + Smart Elapsed Display~~ ✅ Complete
 
 Add a `mode` field (`'until'` | `'since'`) to each countdown entry. Data model: `{id, label, date, yearly, color, mode}`. Old entries default to `'until'`.
 

@@ -839,13 +839,20 @@ function renderSidebar(){
     const items=[];
     (DATA.countdowns||[]).forEach(function(c){
       if(!c.date)return;
-      let d=new Date(c.date+'T00:00:00');
-      if(c.yearly){d=new Date(now.getFullYear(),d.getMonth(),d.getDate());if(d<now)d=new Date(now.getFullYear()+1,d.getMonth(),d.getDate());}
-      const diff=Math.round((d-now)/86400000);
-      if(diff>=0)items.push({s:diff,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
-        '<div style="width:4px;height:4px;border-radius:50%;background:'+c.color+';margin-top:5px;flex-shrink:0"></div>'+
-        '<div><div style="font-size:11px;font-weight:500">'+c.label+'</div>'+
-        '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+(diff===0?'today!':'in '+diff+' day'+(diff!==1?'s':''))+'</div></div></div>'});
+      var cmode=c.mode||'until';
+      if(cmode==='since'&&!c.yearly)return;
+      var d=new Date(c.date+'T00:00:00');
+      var ty=new Date(now.getFullYear(),d.getMonth(),d.getDate());
+      d=ty<now?new Date(now.getFullYear()+1,d.getMonth(),d.getDate()):ty;
+      var diff=Math.round((d-now)/86400000);
+      if(diff>=0&&diff<=365){
+        var sub=diff===0?'today!':'in '+diff+' day'+(diff!==1?'s':'');
+        if(cmode==='since'){var nYrs=d.getFullYear()-new Date(c.date+'T00:00:00').getFullYear();sub=diff===0?'turning '+nYrs+' today! 🎂':'turning '+nYrs+' in '+diff+' day'+(diff!==1?'s':'');}
+        items.push({s:diff,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
+          '<div style="width:4px;height:4px;border-radius:50%;background:'+c.color+';margin-top:5px;flex-shrink:0"></div>'+
+          '<div><div style="font-size:11px;font-weight:500">'+c.label+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+sub+'</div></div></div>'});
+      }
     });
     Object.keys(DATA.events).sort().forEach(function(key){
       const evts=DATA.events[key];if(!evts||!evts.length)return;
@@ -877,14 +884,22 @@ function renderSidebar(){
     sc.innerHTML=
       '<div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">countdowns</div>'+
       (cds.length?cds.map(function(c){
-        let d=new Date(c.date+'T00:00:00');
-        if(c.yearly){d=new Date(now.getFullYear(),d.getMonth(),d.getDate());if(d<now)d=new Date(now.getFullYear()+1,d.getMonth(),d.getDate());}
-        const diff=Math.round((d-now)/86400000);
+        var cmode=c.mode||'until';
+        var dispText;
+        if(cmode==='since'){
+          dispText=c.yearly?cdAnniversary(c.date):cdElapsed(c.date);
+        } else {
+          var d=new Date(c.date+'T00:00:00');
+          if(c.yearly){var ty=new Date(now.getFullYear(),d.getMonth(),d.getDate());d=ty<now?new Date(now.getFullYear()+1,d.getMonth(),d.getDate()):ty;}
+          var diff=Math.round((d-now)/86400000);
+          dispText=diff===0?'today!':diff>0?'in '+diff+' day'+(diff!==1?'s':''):Math.abs(diff)+' day'+(Math.abs(diff)!==1?'s':'')+' ago';
+          if(c.yearly)dispText+=' · yearly';
+        }
         return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border)">'+
           '<div style="width:8px;height:8px;border-radius:50%;background:'+c.color+';flex-shrink:0"></div>'+
           '<div style="flex:1;min-width:0">'+
             '<div style="font-size:12px;font-weight:500">'+c.label+'</div>'+
-            '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+(diff===0?'today!':diff>0?'in '+diff+' day'+(diff!==1?'s':''):Math.abs(diff)+' day'+(Math.abs(diff)!==1?'s':'')+' ago')+(c.yearly?' · yearly':'')+'</div>'+
+            '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+dispText+'</div>'+
           '</div>'+
           '<button class="icon-btn" onclick="openEditCountdownModal(\''+c.id+'\')">✎</button>'+
           '<button class="icon-btn" onclick="deleteCountdown(\''+c.id+'\');renderSidebar()">×</button>'+
@@ -948,6 +963,12 @@ function openAddCountdownModal(){
   openModal(
     '<div class="modal-title">add countdown</div>'+
     '<input id="cd-label" placeholder="label (e.g. Birthday)" autofocus style="margin-bottom:10px">'+
+    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">type</div>'+
+    '<div style="display:flex;margin-bottom:12px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">'+
+      '<button id="cd-mode-until" type="button" onclick="cdSetMode(\'until\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:var(--text);color:#fff">until →</button>'+
+      '<button id="cd-mode-since" type="button" onclick="cdSetMode(\'since\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:none;color:var(--text2)">← since</button>'+
+    '</div>'+
+    '<input type="hidden" id="cd-mode" value="until">'+
     '<input id="cd-date" type="date" value="'+fd(today)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
     '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
       '<input id="cd-yearly" type="checkbox" style="width:auto;margin:0;flex-shrink:0"> repeat yearly'+
@@ -966,16 +987,24 @@ function submitAddCountdown(){
   const date=document.getElementById('cd-date').value;
   const yearly=document.getElementById('cd-yearly').checked;
   const color=document.getElementById('cd-color').value;
+  const mode=document.getElementById('cd-mode').value||'until';
   if(!label||!date)return;
   if(!DATA.countdowns)DATA.countdowns=[];
-  DATA.countdowns.push({id:uid(),label:label,date:date,yearly:yearly,color:color});
+  DATA.countdowns.push({id:uid(),label:label,date:date,yearly:yearly,color:color,mode:mode});
   closeModal();renderSidebar();
 }
 function openEditCountdownModal(id){
   const c=(DATA.countdowns||[]).find(function(x){return x.id===id;});if(!c)return;
+  const m=c.mode||'until';
   openModal(
     '<div class="modal-title">edit countdown</div>'+
     '<input id="cd-label" value="'+c.label+'" autofocus style="margin-bottom:10px">'+
+    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">type</div>'+
+    '<div style="display:flex;margin-bottom:12px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">'+
+      '<button id="cd-mode-until" type="button" onclick="cdSetMode(\'until\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:'+(m==='until'?'var(--text)':'none')+';color:'+(m==='until'?'#fff':'var(--text2)')+'">until →</button>'+
+      '<button id="cd-mode-since" type="button" onclick="cdSetMode(\'since\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:'+(m==='since'?'var(--text)':'none')+';color:'+(m==='since'?'#fff':'var(--text2)')+'">← since</button>'+
+    '</div>'+
+    '<input type="hidden" id="cd-mode" value="'+m+'">'+
     '<input id="cd-date" type="date" value="'+c.date+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
     '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
       '<input id="cd-yearly" type="checkbox"'+(c.yearly?' checked':'')+' style="width:auto;margin:0;flex-shrink:0"> repeat yearly'+
@@ -994,13 +1023,49 @@ function submitEditCountdown(id){
   const date=document.getElementById('cd-date').value;
   const yearly=document.getElementById('cd-yearly').checked;
   const color=document.getElementById('cd-color').value;
+  const mode=document.getElementById('cd-mode').value||'until';
   if(!label||!date)return;
   const c=(DATA.countdowns||[]).find(function(x){return x.id===id;});
-  if(c){c.label=label;c.date=date;c.yearly=yearly;c.color=color;}
+  if(c){c.label=label;c.date=date;c.yearly=yearly;c.color=color;c.mode=mode;}
   closeModal();renderSidebar();
 }
 function deleteCountdown(id){
   if(DATA.countdowns)DATA.countdowns=DATA.countdowns.filter(function(c){return c.id!==id;});
+}
+function cdSetMode(m){
+  var inp=document.getElementById('cd-mode');if(inp)inp.value=m;
+  var bu=document.getElementById('cd-mode-until'),bs=document.getElementById('cd-mode-since');
+  if(bu){bu.style.background=m==='until'?'var(--text)':'none';bu.style.color=m==='until'?'#fff':'var(--text2)';}
+  if(bs){bs.style.background=m==='since'?'var(--text)':'none';bs.style.color=m==='since'?'#fff':'var(--text2)';}
+}
+function cdElapsed(dateStr){
+  var d=new Date(dateStr+'T00:00:00');
+  var now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  var days=Math.round((now-d)/86400000);
+  if(days<0)return 'in '+Math.abs(days)+' day'+(Math.abs(days)!==1?'s':'');
+  if(days===0)return 'today!';
+  var y=today.getFullYear()-d.getFullYear();
+  var mo=today.getMonth()-d.getMonth();
+  if(mo<0){y--;mo+=12;}
+  if(today.getDate()<d.getDate()){mo--;if(mo<0){y--;mo+=11;}}
+  if(y>=1)return y+' yr'+(y>1?'s':'')+(mo>0?' '+mo+' mo':'')+' since';
+  if(mo>=2)return mo+' months since';
+  return days+' day'+(days!==1?'s':'')+' since';
+}
+function cdAnniversary(dateStr){
+  var orig=new Date(dateStr+'T00:00:00');
+  var now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  var years=today.getFullYear()-orig.getFullYear();
+  var hadIt=(today.getMonth()>orig.getMonth())||(today.getMonth()===orig.getMonth()&&today.getDate()>=orig.getDate());
+  if(!hadIt)years--;
+  var ny=today.getFullYear();
+  var thisYr=new Date(ny,orig.getMonth(),orig.getDate());
+  if(thisYr<now)ny++;
+  var nextDate=new Date(ny,orig.getMonth(),orig.getDate());
+  var diff=Math.round((nextDate-now)/86400000);
+  var nextYears=ny-orig.getFullYear();
+  if(diff===0)return years+' yrs · turning '+nextYears+' today! 🎂';
+  return years+' yrs · turning '+nextYears+' in '+diff+' day'+(diff!==1?'s':'');
 }
 
 function startFresh(){
@@ -1015,6 +1080,7 @@ function startApp(){
   if(!DATA.currencyRates) DATA.currencyRates={};
   if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
   if(!DATA.countdowns) DATA.countdowns=[];
+  DATA.countdowns.forEach(function(c){if(!c.mode)c.mode='until';});
   if(!DATA.nisa.lumpSumByYear){
     DATA.nisa.lumpSumByYear={};
     if(DATA.nisa.lumpSumYearly) DATA.nisa.lumpSumByYear[DATA.nisa.startYear]=DATA.nisa.lumpSumYearly;
