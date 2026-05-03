@@ -707,18 +707,6 @@ function renderSavings(panel){
         '</div>'+
       '</div>'+
 
-      (capRow?
-        '<div style="background:#fce8ee;border:1px solid #f0c8d4;border-radius:var(--radius);padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px">'+
-          '<div style="font-size:24px">🎯</div>'+
-          '<div>'+
-            '<div style="font-size:13px;font-weight:500;color:var(--accent)">¥18M cap reached in <strong>'+capRow.year+'</strong></div>'+
-            '<div style="font-size:11px;color:var(--text2);margin-top:2px">age '+capRow.age+' · '+Math.round(capRow.year-n.startYear)+' years of contributions</div>'+
-          '</div>'+
-        '</div>':
-        '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:8px;background:var(--surface2);border-radius:var(--radius)">'+
-          (rawAnnualTs>0&&capRow?'tsumitate ¥'+rawAnnualTs.toLocaleString()+'/yr + lump sums → cap reached '+capRow.year+' (age '+capRow.age+')':rawAnnualTs>0?'add lump sum years above to refine cap estimate':'set a contribution above to see cap estimate')+
-        '</div>')+
-
       '<div style="font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">year snapshots</div>'+
       '<div class="nisa-projections">'+projCards+'</div>'+
       '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">+ add year</button>'+

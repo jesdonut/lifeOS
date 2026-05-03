@@ -454,6 +454,28 @@ Two issues in the multiyear (`years`) view:
 
 ---
 
+## 31. NISA Tracker UI Redesign
+
+Redesign the NISA section in the savings view to be cleaner and more information-dense, based on a Claude-designed mockup.
+
+**Decisions confirmed:**
+- Remove the `🎯 ¥18M cap reached in YYYY` banner ✅ (done)
+- Two-panel side-by-side budget editor: つみたて (pink) | 成長 (blue) ✅ approved
+- No projection SVG chart needed
+
+**Decisions pending:**
+- Hero strip with 4 stats (lifetime cap progress bar, cap year, this year total, avg pace) — pending confirmation
+- Collapse empty ¥0 lump-sum years in the 成長 panel — pending confirmation
+- Compact meta strip (start year / start month / years to cap) replacing current large cards — pending confirmation
+- Snapshot table layout (rows with progress bars vs current cards) — pending confirmation
+  - Also pending: should snapshots use the existing `projectionYears` list, or auto-show every year from start to cap?
+- Color tokens: `--tsumitate: #e85a8a`, `--growth-nisa: #5a8fc8` — pending confirmation
+- Tabular numerics everywhere (`font-variant-numeric: tabular-nums`) — pending
+
+**Scope** — medium. All computation logic stays unchanged; only layout/styling of the NISA card changes.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -488,3 +510,4 @@ Two issues in the multiyear (`years`) view:
 | 28 | Remove Day View — Weekly Becomes Primary + Finance | ✅ |
 | 29 | Merge Year + Years → Single Year View with Calendar | ✅ |
 | 30 | Bug Fix — Years View: Day Badges + Equal Column Widths | ✅ |
+| 31 | NISA Tracker UI Redesign | 🔄 in progress |
