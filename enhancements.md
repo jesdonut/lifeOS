@@ -485,6 +485,6 @@ Two issues in the multiyear (`years`) view:
 | 25 | NISA つみたて — Per-Year Monthly Amount | ✅ |
 | 26 | Bank Account Totals Tracker | ✅ |
 | 27 | Weekly Finance Tracker — Income, Bills, Spending | ⏳ pending |
-| 28 | Remove Day View — Weekly Becomes Primary + Finance | ⏳ pending |
+| 28 | Remove Day View — Weekly Becomes Primary + Finance | ✅ |
 | 29 | Merge Year + Years → Single Year View with Calendar | ✅ |
 | 30 | Bug Fix — Years View: Day Badges + Equal Column Widths | ✅ |

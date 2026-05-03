@@ -41,8 +41,7 @@ const CURRENCIES=[
 
 const today=new Date();
 const MIN_YEAR=1995,MAX_YEAR=2095;
-let view='day',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
-let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
+let view='week',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
 
 // DATA MODEL
 // events: "YYYY-MM-DD": [{id, text, color}]
@@ -102,145 +101,6 @@ function fmtSpend(jpyVal){
     return 'Rp '+(idrRate>0?Math.round(jpyVal/idrRate):0).toLocaleString();
   }
   return '¥'+Math.round(jpyVal).toLocaleString();
-}
-
-// ── TIME GRID ─────────────────────────────────────────────────────────
-const TG_ROWS=40,TG_ROW_H=28; // 4:00–23:30, 40 half-hour slots
-function slotH(i){return 4+Math.floor(i/2);}
-function slotM(i){return(i%2)*30;}
-function pad2(n){return String(n).padStart(2,'0');}
-function fmtT(h,m){
-  if(h>=24)return'midnight';
-  const p=h<12?'am':'pm',hd=h===0||h===12?12:h%12;
-  return hd+(m?':'+pad2(m):'')+p;
-}
-function migrateSlots(){
-  Object.keys(DATA.slots).forEach(function(key){
-    const v=DATA.slots[key];
-    if(v&&!Array.isArray(v)){
-      DATA.slots[key]=Object.keys(v).filter(function(h){return v[h]&&v[h].trim();}).map(function(h){
-        const hn=parseInt(h);
-        return{id:uid(),startH:hn,startM:0,endH:Math.min(hn+1,24),endM:0,text:v[h]};
-      });
-    }
-  });
-}
-function getBlocks(key){if(!Array.isArray(DATA.slots[key]))DATA.slots[key]=[];return DATA.slots[key];}
-function deleteBlock(key,id){DATA.slots[key]=(DATA.slots[key]||[]).filter(function(b){return b.id!==id;});}
-
-function tgDown(ev,key){
-  if(ev.target.closest&&ev.target.closest('.tg-block'))return;
-  const g=document.getElementById('tgrid-'+key);if(!g)return;
-  const rect=g.getBoundingClientRect();
-  const slot=Math.max(0,Math.min(TG_ROWS-1,Math.floor((ev.clientY-rect.top)/TG_ROW_H)));
-  tgDragKey=key;tgDragStart=slot;tgDragEnd=slot;tgDragging=true;
-  tgHi();ev.preventDefault();
-}
-function tgMove(ev,key){
-  if(!tgDragging||tgDragKey!==key)return;
-  const g=document.getElementById('tgrid-'+key);if(!g)return;
-  const rect=g.getBoundingClientRect();
-  const slot=Math.max(0,Math.min(TG_ROWS-1,Math.floor((ev.clientY-rect.top)/TG_ROW_H)));
-  if(slot!==tgDragEnd){tgDragEnd=slot;tgHi();}
-}
-function tgHi(){
-  const s=Math.min(tgDragStart,tgDragEnd),e=Math.max(tgDragStart,tgDragEnd);
-  const sel=document.getElementById('tg-sel-'+tgDragKey);
-  if(sel){sel.style.display='block';sel.style.top=(s*TG_ROW_H)+'px';sel.style.height=((e-s+1)*TG_ROW_H)+'px';}
-}
-function tgUp(){
-  if(!tgDragging)return;
-  tgDragging=false;
-  const s=Math.min(tgDragStart,tgDragEnd),e=Math.max(tgDragStart,tgDragEnd);
-  const key=tgDragKey;tgDragKey=null;
-  const sel=document.getElementById('tg-sel-'+key);if(sel)sel.style.display='none';
-  openAddBlockModal(key,s,e);
-}
-function openAddBlockModal(key,s,e){
-  const sh=slotH(s),sm=slotM(s),reh=slotH(e+1),rem=slotM(e+1);
-  const endStr=reh>=24?'23:59':pad2(reh)+':'+pad2(rem);
-  openModal(
-    '<div class="modal-title">add time block</div>'+
-    '<input id="blk-text" placeholder="e.g. gym, commute, meeting…" autofocus style="margin-bottom:10px">'+
-    '<div style="display:flex;gap:10px;margin-bottom:8px">'+
-      '<div style="flex:1"><div style="font-size:11px;color:var(--text2);margin-bottom:3px">from</div>'+
-        '<input type="time" id="blk-start" value="'+pad2(sh)+':'+pad2(sm)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--mono);font-size:13px;background:var(--surface2);color:var(--text);outline:none"></div>'+
-      '<div style="flex:1"><div style="font-size:11px;color:var(--text2);margin-bottom:3px">to</div>'+
-        '<input type="time" id="blk-end" value="'+endStr+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--mono);font-size:13px;background:var(--surface2);color:var(--text);outline:none"></div>'+
-    '</div>'+
-    '<div class="modal-row">'+
-      '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
-      '<button class="modal-btn primary" onclick="submitAddBlock(\''+key+'\')">add</button>'+
-    '</div>'
-  );
-  setTimeout(function(){const el=document.getElementById('blk-text');if(el)el.focus();},50);
-}
-function submitAddBlock(key){
-  const text=document.getElementById('blk-text').value.trim();if(!text)return;
-  const sv=document.getElementById('blk-start').value,ev=document.getElementById('blk-end').value;
-  if(!sv||!ev)return;
-  const[sh,sm]=sv.split(':').map(Number),[eh,em]=ev.split(':').map(Number);
-  if(eh*60+em<=sh*60+sm)return;
-  getBlocks(key).push({id:uid(),startH:sh,startM:sm,endH:eh,endM:em,text:text});
-  closeModal();render();
-}
-function openEditBlockModal(key,id){
-  const b=(DATA.slots[key]||[]).find(function(b){return b.id===id;});if(!b)return;
-  openModal(
-    '<div class="modal-title">edit block</div>'+
-    '<input id="blk-text" value="'+b.text+'" autofocus style="margin-bottom:10px">'+
-    '<div style="display:flex;gap:10px;margin-bottom:8px">'+
-      '<div style="flex:1"><div style="font-size:11px;color:var(--text2);margin-bottom:3px">from</div>'+
-        '<input type="time" id="blk-start" value="'+pad2(b.startH)+':'+pad2(b.startM)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--mono);font-size:13px;background:var(--surface2);color:var(--text);outline:none"></div>'+
-      '<div style="flex:1"><div style="font-size:11px;color:var(--text2);margin-bottom:3px">to</div>'+
-        '<input type="time" id="blk-end" value="'+pad2(b.endH)+':'+pad2(b.endM)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--mono);font-size:13px;background:var(--surface2);color:var(--text);outline:none"></div>'+
-    '</div>'+
-    '<div class="modal-row">'+
-      '<button class="modal-btn ghost" style="color:var(--accent);border-color:var(--border)" onclick="deleteBlock(\''+key+'\',\''+id+'\');closeModal();render()">delete</button>'+
-      '<button class="modal-btn primary" onclick="submitEditBlock(\''+key+'\',\''+id+'\')">save</button>'+
-    '</div>'
-  );
-  setTimeout(function(){const el=document.getElementById('blk-text');if(el)el.focus();},50);
-}
-function submitEditBlock(key,id){
-  const text=document.getElementById('blk-text').value.trim();if(!text)return;
-  const sv=document.getElementById('blk-start').value,ev=document.getElementById('blk-end').value;
-  if(!sv||!ev)return;
-  const[sh,sm]=sv.split(':').map(Number),[eh,em]=ev.split(':').map(Number);
-  if(eh*60+em<=sh*60+sm)return;
-  const b=(DATA.slots[key]||[]).find(function(b){return b.id===id;});
-  if(b){b.text=text;b.startH=sh;b.startM=sm;b.endH=eh;b.endM=em;}
-  closeModal();render();
-}
-function buildTimeGrid(key){
-  const blocks=getBlocks(key);
-  let rowsHtml='';
-  for(let i=0;i<TG_ROWS;i++){
-    const h=slotH(i),m=slotM(i);
-    const lbl=m===0?fmtT(h,0):'';
-    const bdr=m===30?'border-bottom:1px dashed var(--border)':'border-bottom:1px solid var(--border)';
-    rowsHtml+='<div style="height:'+TG_ROW_H+'px;'+bdr+';display:flex">'+
-      '<span style="width:46px;font-family:var(--mono);font-size:10px;color:var(--text3);padding:6px 6px 0 10px;flex-shrink:0;text-align:right;line-height:1">'+lbl+'</span>'+
-      '<div style="flex:1"></div>'+
-    '</div>';
-  }
-  let blocksHtml='';
-  blocks.forEach(function(b){
-    const startMins=Math.max(0,(b.startH-4)*60+b.startM);
-    const endMins=Math.min(TG_ROWS*30,(b.endH-4)*60+b.endM);
-    if(startMins>=endMins)return;
-    const top=startMins/30*TG_ROW_H;
-    const height=Math.max((endMins-startMins)/30*TG_ROW_H,TG_ROW_H);
-    blocksHtml+='<div class="tg-block" onclick="openEditBlockModal(\''+key+'\',\''+b.id+'\')" style="top:'+top+'px;height:'+height+'px">'+
-      '<div style="font-size:11px;font-weight:500;line-height:1.3;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+b.text+'</div>'+
-      (height>TG_ROW_H+4?'<div style="font-size:9px;opacity:.75;font-family:var(--mono);margin-top:1px">'+fmtT(b.startH,b.startM)+' – '+fmtT(b.endH,b.endM)+'</div>':'')+
-    '</div>';
-  });
-  return '<div id="tgrid-'+key+'" style="position:relative;user-select:none;cursor:crosshair" onmousedown="tgDown(event,\''+key+'\')" onmousemove="tgMove(event,\''+key+'\')">'+
-    rowsHtml+
-    '<div id="tg-sel-'+key+'" style="position:absolute;left:46px;right:4px;top:0;height:0;display:none;background:rgba(194,96,122,.12);border:1px solid rgba(194,96,122,.4);border-radius:4px;pointer-events:none;z-index:1"></div>'+
-    blocksHtml+
-  '</div>';
 }
 
 // ── SPEND MATH ────────────────────────────────────────────────────────
@@ -341,8 +201,7 @@ function submitAddEvent(){
 function setView(v){view=v;document.querySelectorAll('.vbtn').forEach(function(b){b.classList.toggle('active',b.textContent===v);});render();}
 function setSTab(t){stab=t;document.querySelectorAll('.stab').forEach(function(b){b.classList.toggle('active',b.textContent===t);});renderSidebar();}
 function nav(dir){
-  if(view==='day') cursor.setDate(cursor.getDate()+dir);
-  else if(view==='week'){cursor.setDate(cursor.getDate()+dir*7);focusDay=null;}
+  if(view==='week'){cursor.setDate(cursor.getDate()+dir*7);focusDay=null;}
   else if(view==='month') cursor.setMonth(cursor.getMonth()+dir);
   else if(view==='year') cursor.setFullYear(cursor.getFullYear()+dir);
   var cy=cursor.getFullYear();
@@ -351,17 +210,13 @@ function nav(dir){
   multiYearStart=Math.max(MIN_YEAR,Math.min(MAX_YEAR-4,multiYearStart));
   render();
 }
-function jumpDay(key){const p=key.split('-');cursor=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));setView('day');}
 function jumpWeek(key){const p=key.split('-');cursor=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));focusDay=key;setView('week');}
 function jumpMonth(y,m){cursor=new Date(y,m,1);setView('month');}
 
 function render(){
   const panel=document.getElementById('main-panel');
   const label=document.getElementById('period-label');
-  if(view==='day'){
-    label.textContent=DAYS[(cursor.getDay()+6)%7]+', '+MS[cursor.getMonth()]+' '+cursor.getDate()+' '+cursor.getFullYear();
-    renderDay(panel,new Date(cursor));
-  }else if(view==='week'){
+  if(view==='week'){
     const mon=getMon(new Date(cursor)),sun=new Date(mon);sun.setDate(sun.getDate()+6);
     label.textContent=MS[mon.getMonth()]+' '+mon.getDate()+' – '+MS[sun.getMonth()]+' '+sun.getDate()+' '+mon.getFullYear();
     renderWeek(panel,mon);
@@ -379,110 +234,6 @@ function render(){
   autoSave();
 }
 
-// ── DAY VIEW ──────────────────────────────────────────────────────────
-function renderDay(panel,d){
-  const key=fd(d);
-  const evts=getEvents(key);
-  const tasks=getTasks(key);
-  const spend=DATA.spend[key]||{};
-  const total=daySpendTotal(key);
-
-  let evtHtml=evts.map(function(e){
-    return '<span class="evt-pill" style="background:'+e.color+'18;color:'+e.color+'">'+
-      e.text+
-      '<button onclick="deleteEvent(\''+key+'\',\''+e.id+'\');render()" title="remove">×</button>'+
-    '</span>';
-  }).join('');
-
-  let taskHtml=tasks.map(function(t){
-    return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">'+
-      '<input type="checkbox" '+(t.done?'checked':'')+' onchange="toggleTask(\''+key+'\',\''+t.id+'\');render()" style="cursor:pointer">'+
-      '<span style="font-size:12px;flex:1;'+(t.done?'text-decoration:line-through;opacity:.5':'')+'">'+(t.text)+'</span>'+
-      '<button class="icon-btn" onclick="deleteTask(\''+key+'\',\''+t.id+'\');render()">×</button>'+
-    '</div>';
-  }).join('');
-
-
-  let spendHtml=CATS.map(function(cat){
-    const ent=spend[cat.key]||null;
-    const dv=ent?spendVal(ent):0;
-    const rw=ent&&typeof ent==='object'?ent.raw:'';
-    const hasB=rw&&(rw.includes('+')||rw.includes('-')||rw.includes('*')||rw.includes('/'));
-    return '<div class="spend-cat">'+
-      '<div class="spend-cat-label">'+
-        '<span class="spend-cat-dot" style="background:'+catColor(cat.key)+'"></span>'+
-        '<span ondblclick="renameCat(\''+cat.key+'\')" title="double-click to rename" style="cursor:default">'+catLabel(cat.key)+'</span>'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;gap:3px">'+
-        '<span style="font-size:10px;color:var(--text3)">¥</span>'+
-        '<input class="spend-expr-input" type="text" inputmode="decimal" placeholder="e.g. 90+20"'+
-          ' value="'+(dv||'')+'\" data-raw="'+(rw||'')+'\"'+
-          ' onfocus="this.value=this.dataset.raw||this.value;this.select()"'+
-          ' onblur="commitSpend(this,\''+key+'\',\''+cat.key+'\')"'+
-          ' onkeydown="if(event.key===\'Enter\')this.blur()"'+
-        ' />'+
-      '</div>'+
-      '<div class="spend-breakdown" style="display:'+(hasB&&dv?'block':'none')+'">'+(hasB&&dv?rw+' = '+Math.round(dv).toLocaleString():'')+'</div>'+
-    '</div>';
-  }).join('');
-
-  panel.innerHTML=
-    '<div class="day-wrap">'+
-      '<div class="day-card">'+
-        '<div class="day-hdr">'+
-          '<div class="day-num-big">'+d.getDate()+'</div>'+
-          '<div class="day-info">'+
-            '<div class="day-dow">'+DAYS[(d.getDay()+6)%7]+'</div>'+
-            '<div class="day-full">'+MONTHS[d.getMonth()]+' '+d.getFullYear()+'</div>'+
-          '</div>'+
-          (isToday(d)?'<span class="today-badge">today</span>':'')+
-        '</div>'+
-        '<div style="padding:6px 14px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-height:34px">'+
-          evtHtml+
-          '<button onclick="openAddEventModal(\''+key+'\')" style="background:none;border:1px dashed var(--border2);border-radius:12px;padding:2px 10px;font-size:11px;color:var(--text3);cursor:pointer">+ event</button>'+
-        '</div>'+
-        '<div style="padding:8px 14px;border-bottom:1px solid var(--border)">'+
-          '<div style="font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">tasks</div>'+
-          taskHtml+
-          '<input placeholder="+ add task" style="width:100%;background:none;border:none;border-bottom:1px dashed var(--border);outline:none;font-family:var(--sans);font-size:12px;color:var(--text);padding:4px 0;margin-top:4px"'+
-            ' onkeydown="if(event.key===\'Enter\'&&this.value.trim()){addTask(\''+key+'\',this.value);this.value=\'\';render()}"'+
-          ' />'+
-        '</div>'+
-        '<div class="day-body">'+
-          '<div class="day-slots-col">'+buildTimeGrid(key)+'</div>'+
-          '<div class="day-spend-col">'+
-            '<div class="day-spend-title">spend</div>'+
-            '<div class="spend-day-grid">'+spendHtml+'</div>'+
-            '<div class="spend-total-row"><span style="font-size:11px;color:var(--text2)">total today</span><span id="day-spend-total" style="font-family:var(--mono);font-size:14px;font-weight:500">'+fmtSpend(total)+'</span></div>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-}
-
-function renameCat(catKey){
-  const curLabel=catLabel(catKey),curColor=catColor(catKey);
-  openModal(
-    '<div class="modal-title">edit category</div>'+
-    '<input id="cat-label" value="'+curLabel+'" placeholder="category name" autofocus style="margin-bottom:10px">'+
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
-    buildSwatches('cat-color',curColor)+
-    '<div class="modal-row">'+
-      '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
-      '<button class="modal-btn primary" onclick="submitRenameCat(\''+catKey+'\')">save</button>'+
-    '</div>'
-  );
-  setTimeout(function(){const el=document.getElementById('cat-label');if(el)el.focus();},50);
-}
-function submitRenameCat(catKey){
-  const lbl=document.getElementById('cat-label').value.trim();
-  const col=document.getElementById('cat-color').value;
-  if(lbl) DATA.catLabels[catKey]=lbl;
-  if(!DATA.catColors) DATA.catColors={};
-  DATA.catColors[catKey]=col;
-  closeModal();render();
-}
-
 // ── WEEK VIEW ─────────────────────────────────────────────────────────
 function renderWeek(panel,mon){
   let cols='',weekTotal=0;
@@ -491,7 +242,6 @@ function renderWeek(panel,mon){
     const key=fd(d);
     const evts=getEvents(key);
     const tasks=getTasks(key);
-    const blocks=getBlocks(key);
     const spend=daySpendTotal(key);
     weekTotal+=spend;
 
@@ -509,19 +259,14 @@ function renderWeek(panel,mon){
       '</div>';
     }).join('');
 
-    const slotHtml=blocks.slice(0,3).map(function(b){
-      return '<div class="wc-slot"><span style="color:var(--text3);font-family:var(--mono);font-size:9px">'+fmtT(b.startH,b.startM)+'</span> '+b.text+'</div>';
-    }).join('');
-
     cols+=
       '<div class="week-col'+(isToday(d)?' today-col':'')+(focusDay&&fd(d)===focusDay?' focus-col':'')+'">'+
-        '<div class="wc-head" onclick="jumpDay(\''+key+'\')">'+
+        '<div class="wc-head">'+
           '<div class="wc-dow">'+DAYS[i]+'</div>'+
           '<div class="wc-num">'+d.getDate()+'</div>'+
           (isToday(d)?'<div style="width:5px;height:5px;border-radius:50%;background:var(--accent);margin:2px auto 0"></div>':'')+
         '</div>'+
         evtHtml+
-        slotHtml+
         taskHtml+
         '<input class="wc-task-input" placeholder="+ task" onkeydown="if(event.key===\'Enter\'&&this.value.trim()){addTask(\''+key+'\',this.value);this.value=\'\';render()}" />'+
         '<button onclick="openAddEventModal(\''+key+'\')" style="background:none;border:1px dashed var(--border2);border-radius:10px;padding:2px 6px;font-size:10px;color:var(--text3);cursor:pointer;width:100%">+ event</button>'+
@@ -548,7 +293,6 @@ function renderMonth(panel,d){
     const cdate=new Date(cy,cm,cd),ckey=fd(cdate);
     const evts=getEvents(ckey);
     const tasks=getTasks(ckey).filter(function(t){return !t.done;});
-    const firstBlock=getBlocks(ckey)[0]||null;
     const spend=daySpendTotal(ckey);
     const isTod=isToday(cdate);
     cells+=
@@ -556,7 +300,6 @@ function renderMonth(panel,d){
         '<div class="mc-num">'+cd+'</div>'+
         evts.slice(0,2).map(function(e){return '<div class="mc-item" style="background:'+e.color+'18;color:'+e.color+'">'+e.text+'</div>';}).join('')+
         tasks.slice(0,1).map(function(t){return '<div class="mc-item" style="background:#e8e0f5;color:#9b7ec8">'+t.text+'</div>';}).join('')+
-        (firstBlock?'<div class="mc-item" style="background:#e8eef5;color:#2c4a6e">'+firstBlock.text+'</div>':'')+
         (spend?'<div class="mc-spend">'+fmtSpend(spend)+'</div>':'')+
       '</div>';
   }
@@ -630,11 +373,11 @@ function renderYear(panel,year){
       const cdate=new Date(year,m,day),ckey=fd(cdate);
       const hasEv=getEvents(ckey).length>0;
       const hasTask=getTasks(ckey).filter(function(t){return !t.done;}).length>0;
-      const hasSlot=getBlocks(ckey).length>0;
+
       cells+='<div class="ymb-mini-day'+
-        (hasEv?' has-ev':hasTask?' has-task':hasSlot?' has-slot':'')+
+        (hasEv?' has-ev':hasTask?' has-task':'')+
         (isToday(cdate)?' is-today':'')+
-        '" onclick="jumpDay(\''+ckey+'\')" title="'+ckey+'">'+day+'</div>';
+        '" onclick="jumpWeek(\''+ckey+'\')" title="'+ckey+'">'+day+'</div>';
     }
     const mTotal=monthSpendTotal(year,m);
     const taskCount=Object.keys(DATA.tasks).filter(function(k){return k.startsWith(year+'-'+String(m+1).padStart(2,'0'));}).reduce(function(s,k){return s+DATA.tasks[k].filter(function(t){return !t.done;}).length;},0);
@@ -1368,7 +1111,6 @@ function startFresh(){
 }
 
 function startApp(){
-  migrateSlots();
   if(!DATA.catColors) DATA.catColors={};
   if(!DATA.currencyRates) DATA.currencyRates={};
   if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
@@ -1389,7 +1131,6 @@ function startApp(){
   document.getElementById('splash').style.display='none';
   const app=document.getElementById('app');
   app.style.display='flex';
-  document.addEventListener('mouseup',tgUp);
   render();
   initAutoSave();
 }
