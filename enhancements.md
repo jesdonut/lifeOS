@@ -125,11 +125,36 @@ Both hints update live as the toggle changes via `cdSetMode()`.
 
 ---
 
-## Implementation Order (remaining)
+## ~~17. Bug Fix — Currency Section: Toggle + Amount Input~~ ✅ Complete
 
-1. **#8 + #9** Color swatches + category settings — do together, tightly coupled
-2. **#11** Sidebar redesign — new DATA.countdowns + render logic
-3. **#12** NISA per-year lump sum — contained to savings section
-4. **#13** Currency rates + toggle — contained to savings/sidebar
-5. **#10** Day view no-scroll grid — largest layout rewrite, do after data model is stable
-6. **#14** Auto-save persistence — cross-cutting, do last when all DATA changes are settled
+Two bugs in the savings view currencies section:
+- Amount input called `renderSidebar()` instead of `render()`, so typing an amount never updated the equivalent display
+- Equivalent line hardcoded `¥` instead of `fmtSpend()`, so the JPY/IDR toggle had no visible effect in the savings panel
+
+Also added a **total held** row below the currency grid that updates with the base currency toggle.
+
+---
+
+## Status
+
+| # | Feature | Status |
+|---|---|---|
+| 1 | Month View: Click Day → Navigate to Week | ✅ |
+| 2 | Day Page: Two-Column Layout | ✅ |
+| 3 | Day Page: Flexible Time Blocks | ✅ |
+| 4 | Visual Restyling — Sakura Studio Palette | ✅ |
+| 5 | Logo Click → Jump to Today | ✅ |
+| 6 | Number Formatting — Always toLocaleString() | ✅ |
+| 7 | Month View — Remove Expense Summary | ✅ |
+| 8 | Color System — 8 Fixed Swatches | ✅ |
+| 9 | Spend Categories — User-Configurable | ✅ |
+| 10 | Day View — No-Scroll Fixed-Height Grid | ⏳ pending |
+| 11 | Sidebar — Notes + Upcoming + Countdowns | ✅ |
+| 12 | 成長投資枠 — Per-Year Lump Sum | ✅ |
+| 13 | Currency — Rate Editing + Base Toggle | ✅ |
+| 14 | Auto-Save via File System Access API | ✅ |
+| 15 | Countdowns — Since/Until + Smart Elapsed | ✅ |
+| 16 | Countdown Modal — Contextual Hints | ✅ |
+| 17 | Bug Fix — Currency Toggle + Amount Input | ✅ |
+
+**Only #10 remains.** It is the largest rewrite — fixed-height viewport grid with overlap column layout.
