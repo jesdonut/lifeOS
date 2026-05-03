@@ -1111,6 +1111,7 @@ function startFresh(){
 }
 
 function startApp(){
+  DATA.slots={};
   if(!DATA.catColors) DATA.catColors={};
   if(!DATA.currencyRates) DATA.currencyRates={};
   if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
