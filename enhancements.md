@@ -65,7 +65,7 @@ Day view fits entirely in the visible viewport with no vertical scroll. Fixed-he
 
 ---
 
-## 11. Sidebar — Replace 4 Tabs with Notes + Upcoming + Countdowns
+## ~~11. Sidebar — Replace 4 Tabs with Notes + Upcoming + Countdowns~~ ✅ Complete
 
 **Notes** tab — unchanged.
 
@@ -90,7 +90,7 @@ All currency cards show the exchange rate with an editable input. Toggle at top:
 
 ---
 
-## 14. Data Persistence — Auto-Save via File System Access API
+## ~~14. Data Persistence — Auto-Save via File System Access API~~ ✅ Complete
 
 Remove the 💾 save button. On first start/load, prompt once with `showSaveFilePicker` (suggestedName: `lifeOS-save.json`). Store the file handle; auto-save silently after every data change (debounced 1 s). Show a subtle fading "saved" indicator in the topbar. Fall back to manual download on browsers without the API. Show a Safari-specific warning to use Chrome for auto-save.
 

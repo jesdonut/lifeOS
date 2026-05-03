@@ -17,8 +17,8 @@
     <button class="splash-btn primary" onclick="document.getElementById('splash-file-input').click()">load save file</button>
     <button class="splash-btn ghost" onclick="startFresh()">start fresh</button>
     <div class="splash-hint">
-      when done, hit <strong style="color:var(--text2)">💾 save</strong> in the top bar<br>
-      it downloads <code style="font-family:var(--mono)">lifeOS-save.json</code> — load it next time
+      auto-saves to your chosen file — you'll be asked where to save.<br>
+      use <strong style="color:var(--text2)">load</strong> in the top bar to open your save file next time.
     </div>
   </div>
 </div>
@@ -43,7 +43,8 @@
       <button class="nav-btn" onclick="nav(1)">→</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-left:12px;padding-left:12px;border-left:1px solid var(--border)">
-      <button class="save-btn" onclick="saveData()">💾 save</button>
+      <span id="saved-indicator" style="opacity:0;transition:opacity .5s;font-size:11px;color:var(--text2);font-family:var(--mono)">✓ saved</span>
+      <button id="manual-save-btn" class="save-btn" onclick="saveData()" style="display:none">💾 save</button>
       <label class="load-lbl">load<input type="file" accept=".json" onchange="loadFile(event)" style="display:none"></label>
     </div>
   </div>
@@ -53,9 +54,8 @@
     <div class="sidebar">
       <div class="stabs">
         <button class="stab active" onclick="setSTab('notes')">notes</button>
-        <button class="stab" onclick="setSTab('events')">events</button>
-        <button class="stab" onclick="setSTab('spend')">spend</button>
-        <button class="stab" onclick="setSTab('fx')">FX</button>
+        <button class="stab" onclick="setSTab('upcoming')">upcoming</button>
+        <button class="stab" onclick="setSTab('countdowns')">countdowns</button>
       </div>
       <div class="sidebar-body" id="sidebar-body"></div>
     </div>

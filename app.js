@@ -54,7 +54,7 @@ let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
 
 const SEED_EVENTS=[
   {date:'2026-05-08',text:'Driving license exam',color:'#2c4a6e'},
@@ -369,6 +369,7 @@ function render(){
     renderSavings(panel);
   }
   renderSidebar();
+  autoSave();
 }
 
 // ── DAY VIEW ──────────────────────────────────────────────────────────
@@ -833,65 +834,65 @@ function renderSidebar(){
         return '<div class="note-card"><textarea onchange="DATA.notes['+i+'].text=this.value" placeholder="note...">'+n.text+'</textarea><div class="note-meta"><span>'+n.date+'</span><button class="note-del icon-btn" onclick="DATA.notes.splice('+i+',1);renderSidebar()">×</button></div></div>';
       }).join('')+
       '<button class="add-btn" onclick="DATA.notes.unshift({id:\''+uid()+'\',text:\'\',date:\''+fd(today)+'\'});renderSidebar()">+ add note</button>';
-  } else if(stab==='events'){
-    const allKeys=Object.keys(DATA.events).sort();
-    let evtRows='';
-    allKeys.forEach(function(key){
-      const evts=DATA.events[key];
-      if(!evts||!evts.length) return;
-      evts.forEach(function(e){
-        evtRows+=
-          '<div style="display:flex;align-items:flex-start;gap:6px;padding:6px 0;border-bottom:1px solid var(--border)">'+
-            '<div style="width:4px;height:4px;border-radius:50%;background:'+e.color+';margin-top:5px;flex-shrink:0"></div>'+
-            '<div style="flex:1;min-width:0">'+
-              '<div style="font-size:11px;font-weight:500;color:var(--text);word-break:break-word">'+e.text+'</div>'+
-              '<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:1px;cursor:pointer" onclick="jumpDay(\''+key+'\')">'+key+' →</div>'+
-            '</div>'+
-            '<button class="icon-btn" onclick="deleteEvent(\''+key+'\',\''+e.id+'\');renderSidebar();if(view===\'day\'||view===\'week\'||view===\'month\'||view===\'year\'||view===\'multiyear\')render()">×</button>'+
-          '</div>';
-      });
+  } else if(stab==='upcoming'){
+    const now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    const items=[];
+    (DATA.countdowns||[]).forEach(function(c){
+      if(!c.date)return;
+      let d=new Date(c.date+'T00:00:00');
+      if(c.yearly){d=new Date(now.getFullYear(),d.getMonth(),d.getDate());if(d<now)d=new Date(now.getFullYear()+1,d.getMonth(),d.getDate());}
+      const diff=Math.round((d-now)/86400000);
+      if(diff>=0)items.push({s:diff,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
+        '<div style="width:4px;height:4px;border-radius:50%;background:'+c.color+';margin-top:5px;flex-shrink:0"></div>'+
+        '<div><div style="font-size:11px;font-weight:500">'+c.label+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+(diff===0?'today!':'in '+diff+' day'+(diff!==1?'s':''))+'</div></div></div>'});
     });
+    Object.keys(DATA.events).sort().forEach(function(key){
+      const evts=DATA.events[key];if(!evts||!evts.length)return;
+      const d=new Date(key+'T00:00:00');
+      const diff=Math.round((d-now)/86400000);
+      if(diff>=0&&diff<=60){evts.forEach(function(e){
+        items.push({s:diff,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
+          '<div style="width:4px;height:4px;border-radius:50%;background:'+e.color+';margin-top:5px;flex-shrink:0"></div>'+
+          '<div><div style="font-size:11px;font-weight:500">'+e.text+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+(diff===0?'today!':'in '+diff+' day'+(diff!==1?'s':''))+'</div></div></div>'});
+      });}
+    });
+    Object.keys(DATA.goals).forEach(function(gkey){
+      if(!DATA.goals[gkey])return;
+      const p=gkey.split('-'),gy=parseInt(p[0]),gm=parseInt(p[1])-1;
+      const dm=(gy-today.getFullYear())*12+(gm-today.getMonth());
+      if(dm>0)items.push({s:dm*30,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
+        '<div style="width:4px;height:4px;border-radius:50%;background:var(--lavender-text);margin-top:5px;flex-shrink:0"></div>'+
+        '<div><div style="font-size:11px;font-weight:500">'+DATA.goals[gkey]+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">in '+dm+' month'+(dm!==1?'s':'')+'</div></div></div>'});
+    });
+    items.sort(function(a,b){return a.s-b.s;});
     sc.innerHTML=
-      '<div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">all events</div>'+
-      (evtRows||'<div style="font-size:12px;color:var(--text3);padding:8px 0">no events yet</div>')+
-      '<button class="add-btn" onclick="openAddEventModal()">+ add event</button>';
-  } else if(stab==='spend'){
-    const key=fd(cursor);
-    const spend=DATA.spend[key]||{};
-    const total=daySpendTotal(key),mTotal=monthSpendTotal(cursor.getFullYear(),cursor.getMonth());
+      '<div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">upcoming</div>'+
+      (items.length?items.map(function(i){return i.html;}).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">nothing upcoming in 60 days</div>');
+  } else if(stab==='countdowns'){
+    const cds=DATA.countdowns||[];
+    const now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     sc.innerHTML=
-      '<div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">'+MS[cursor.getMonth()]+' '+cursor.getDate()+'</div>'+
-      CATS.map(function(cat){
-        const ent=spend[cat.key]||null,v=spendVal(ent),rw=ent&&typeof ent==='object'?ent.raw:'';
-        const hasB=rw&&(rw.includes('+')||rw.includes('-'));
-        return '<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:center">'+
-            '<span style="display:flex;align-items:center;gap:5px;font-size:12px"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+catColor(cat.key)+'"></span>'+catLabel(cat.key)+'</span>'+
-            '<span style="font-family:var(--mono);font-size:12px">'+(v?fmtSpend(v):'—')+'</span>'+
+      '<div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">countdowns</div>'+
+      (cds.length?cds.map(function(c){
+        let d=new Date(c.date+'T00:00:00');
+        if(c.yearly){d=new Date(now.getFullYear(),d.getMonth(),d.getDate());if(d<now)d=new Date(now.getFullYear()+1,d.getMonth(),d.getDate());}
+        const diff=Math.round((d-now)/86400000);
+        return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border)">'+
+          '<div style="width:8px;height:8px;border-radius:50%;background:'+c.color+';flex-shrink:0"></div>'+
+          '<div style="flex:1;min-width:0">'+
+            '<div style="font-size:12px;font-weight:500">'+c.label+'</div>'+
+            '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+(diff===0?'today!':diff>0?'in '+diff+' day'+(diff!==1?'s':''):Math.abs(diff)+' day'+(Math.abs(diff)!==1?'s':'')+' ago')+(c.yearly?' · yearly':'')+'</div>'+
           '</div>'+
-          (hasB&&v?'<div style="font-size:9px;color:var(--text3);font-family:var(--mono);text-align:right">'+rw+'</div>':'')+
+          '<button class="icon-btn" onclick="openEditCountdownModal(\''+c.id+'\')">✎</button>'+
+          '<button class="icon-btn" onclick="deleteCountdown(\''+c.id+'\');renderSidebar()">×</button>'+
         '</div>';
-      }).join('')+
-      '<div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:500"><span style="font-size:12px">day total</span><span style="font-family:var(--mono);font-size:13px">'+fmtSpend(total)+'</span></div>'+
-      '<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--border);color:var(--text2)"><span style="font-size:11px">month total</span><span style="font-family:var(--mono);font-size:12px">'+fmtSpend(mTotal)+'</span></div>';
-  } else if(stab==='fx'){
-    const allJpy=CURRENCIES.reduce(function(s,c){return s+(parseFloat(DATA.currencies[c.code]||0)*c.rate);},0);
-    sc.innerHTML=
-      '<div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">currencies</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
-      CURRENCIES.map(function(c){
-        const amt=DATA.currencies[c.code]||'',jpyEq=amt?Math.round(parseFloat(amt)*c.rate):0;
-        return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px">'+
-          '<div style="font-size:16px;margin-bottom:1px">'+c.flag+'</div>'+
-          '<div style="font-family:var(--mono);font-size:10px;color:var(--text2)">'+c.code+'</div>'+
-          '<input style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)" type="number" placeholder="0" value="'+amt+'" onchange="DATA.currencies[\''+c.code+'\']=this.value;renderSidebar()" />'+
-          (jpyEq?'<div style="font-size:9px;color:var(--text3);font-family:var(--mono)">¥'+jpyEq.toLocaleString()+'</div>':'')+
-        '</div>';
-      }).join('')+
-      '</div>'+
-      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;font-family:var(--mono);font-size:12px;color:var(--text2)">≈ ¥'+Math.round(allJpy).toLocaleString()+' total</div>':'')+
-      '<div style="margin-top:6px;font-size:10px;color:var(--text3)">Rates approx. May 2026</div>';
+      }).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">no countdowns yet</div>')+
+      '<button class="add-btn" onclick="openAddCountdownModal()">+ add countdown</button>';
   }
+  autoSave();
 }
 
 // ── SAVE / LOAD ───────────────────────────────────────────────────────
@@ -901,8 +902,7 @@ function saveData(){
   const a=document.createElement('a');
   a.href=url;a.download='lifeOS-save.json';a.click();
   URL.revokeObjectURL(url);
-  const btn=document.querySelector('.save-btn');
-  if(btn){const orig=btn.textContent;btn.textContent='✓ saved!';setTimeout(function(){btn.textContent=orig;},1500);}
+  showSavedIndicator();
 }
 
 function loadFile(event){
@@ -912,6 +912,7 @@ function loadFile(event){
   reader.onload=function(e){
     try{
       DATA=JSON.parse(e.target.result);
+      fileHandle=null;
       startApp();
     }catch(err){alert('Could not read file — make sure it is a lifeOS-save.json file.');}
   };
@@ -919,8 +920,91 @@ function loadFile(event){
   event.target.value='';
 }
 
+// ── AUTO-SAVE ─────────────────────────────────────────────────────────
+let fileHandle=null,_saveTimer=null;
+function autoSave(){clearTimeout(_saveTimer);_saveTimer=setTimeout(doSave,1000);}
+async function doSave(){
+  if(!fileHandle)return;
+  try{const w=await fileHandle.createWritable();await w.write(JSON.stringify(DATA,null,2));await w.close();showSavedIndicator();}catch(e){}
+}
+function showSavedIndicator(){
+  const el=document.getElementById('saved-indicator');if(!el)return;
+  el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(function(){el.style.opacity='0';},1500);
+}
+async function initAutoSave(){
+  if(!window.showSaveFilePicker){
+    const btn=document.getElementById('manual-save-btn');if(btn)btn.style.display='';
+    const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if(isSafari){const ind=document.getElementById('saved-indicator');if(ind){ind.textContent='use Chrome for auto-save';ind.style.opacity='1';}}
+    return;
+  }
+  try{
+    fileHandle=await window.showSaveFilePicker({suggestedName:'lifeOS-save.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]});
+  }catch(e){const btn=document.getElementById('manual-save-btn');if(btn)btn.style.display='';}
+}
+
+// ── COUNTDOWNS CRUD ───────────────────────────────────────────────────
+function openAddCountdownModal(){
+  openModal(
+    '<div class="modal-title">add countdown</div>'+
+    '<input id="cd-label" placeholder="label (e.g. Birthday)" autofocus style="margin-bottom:10px">'+
+    '<input id="cd-date" type="date" value="'+fd(today)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
+      '<input id="cd-yearly" type="checkbox"> repeat yearly'+
+    '</label>'+
+    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    buildSwatches('cd-color',PALETTE[0])+
+    '<div class="modal-row">'+
+      '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
+      '<button class="modal-btn primary" onclick="submitAddCountdown()">add</button>'+
+    '</div>'
+  );
+  setTimeout(function(){var el=document.getElementById('cd-label');if(el)el.focus();},50);
+}
+function submitAddCountdown(){
+  const label=document.getElementById('cd-label').value.trim();
+  const date=document.getElementById('cd-date').value;
+  const yearly=document.getElementById('cd-yearly').checked;
+  const color=document.getElementById('cd-color').value;
+  if(!label||!date)return;
+  if(!DATA.countdowns)DATA.countdowns=[];
+  DATA.countdowns.push({id:uid(),label:label,date:date,yearly:yearly,color:color});
+  closeModal();renderSidebar();
+}
+function openEditCountdownModal(id){
+  const c=(DATA.countdowns||[]).find(function(x){return x.id===id;});if(!c)return;
+  openModal(
+    '<div class="modal-title">edit countdown</div>'+
+    '<input id="cd-label" value="'+c.label+'" autofocus style="margin-bottom:10px">'+
+    '<input id="cd-date" type="date" value="'+c.date+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
+      '<input id="cd-yearly" type="checkbox"'+(c.yearly?' checked':'')+'>  repeat yearly'+
+    '</label>'+
+    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    buildSwatches('cd-color',c.color)+
+    '<div class="modal-row">'+
+      '<button class="modal-btn ghost" style="color:var(--accent);border-color:var(--border)" onclick="deleteCountdown(\''+id+'\');closeModal();renderSidebar()">delete</button>'+
+      '<button class="modal-btn primary" onclick="submitEditCountdown(\''+id+'\')">save</button>'+
+    '</div>'
+  );
+  setTimeout(function(){var el=document.getElementById('cd-label');if(el)el.focus();},50);
+}
+function submitEditCountdown(id){
+  const label=document.getElementById('cd-label').value.trim();
+  const date=document.getElementById('cd-date').value;
+  const yearly=document.getElementById('cd-yearly').checked;
+  const color=document.getElementById('cd-color').value;
+  if(!label||!date)return;
+  const c=(DATA.countdowns||[]).find(function(x){return x.id===id;});
+  if(c){c.label=label;c.date=date;c.yearly=yearly;c.color=color;}
+  closeModal();renderSidebar();
+}
+function deleteCountdown(id){
+  if(DATA.countdowns)DATA.countdowns=DATA.countdowns.filter(function(c){return c.id!==id;});
+}
+
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
   seedData();
   startApp();
 }
@@ -930,6 +1014,7 @@ function startApp(){
   if(!DATA.catColors) DATA.catColors={};
   if(!DATA.currencyRates) DATA.currencyRates={};
   if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
+  if(!DATA.countdowns) DATA.countdowns=[];
   if(!DATA.nisa.lumpSumByYear){
     DATA.nisa.lumpSumByYear={};
     if(DATA.nisa.lumpSumYearly) DATA.nisa.lumpSumByYear[DATA.nisa.startYear]=DATA.nisa.lumpSumYearly;
@@ -940,6 +1025,7 @@ function startApp(){
   app.style.display='flex';
   document.addEventListener('mouseup',tgUp);
   render();
+  initAutoSave();
 }
 
 // boot
