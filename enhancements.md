@@ -135,6 +135,56 @@ Also added a **total held** row below the currency grid that updates with the ba
 
 ---
 
+## 18. Bug Fix — NISA Lifetime Cap Description
+
+The info text in the savings view says "つみたて max ¥12M + 成長 max ¥12M (shared ¥18M pool)" which is wrong. Correct rules:
+- つみたて投資枠: ¥1.2M/year max
+- 成長投資枠: ¥2.4M/year max
+- Combined lifetime cap: ¥18M (shared pool)
+- Max annual contribution: ¥3.6M/year if both are used
+
+The calculation logic already enforces the correct caps (¥1.2M and ¥2.4M per year). Only the description text needs fixing. One-line change in `renderSavings()`.
+
+---
+
+## 19. Year View — Clearer Goal Row Labels and Icons
+
+Current icons and labels in the year view monthly blocks:
+- `→` + placeholder `goal...`
+- `◎` + placeholder `milestone...`
+- `·` + placeholder `note...`
+
+These feel abstract. Replace with icons and wording that better reflect life planning:
+- Row 0: `★` + placeholder `aim...` — the big thing you want to achieve this month/year
+- Row 1: `▶` + placeholder `by this point...` — a specific milestone or checkpoint to hit
+- Row 2: `—` + placeholder `note...` — free text, observations, reminders
+
+Small change — a few string replacements inside `renderYear()`.
+
+---
+
+## 20. Currency Cards — Rate Label Respects Base Currency
+
+Each currency card shows `1[CODE] = [rate] ¥`. The `¥` is hardcoded — when IDR is the base currency the label still says ¥ instead of Rp.
+
+Fix: when `DATA.baseCurrency === 'IDR'`, convert the displayed rate from JPY to IDR and show `Rp` instead of `¥`. The stored rate stays in JPY terms internally; only the display label changes.
+
+Small change — update the rate label span in `renderSavings()` currency card loop.
+
+---
+
+## 21. Day View — Condensed Time Grid (Reduce Scrolling)
+
+The day view currently shows 4am–11pm (20 hours). On a 13" MacBook Pro screen the full grid requires significant scrolling.
+
+Two-part fix:
+1. Narrow the default time range to **7am–10pm** (15 hours instead of 20) — blocks outside this range are still preserved, just not shown unless they exist.
+2. Reduce per-slot row height slightly in CSS so the visible range fits within a normal viewport.
+
+Medium complexity — involves changing the `HOURS`/`HLABELS` constants or adding a render-time filter, plus CSS row height tuning.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -156,5 +206,8 @@ Also added a **total held** row below the currency grid that updates with the ba
 | 15 | Countdowns — Since/Until + Smart Elapsed | ✅ |
 | 16 | Countdown Modal — Contextual Hints | ✅ |
 | 17 | Bug Fix — Currency Toggle + Amount Input | ✅ |
-
-**Only #10 remains.** It is the largest rewrite — fixed-height viewport grid with overlap column layout.
+| 18 | Bug Fix — NISA Lifetime Cap Description | ⏳ pending |
+| 19 | Year View — Clearer Goal Row Labels + Icons | ⏳ pending |
+| 20 | Currency Cards — Rate Label Respects Base Currency | ⏳ pending |
+| 21 | Day View — Condensed Time Grid | ⏳ pending |
+| 10 | Day View — No-Scroll Fixed-Height Grid (full rewrite) | ⏳ on hold |
