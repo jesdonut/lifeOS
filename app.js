@@ -23,7 +23,7 @@ const CURRENCIES=[
   {code:'MYR',flag:'🇲🇾',rate:32.1},{code:'EUR',flag:'🇪🇺',rate:161.3},
 ];
 
-const today=new Date(2026,4,2);
+const today=new Date();
 let view='day',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
 let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
 
@@ -238,7 +238,7 @@ function commitSpend(input,dayKey,catKey){
   input.dataset.raw=raw;
   const hasB=raw&&(raw.includes('+')||raw.includes('-')||raw.includes('*')||raw.includes('/'));
   const hint=input.closest('.spend-cat').querySelector('.spend-breakdown');
-  if(hint){hint.textContent=hasB&&val?raw+' = '+Math.round(val):'';hint.style.display=hasB&&val?'block':'none';}
+  if(hint){hint.textContent=hasB&&val?raw+' = '+Math.round(val).toLocaleString():'';hint.style.display=hasB&&val?'block':'none';}
   const tot=document.getElementById('day-spend-total');
   if(tot) tot.textContent='¥'+Math.round(daySpendTotal(dayKey)).toLocaleString();
   renderSidebar();
@@ -390,7 +390,7 @@ function renderDay(panel,d){
           ' onkeydown="if(event.key===\'Enter\')this.blur()"'+
         ' />'+
       '</div>'+
-      '<div class="spend-breakdown" style="display:'+(hasB&&dv?'block':'none')+'">'+(hasB&&dv?rw+' = '+Math.round(dv):'')+'</div>'+
+      '<div class="spend-breakdown" style="display:'+(hasB&&dv?'block':'none')+'">'+(hasB&&dv?rw+' = '+Math.round(dv).toLocaleString():'')+'</div>'+
     '</div>';
   }).join('');
 
@@ -512,34 +512,12 @@ function renderMonth(panel,d){
       '</div>';
   }
 
-  const barMonths=[];
-  for(let i=5;i>=0;i--){let m=month-i,y=year;if(m<0){m+=12;y--;}barMonths.push({m:m,y:y});}
-  const barVals=barMonths.map(function(o){return monthSpendTotal(o.y,o.m);});
-  const maxBar=Math.max.apply(null,barVals.concat([1]));
-  const catTotals=CATS.map(function(cat){
-    let t=0;
-    for(let i=1;i<=dim;i++){const e=(DATA.spend[fd(new Date(year,month,i))]||{})[cat.key];t+=spendVal(e);}
-    return{key:cat.key,label:catLabel(cat.key),color:cat.color,total:t};
-  }).filter(function(c){return c.total>0;});
-  const mTotal=monthSpendTotal(year,month);
-
   panel.innerHTML=
-    '<div style="display:flex;flex-direction:column;gap:12px">'+
-      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">'+
-        '<div style="display:flex;justify-content:flex-end;padding:8px 10px;border-bottom:1px solid var(--border)">'+
-          '<button onclick="openAddEventModal()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:3px 12px;font-size:11px;color:var(--text2);cursor:pointer">+ add event</button>'+
-        '</div>'+
-        '<div class="month-cal-grid">'+cells+'</div>'+
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">'+
+      '<div style="display:flex;justify-content:flex-end;padding:8px 10px;border-bottom:1px solid var(--border)">'+
+        '<button onclick="openAddEventModal()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:3px 12px;font-size:11px;color:var(--text2);cursor:pointer">+ add event</button>'+
       '</div>'+
-      '<div class="spend-summary">'+
-        '<div class="ss-title">'+MS[month]+' spend — ¥'+Math.round(mTotal).toLocaleString()+'</div>'+
-        '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">'+
-          catTotals.map(function(c){return '<span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'+c.color+'"></span>'+c.label+' ¥'+Math.round(c.total).toLocaleString()+'</span>';}).join('')+
-        '</div>'+
-        '<div class="bar-chart">'+
-          barMonths.map(function(o,i){return '<div class="bar-col"><div class="bar-val">'+(barVals[i]?'¥'+Math.round(barVals[i]/1000)+'k':'')+'</div><div class="bar-fill" style="height:'+Math.max(Math.round(barVals[i]/maxBar*50),barVals[i]?2:0)+'px;background:'+(i===5?'var(--accent)':'var(--border2)')+'"></div><div class="bar-lbl">'+MS[o.m]+'</div></div>';}).join('')+
-        '</div>'+
-      '</div>'+
+      '<div class="month-cal-grid">'+cells+'</div>'+
     '</div>';
 }
 

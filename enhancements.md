@@ -1,103 +1,106 @@
-# lifeOS — Planned Enhancements
+# lifeOS — Enhancements & Upgrade Tracker
 
 ---
 
-## 1. ~~Month View: Click Day → Navigate to Week (not Day)~~ ✅ Complete
+## ~~1. Month View: Click Day → Navigate to Week~~ ✅ Complete
 
-**Current behaviour:** Clicking any day cell in the month grid jumps straight to the day view for that date.
-
-**Proposed behaviour:** Clicking a day cell navigates to the *week* view containing that day, keeping the clicked day highlighted/focused. To reach the day view, the user would click the large date number in the week column header.
-
-**Why this is better UX:**
-The month → week → day hierarchy feels natural and mirrors how people think about time. Landing on a week gives more context: you can see what else is happening around that day before committing to it. Jumping from month straight to day is a two-level skip that loses the week's context entirely. The week view is also more actionable — you can quickly scan and compare several days at once.
-
-**Details to consider:**
-- When arriving at week view from month, auto-scroll or visually highlight the clicked day's column (e.g. a subtle pulse or bolder header) so the user knows where they landed.
-- Keep the existing week column header click (the date number) as the way to drill into day view — it's already a natural affordance.
+Clicking a day cell navigates to the *week* view containing that day, keeping the clicked day highlighted. Clicking the large date number in the week column header drills into day view.
 
 ---
 
-## 2. ~~Day Page: Two-Column Layout — Time Slots + Spend Side by Side~~ ✅ Complete
+## ~~2. Day Page: Two-Column Layout — Time Slots + Spend Side by Side~~ ✅ Complete
 
-**Current behaviour:** The day view is a single centred card (max 640px wide) with time slots stacked above the spend grid. On wider screens there is a lot of dead space on either side, and the user must scroll past ~20 hour rows to reach the spend section.
-
-**Proposed layout:**
-Split the day card body into two columns side by side:
-- **Left column (~60%):** the events row, tasks, and time slots — the "plan" side.
-- **Right column (~40%):** the spend grid and daily total — always visible, no scrolling needed.
-
-The header (date, day-of-week, today badge) spans the full width as before.
-
-**Why this is better UX:**
-- Spend tracking is a frequent action (quick entry after each purchase). Burying it below 20 rows of hourly inputs creates unnecessary friction.
-- The two-column split reclaims the blank side margins that currently just show the background. On a typical 1280px+ laptop screen this is a big chunk of wasted space.
-- Having both panels visible at once lets the user plan their day and log spend without any context switch — it reads as "here's my day, here's what I spent."
-- The right column height naturally matches the left on most days, so it won't feel lopsided.
-
-**Details to consider:**
-- On narrow screens / mobile the layout should stack back to single-column (the original order: plan on top, spend below).
-- The spend column could get a sticky position so it stays in view while the user scrolls through a long list of hourly slots.
+Day card body split into left (~60%) for events/tasks/time grid and right (~40%) for spend — always visible, no scrolling needed. Stacks to single column on narrow screens.
 
 ---
 
-## 3. ~~Day Page: Flexible Time Blocks (Multi-Hour & Half-Hour Entries)~~ ✅ Complete
+## ~~3. Day Page: Flexible Time Blocks (Multi-Hour & Half-Hour Entries)~~ ✅ Complete
 
-**Current behaviour:** Each hour from 4am–11pm is a separate single-line text input. There is no way to express that an event spans 2 hours, starts at :30, or continues across a slot boundary.
-
-**Proposed approach — "click to add block" on a time grid:**
-Replace the plain input rows with a visual time grid. Clicking (and optionally dragging) a range of slots opens a small popover to enter a label. The resulting entry renders as a coloured block that visually spans the selected time range.
-
-- A block stores: `startHour`, `startMin` (0 or 30), `endHour`, `endMin`, `text`, `color`.
-- Clicking an existing block opens it for editing or deletion.
-- The grid shows 30-minute rows (double the current density), with hour labels only on the :00 row to avoid clutter.
-- A block can span any continuous range — 30 min, 90 min, 3 hours, etc.
-
-**Why this is better UX:**
-- Real life doesn't fit into hourly buckets. A gym session is 75 minutes, a commute is 45, a meeting is 2 hours. The current system forces the user to either pick the closest hour or awkwardly duplicate text across rows.
-- A visual block makes the day's shape immediately legible — busy vs. free time is visible at a glance, not buried in a list of text inputs.
-- Drag-to-create is fast and tactile. The popover keeps the entry flow lightweight (no modal, no navigation).
-
-**Details to consider:**
-- Keep a "quick type" fallback: clicking a single 30-min slot without dragging should let the user just type a label inline, the same as today but at 30-min granularity.
-- Overlap handling: if two blocks overlap, offset them side by side (like a real calendar) rather than hiding one.
-- The week view should reflect multi-hour blocks in its compact slot preview (show the first block's label rather than the first filled hour).
+30-minute visual time grid replacing plain hour inputs. Drag to create blocks with arbitrary start/end times. Blocks store `startHour`, `startMin`, `endHour`, `endMin`, `text`. Click a block to edit or delete.
 
 ---
 
-## 4. Visual Restyling — Pastel Pink / Warm Cute Palette
+## ~~4. Visual Restyling — Sakura Studio Palette~~ ✅ Complete
 
-**Current palette:** Muted olive-green accent on a warm off-white base. Clean and minimal but neutral/utilitarian in feel.
-
-**Proposed palette direction — "sakura studio":**
-
-| Token | Current | Proposed |
-|---|---|---|
-| `--bg` | `#f5f4f0` (warm grey) | `#fdf6f8` (blush white) |
-| `--surface` | `#ffffff` | `#ffffff` |
-| `--surface2` | `#f0efe9` | `#fdf0f3` (very pale pink) |
-| `--border` | `#e0dfd8` | `#f0d9e0` (dusty rose border) |
-| `--border2` | `#cccbc3` | `#ddb8c4` |
-| `--accent` | `#2d5a3d` (forest green) | `#c2607a` (warm rose) |
-| `--accent-light` | `#e8f0ea` | `#fce8ee` (blush) |
-| `--text` | `#1a1916` | `#2d1f25` (warm near-black) |
-| `--text2` | `#6b6a63` | `#8a6672` (mauve-grey) |
-| `--text3` | `#a09f98` | `#c4a0aa` (dusty pink) |
-
-**Additional touches:**
-- Soft lavender (`#e8e0f5` / `#9b7ec8`) as a secondary accent for tasks (replacing the current purple), giving a coordinated analogous palette.
-- A pale sky blue (`#daeaf5` / `#4a7fa5`) retained for the schedule/slot blocks — it contrasts pleasantly with the pinks without clashing.
-- Slightly rounder radius tokens: `--radius: 8px`, `--radius-lg: 14px` — rounder corners reinforce the soft aesthetic.
-- The splash screen logo could use a gradient text (rose → lavender) for a touch of personality.
-- Today's badge and the "active" view button use the rose accent, making the current position in time feel warm and welcoming rather than businesslike.
-
-**Why this is better UX:**
-A personal life planner is an intimate tool. The current palette reads more like a productivity SaaS dashboard. A warm, feminine palette makes the app feel like *her* space — something she wants to open every day. Pastel colours also reduce eye strain during the evening journaling / planning sessions where this app is likely used most.
+Full CSS token swap to pastel pink / warm blush palette. Lavender (`#e8e0f5` / `#9b7ec8`) for tasks, sky blue retained for time blocks, rounder radius tokens (`--radius: 8px`, `--radius-lg: 14px`), rose→lavender gradient on splash logo, active view button uses rose accent.
 
 ---
 
-## Implementation Order (suggested)
+## ~~5. Logo Click → Jump to Today~~ ✅ Complete
 
-1. **#4 Restyling** — purely CSS, zero risk of breaking logic, instant visual payoff.
-2. **#2 Two-column day layout** — HTML/CSS restructure, improves usability immediately.
-3. **#1 Month → week navigation** — one-line JS change, low effort, high polish.
-4. **#3 Flexible time blocks** — most complex (new data model + drag interaction), do last.
+Clicking the "lifeOS" logo in the topbar resets cursor to today and switches to day view. `today` now uses `new Date()` (real current date) instead of a hardcoded value.
+
+---
+
+## ~~6. Number Formatting — Always `toLocaleString()`~~ ✅ Complete
+
+All ¥ amounts (spend inputs, NISA projections, currency cards, totals, expression breakdown hints) use `.toLocaleString()` for comma formatting (e.g. 100000 → 100,000).
+
+---
+
+## ~~7. Month View — Remove Expense Summary Section~~ ✅ Complete
+
+Removed the spend bar chart and category breakdown panel from below the monthly calendar grid. The calendar now uses the full panel space. Per-day ¥ totals inside each cell are retained.
+
+---
+
+## 8. Color System — 8 Fixed Swatches
+
+Replace all free color pickers with a palette of exactly 8 colors rendered as clickable circles:
+`#2d5a3d` green · `#2c4a6e` navy · `#8b2c2c` brick · `#8b5e3c` brown · `#5a3c7a` purple · `#7a6830` olive · `#3c6b6b` teal · `#888888` grey
+
+Apply everywhere a color is chosen: add event modal, category labels, countdowns.
+
+---
+
+## 9. Spend Categories — User-Configurable
+
+Each of the 8 spend categories maps to one of the 8 swatches. A Settings modal lets the user rename any category and reassign its color. Default mapping (Food=green, Transport=navy, etc.) unchanged on fresh start.
+
+---
+
+## 10. Day View — No-Scroll Fixed-Height Grid (Google Calendar Style)
+
+Day view fits entirely in the visible viewport with no vertical scroll. Fixed-height proportional time bands 4am–11pm. Multiple entries in the same slot render side by side as columns.
+
+---
+
+## 11. Sidebar — Replace 4 Tabs with Notes + Upcoming + Countdowns
+
+**Notes** tab — unchanged.
+
+**Upcoming** tab — unified feed sorted soonest first:
+- Countdown timers (user-defined) shown as "in X days" or "today!"
+- Events from `DATA.events` within 60 days shown as "in X days — [name]"
+- Goals from `DATA.goals` for future months shown as "in X months — [goal]"
+
+**Countdowns** tab — add/edit/delete named dates. Each entry: label, date, optional yearly repeat, color. Stored in `DATA.countdowns = [{id, label, date, yearly, color}]`.
+
+---
+
+## 12. 成長投資枠 — Per-Year Lump Sum Input
+
+Replace the single yearly lump sum field with a per-year table. Each row has an editable lump sum field. Stored as `DATA.nisa.lumpSumByYear = {"2026": 500000, ...}`. `nisaCalc()` reads per-year amounts. Show `+ add year` / `×` to manage rows. Cap calculation accounts for variable amounts.
+
+---
+
+## 13. Currency — Manual Rate Editing + Base Currency Toggle
+
+All currency cards show the exchange rate with an editable input. Toggle at top: "base currency: JPY | IDR" — when IDR is selected all totals show in IDR. Rates stored in `DATA.currencyRates = {USD: 149.5, ...}` (JPY base = 1).
+
+---
+
+## 14. Data Persistence — Auto-Save via File System Access API
+
+Remove the 💾 save button. On first start/load, prompt once with `showSaveFilePicker` (suggestedName: `lifeOS-save.json`). Store the file handle; auto-save silently after every data change (debounced 1 s). Show a subtle fading "saved" indicator in the topbar. Fall back to manual download on browsers without the API. Show a Safari-specific warning to use Chrome for auto-save.
+
+---
+
+## Implementation Order (remaining)
+
+1. **#8 + #9** Color swatches + category settings — do together, tightly coupled
+2. **#11** Sidebar redesign — new DATA.countdowns + render logic
+3. **#12** NISA per-year lump sum — contained to savings section
+4. **#13** Currency rates + toggle — contained to savings/sidebar
+5. **#10** Day view no-scroll grid — largest layout rewrite, do after data model is stable
+6. **#14** Auto-save persistence — cross-cutting, do last when all DATA changes are settled
