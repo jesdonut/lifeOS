@@ -650,7 +650,7 @@ function renderMultiYear(panel){
           '<button onclick="cursor=new Date('+y+',0,1);setView(\'year\')" style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:8px;padding:2px 10px;font-size:10px;color:var(--text2);cursor:pointer">view year →</button>'+
         '</div>'+
         '<div class="my-months-row">'+monthCells+'</div>'+
-        (contrib>0?'<div class="my-nisa-row"><span class="my-nisa-label">NISA contrib:</span><span class="my-nisa-val">¥'+contrib.toLocaleString()+(capThisYear?' 🎉 cap reached!':'')+'</span></div>':'')+
+        (contrib>0?'<div class="my-nisa-row"><span class="my-nisa-label">NISA contribution:</span><span class="my-nisa-val">¥'+contrib.toLocaleString()+(capThisYear?' 🎉 cap reached!':'')+'</span></div>':'')+
       '</div>';
   }
   panel.innerHTML=html;
