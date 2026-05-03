@@ -78,7 +78,7 @@ Day view fits entirely in the visible viewport with no vertical scroll. Fixed-he
 
 ---
 
-## 12. 成長投資枠 — Per-Year Lump Sum Input
+## ~~12. 成長投資枠 — Per-Year Lump Sum Input~~ ✅ Complete
 
 Replace the single yearly lump sum field with a per-year table. Each row has an editable lump sum field. Stored as `DATA.nisa.lumpSumByYear = {"2026": 500000, ...}`. `nisaCalc()` reads per-year amounts. Show `+ add year` / `×` to manage rows. Cap calculation accounts for variable amounts.
 

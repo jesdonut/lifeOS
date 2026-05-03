@@ -38,7 +38,7 @@ let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumYearly:0,startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{}};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{}};
 
 const SEED_EVENTS=[
   {date:'2026-05-08',text:'Driving license exam',color:'#2c4a6e'},
@@ -570,6 +570,7 @@ function renderYear(panel,year){
 // ── MULTI-YEAR VIEW ───────────────────────────────────────────────────
 function renderMultiYear(panel){
   const birthYear=1995;
+  const allNisaRows=nisaCalc();
   let html='';
   for(let y=multiYearStart;y<multiYearStart+5;y++){
     const age=y-birthYear;
@@ -595,11 +596,10 @@ function renderMultiYear(panel){
         '</div>';
     }
 
-    const n=DATA.nisa,annualTotal=(n.tsumitateMonthly*12)+(n.lumpSumYearly||0);
-    const yearsIn=Math.max(0,y-n.startYear);
-    const contrib=Math.min(yearsIn*annualTotal,18000000);
-    const capHitYear=annualTotal>0?n.startYear+Math.ceil(18000000/annualTotal):null;
-    const capThisYear=capHitYear&&y>=capHitYear;
+    const nisaRow=allNisaRows.find(function(r){return r.year===y;});
+    const contrib=nisaRow?nisaRow.cumulative:0;
+    const capRow=allNisaRows.find(function(r){return r.capReached;});
+    const capThisYear=capRow&&y>=capRow.year;
 
     html+=
       '<div class="my-year-section">'+
@@ -619,11 +619,10 @@ function renderMultiYear(panel){
 function nisaCalc(){
   var n=DATA.nisa,birthYear=1995;
   var annualTs=Math.min(n.tsumitateMonthly*12,1200000);
-  var annualLs=Math.min(n.lumpSumYearly||0,2400000);
-  var annualTotal=annualTs+annualLs;
   var cumulative=0,rows=[];
   for(var y=n.startYear;y<=2100;y++){
     if(cumulative>=18000000) break;
+    var annualLs=Math.min((n.lumpSumByYear&&n.lumpSumByYear[y])||0,2400000);
     var ts=Math.min(annualTs,18000000-cumulative);
     var ls=Math.min(annualLs,18000000-cumulative-ts);
     var total=ts+ls;
@@ -632,6 +631,17 @@ function nisaCalc(){
     if(cumulative>=18000000) break;
   }
   return rows;
+}
+function addNisaYear(){
+  var y=parseInt(prompt('Year to add lump sum for (e.g. 2028):'));
+  if(!y||y<2020||y>2100) return;
+  if(!DATA.nisa.lumpSumByYear) DATA.nisa.lumpSumByYear={};
+  if(!(y in DATA.nisa.lumpSumByYear)) DATA.nisa.lumpSumByYear[y]=0;
+  render();
+}
+function removeNisaYear(yr){
+  if(DATA.nisa.lumpSumByYear) delete DATA.nisa.lumpSumByYear[yr];
+  render();
 }
 function addProjectionYear(){
   var y=parseInt(prompt('Add year to track (e.g. 2038):'));
@@ -648,10 +658,7 @@ function removeProjectionYear(y){
 function renderSavings(panel){
   var n=DATA.nisa,birthYear=1995;
   var annualTs=Math.min(n.tsumitateMonthly*12,1200000);
-  var annualLs=Math.min(n.lumpSumYearly||0,2400000);
-  var annualTotal=annualTs+annualLs;
   var rawAnnualTs=n.tsumitateMonthly*12;
-  var rawAnnualLs=n.lumpSumYearly||0;
   var allRows=nisaCalc();
   var capRow=allRows.find(function(r){return r.capReached;});
   var projRows=allRows.filter(function(r){return n.projectionYears.indexOf(r.year)>=0;});
@@ -710,23 +717,26 @@ function renderSavings(panel){
       '</div>'+
 
       '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px">'+
-        '<div style="font-size:11px;font-weight:500;color:#2c4a6e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">成長投資枠 — lump sum</div>'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-          '<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">yearly (¥)</div>'+
-            '<input type="number" step="10000" value="'+rawAnnualLs+'" onchange="DATA.nisa.lumpSumYearly=parseInt(this.value)||0;render()" style="width:100%;border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--text);outline:none">'+
-          '</div>'+
-          '<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">status</div>'+
-            '<div style="font-family:var(--mono);font-size:13px;font-weight:500;padding:5px 0;color:var(--text2)">'+(rawAnnualLs===0?'not using':'¥'+rawAnnualLs.toLocaleString()+'/yr')+'</div>'+
-          '</div>'+
-        '</div>'+
-        '<div style="font-size:10px;color:var(--text3);margin-top:6px">yearly cap: ¥2,400,000'+(rawAnnualLs>2400000?' <span style="color:#8b2c2c">⚠ over cap, will be capped</span>':'')+'</div>'+
+        '<div style="font-size:11px;font-weight:500;color:#2c4a6e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">成長投資枠 — lump sum by year</div>'+
+        '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">yearly cap ¥2,400,000 · add a row for each year you plan a lump sum</div>'+
+        Object.keys(n.lumpSumByYear||{}).sort().map(function(yr){
+          var val=(n.lumpSumByYear[yr])||0;
+          return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+            '<span style="font-family:var(--mono);font-size:12px;color:var(--text2);width:40px;flex-shrink:0">'+yr+'</span>'+
+            '<span style="font-size:10px;color:var(--text3)">¥</span>'+
+            '<input type="number" step="10000" value="'+val+'" onchange="DATA.nisa.lumpSumByYear[\''+yr+'\']=parseInt(this.value)||0;render()" style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none">'+
+            (val>2400000?'<span style="font-size:9px;color:#8b2c2c">⚠ over cap</span>':'')+
+            '<button onclick="removeNisaYear(\''+yr+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0">×</button>'+
+          '</div>';
+        }).join('')+
+        '<button onclick="addNisaYear()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add year</button>'+
       '</div>'+
 
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'+
         '<div style="background:var(--accent-light);border:1px solid #f0c8d4;border-radius:var(--radius);padding:10px">'+
-          '<div style="font-size:10px;color:var(--accent);margin-bottom:3px">combined yearly</div>'+
-          '<div style="font-family:var(--mono);font-size:16px;font-weight:500;color:var(--accent)">¥'+annualTotal.toLocaleString()+'</div>'+
-          '<div style="font-size:9px;color:var(--text3);margin-top:2px">max ¥3,600,000/yr total</div>'+
+          '<div style="font-size:10px;color:var(--accent);margin-bottom:3px">tsumitate yearly</div>'+
+          '<div style="font-family:var(--mono);font-size:16px;font-weight:500;color:var(--accent)">¥'+annualTs.toLocaleString()+'</div>'+
+          '<div style="font-size:9px;color:var(--text3);margin-top:2px">max ¥1,200,000/yr</div>'+
         '</div>'+
         '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px">'+
           '<div style="font-size:10px;color:var(--text2);margin-bottom:3px">start year</div>'+
@@ -743,7 +753,7 @@ function renderSavings(panel){
           '</div>'+
         '</div>':
         '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:8px;background:var(--surface2);border-radius:var(--radius)">'+
-          (annualTotal>0?'at ¥'+annualTotal.toLocaleString()+'/yr → ¥18M cap in ~'+Math.ceil(18000000/annualTotal)+' years (around '+(n.startYear+Math.ceil(18000000/annualTotal))+')':'set a contribution above to see cap estimate')+
+          (rawAnnualTs>0&&capRow?'tsumitate ¥'+rawAnnualTs.toLocaleString()+'/yr + lump sums → cap reached '+capRow.year+' (age '+capRow.age+')':rawAnnualTs>0?'add lump sum years above to refine cap estimate':'set a contribution above to see cap estimate')+
         '</div>')+
 
       '<div style="font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">year snapshots</div>'+
@@ -852,13 +862,18 @@ function loadFile(event){
 }
 
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumYearly:0,startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{}};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{}};
   seedData();
   startApp();
 }
 
 function startApp(){
   migrateSlots();
+  if(!DATA.nisa.lumpSumByYear){
+    DATA.nisa.lumpSumByYear={};
+    if(DATA.nisa.lumpSumYearly) DATA.nisa.lumpSumByYear[DATA.nisa.startYear]=DATA.nisa.lumpSumYearly;
+    delete DATA.nisa.lumpSumYearly;
+  }
   document.getElementById('splash').style.display='none';
   const app=document.getElementById('app');
   app.style.display='flex';
