@@ -729,6 +729,7 @@ function renderSavings(panel){
     '</div>';
   }).join('');
 
+  var allJpy=CURRENCIES.filter(function(c){return c.code!=='JPY';}).reduce(function(s,c){var a=parseFloat(DATA.currencies[c.code]||0);return s+(a?Math.round(a*getRate(c.code)):0);},0);
   var currCards=CURRENCIES.filter(function(c){return c.code!=='JPY';}).map(function(c){
     var amt=DATA.currencies[c.code]||'';
     var rate=getRate(c.code);
@@ -736,13 +737,13 @@ function renderSavings(panel){
     return '<div class="curr-card">'+
       '<div style="font-size:16px;margin-bottom:2px">'+c.flag+'</div>'+
       '<div class="curr-code">'+c.code+'</div>'+
-      '<input class="curr-input" type="number" placeholder="0" value="'+amt+'" onchange="DATA.currencies[\''+c.code+'\']=this.value;renderSidebar()" />'+
+      '<input class="curr-input" type="number" placeholder="0" value="'+amt+'" onchange="DATA.currencies[\''+c.code+'\']=this.value;render()" />'+
       '<div style="display:flex;align-items:center;gap:4px;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'+
         '<span style="font-size:9px;color:var(--text3)">1'+c.code+'=</span>'+
         '<input type="number" step="0.001" value="'+rate+'" onchange="if(!DATA.currencyRates)DATA.currencyRates={};DATA.currencyRates[\''+c.code+'\']=parseFloat(this.value)||'+rate+';render()" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
         '<span style="font-size:9px;color:var(--text3)">¥</span>'+
       '</div>'+
-      (jpyEq?'<div class="curr-jpy">≈ ¥'+jpyEq.toLocaleString()+'</div>':'')+
+      (jpyEq?'<div class="curr-jpy">≈ '+fmtSpend(jpyEq)+'</div>':'')+
     '</div>';
   }).join('');
 
@@ -819,6 +820,7 @@ function renderSavings(panel){
         '</div>'+
       '</div>'+
       '<div class="curr-grid">'+currCards+'</div>'+
+      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtSpend(allJpy)+'</span></div>':'')+
       '<div style="margin-top:10px;font-size:10px;color:var(--text3)">Rates are editable — click the number next to a currency to update.</div>'+
     '</div>'+
     '</div>';
