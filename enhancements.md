@@ -185,6 +185,60 @@ Medium complexity — involves changing the `HOURS`/`HLABELS` constants or addin
 
 ---
 
+## 22. Currency — Purchase Lots & P&L Tracking
+
+Track what you paid when you bought each foreign currency so you can see your gain/loss at current rates.
+
+**Data model** — new array `DATA.currencyLots`:
+```
+{ id, code, amount, rateIDR, date }
+```
+- `code` — "USD", "CNY", etc.
+- `amount` — how many units of foreign currency you bought
+- `rateIDR` — IDR per unit at time of purchase (e.g. 17000 for 1 USD = Rp 17,000)
+- `date` — purchase date "YYYY-MM-DD"
+
+**Display** — inside each currency card, below the amount input:
+- Collapsible "lots" section listing each purchase row: date · amount · bought at Rp X · now Rp Y · P&L Rp ±Z
+- "+ add lot" button opens a small modal (date, amount, rate paid)
+- Summary line per currency: total cost basis vs current value, overall % gain/loss
+- Current IDR rate derived from stored JPY rates: `getRate(code) / getRate('IDR')`
+
+**Scope** — medium. New modal, new lot rows per card, P&L math. No graph yet (historical snapshots would need separate infrastructure).
+
+---
+
+## 23. Bonds — ORI Tracker (Active + Matured)
+
+Track Indonesian government retail bonds (ORI / SR) — when coupons arrive, when bonds mature, and a full archive of past bonds.
+
+**Data model** — new array `DATA.bonds`:
+```
+{ id, series, faceValue, couponRate, issueDate, maturityDate, matured }
+```
+- `series` — "ORI024", "ORI025", etc.
+- `faceValue` — IDR principal invested (e.g. 5000000)
+- `couponRate` — annual rate as decimal (e.g. 0.0625 for 6.25%)
+- `issueDate` — settlement/start date "YYYY-MM-DD"
+- `maturityDate` — end date "YYYY-MM-DD"
+- `matured` — boolean (manually marked or auto from date)
+
+**Derived calculations:**
+- Monthly coupon = `faceValue × couponRate / 12`
+- Total coupons received = months elapsed since issue × monthly coupon
+- Remaining coupons = months until maturity × monthly coupon
+- Days to maturity → feeds the **upcoming** sidebar tab as a reminder
+
+**Display** — new section in the Savings view below Currencies:
+- Active bonds: card per bond with series, face value, coupon rate, monthly income, countdown to maturity
+- "Total monthly coupon income" summary line across all active bonds
+- Matured bonds: collapsed archive section, shows what was earned
+- "+ add bond" modal: series, face value, coupon %, issue date, maturity date
+
+**Scope** — medium-high. New section, new modal, countdown math, archive toggle. Maturity dates also optionally appear in the upcoming sidebar tab.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -198,7 +252,7 @@ Medium complexity — involves changing the `HOURS`/`HLABELS` constants or addin
 | 7 | Month View — Remove Expense Summary | ✅ |
 | 8 | Color System — 8 Fixed Swatches | ✅ |
 | 9 | Spend Categories — User-Configurable | ✅ |
-| 10 | Day View — No-Scroll Fixed-Height Grid | ⏳ pending |
+| 10 | Day View — No-Scroll Fixed-Height Grid | ⏳ on hold |
 | 11 | Sidebar — Notes + Upcoming + Countdowns | ✅ |
 | 12 | 成長投資枠 — Per-Year Lump Sum | ✅ |
 | 13 | Currency — Rate Editing + Base Toggle | ✅ |
@@ -210,4 +264,5 @@ Medium complexity — involves changing the `HOURS`/`HLABELS` constants or addin
 | 19 | Year View — Clearer Goal Row Labels + Icons | ✅ |
 | 20 | Currency Cards — Rate Label Respects Base Currency | ✅ |
 | 21 | Day View — Condensed Time Grid | ⏳ pending |
-| 10 | Day View — No-Scroll Fixed-Height Grid (full rewrite) | ⏳ on hold |
+| 22 | Currency — Purchase Lots & P&L Tracking | ⏳ pending |
+| 23 | Bonds — ORI Tracker (Active + Matured) | ⏳ pending |
