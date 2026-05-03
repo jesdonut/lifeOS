@@ -40,6 +40,7 @@ const CURRENCIES=[
 ];
 
 const today=new Date();
+const MIN_YEAR=1995,MAX_YEAR=2095;
 let view='day',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
 let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
 
@@ -339,6 +340,10 @@ function nav(dir){
   else if(view==='month') cursor.setMonth(cursor.getMonth()+dir);
   else if(view==='year') cursor.setFullYear(cursor.getFullYear()+dir);
   else if(view==='multiyear') multiYearStart+=dir*5;
+  var cy=cursor.getFullYear();
+  if(cy<MIN_YEAR){cursor=new Date(MIN_YEAR,0,1);}
+  if(cy>MAX_YEAR){cursor=new Date(MAX_YEAR,11,31);}
+  multiYearStart=Math.max(MIN_YEAR,Math.min(MAX_YEAR-4,multiYearStart));
   render();
 }
 function jumpDay(key){const p=key.split('-');cursor=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));setView('day');}
