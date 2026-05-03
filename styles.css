@@ -131,10 +131,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .my-year-num{font-family:var(--mono);font-size:18px;font-weight:500}
 .my-year-age{font-size:11px;color:var(--text2)}
 .my-months-row{display:grid;grid-template-columns:repeat(12,1fr)}
-.my-month-cell{border-right:1px solid var(--border);padding:8px 6px;cursor:pointer;transition:.1s}.my-month-cell:last-child{border-right:none}.my-month-cell:hover{background:var(--surface2)}
+.my-month-cell{border-right:1px solid var(--border);padding:8px 6px;cursor:pointer;transition:.1s;min-width:0}.my-month-cell:last-child{border-right:none}.my-month-cell:hover{background:var(--surface2)}
 .my-month-name{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:4px;font-family:var(--mono)}
-.my-month-content{font-size:10px;color:var(--text);line-height:1.5;min-height:24px}
-.my-month-item{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.my-month-content{font-size:10px;color:var(--text);line-height:1.5;min-height:24px;min-width:0}
+.my-month-item{display:flex;align-items:center;min-width:0}.my-month-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .my-nisa-row{display:flex;align-items:center;gap:8px;padding:6px 14px;border-top:1px solid var(--border);background:var(--accent-light)}
 .my-nisa-label{font-size:10px;color:var(--accent);font-family:var(--mono)}
 .my-nisa-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent)}

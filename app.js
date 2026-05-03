@@ -55,7 +55,7 @@ let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[]};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}]};
 
 const SEED_EVENTS=[
   {date:'2026-05-08',text:'Driving license exam',color:'#2c4a6e'},
@@ -633,17 +633,21 @@ function renderMultiYear(panel){
       const goal=DATA.goals[gkey]||'';
       const mkey=y+'-'+String(m+1).padStart(2,'0');
       const evtKeys=Object.keys(DATA.events).filter(function(k){return k.startsWith(mkey);});
-      const evtTexts=evtKeys.map(function(k){return DATA.events[k].map(function(e){return e.text;});}).flat();
+      const evtItems=evtKeys.map(function(k){var d=parseInt(k.split('-')[2]);return DATA.events[k].map(function(e){return {day:d,text:e.text};});}).flat();
       const taskKeys=Object.keys(DATA.tasks).filter(function(k){return k.startsWith(mkey);});
-      const taskTexts=taskKeys.map(function(k){return DATA.tasks[k].filter(function(t){return !t.done;}).map(function(t){return t.text;});}).flat();
+      const taskItems=taskKeys.map(function(k){var d=parseInt(k.split('-')[2]);return DATA.tasks[k].filter(function(t){return !t.done;}).map(function(t){return {day:d,text:t.text};});}).flat();
       const mTotal=monthSpendTotal(y,m);
 
-      const items=[].concat(goal?[goal]:[],evtTexts,taskTexts).slice(0,3);
+      const goalItems=goal?[{day:null,text:goal}]:[];
+      const items=goalItems.concat(evtItems,taskItems).slice(0,3);
       monthCells+=
         '<div class="my-month-cell" onclick="cursor=new Date('+y+','+m+',1);setView(\'month\')">'+
           '<div class="my-month-name">'+MS[m]+'</div>'+
           '<div class="my-month-content">'+
-            items.map(function(t){return '<div class="my-month-item">'+t+'</div>';}).join('')+
+            items.map(function(item){
+              var badge=item.day?'<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;background:var(--border2);border-radius:2px;font-size:7px;font-weight:600;color:var(--text2);margin-right:2px;flex-shrink:0">'+item.day+'</span>':'';
+              return '<div class="my-month-item">'+badge+'<span>'+item.text+'</span></div>';
+            }).join('')+
             (mTotal?'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">'+fmtSpend(mTotal)+'</div>':'')+
           '</div>'+
         '</div>';
@@ -669,12 +673,17 @@ function renderMultiYear(panel){
 }
 
 // ── SAVINGS VIEW ──────────────────────────────────────────────────────
+function getTsumitateForYear(n,y){
+  var keys=Object.keys(n.tsumitateByYear||{}).map(Number).filter(function(k){return k<=y;}).sort(function(a,b){return b-a;});
+  return keys.length?n.tsumitateByYear[keys[0]]:0;
+}
 function nisaCalc(){
   var n=DATA.nisa,birthYear=1995;
-  var annualTs=Math.min(n.tsumitateMonthly*12,1200000);
   var cumulative=0,rows=[];
   for(var y=n.startYear;y<=2100;y++){
     if(cumulative>=18000000) break;
+    var months=y===n.startYear?(13-(n.startMonth||1)):12;
+    var annualTs=Math.min(getTsumitateForYear(n,y)*months,1200000);
     var annualLs=Math.min((n.lumpSumByYear&&n.lumpSumByYear[y])||0,2400000);
     var ts=Math.min(annualTs,18000000-cumulative);
     var ls=Math.min(annualLs,18000000-cumulative-ts);
@@ -708,10 +717,40 @@ function removeProjectionYear(y){
   DATA.nisa.projectionYears=DATA.nisa.projectionYears.filter(function(yr){return yr!==y;});
   render();
 }
+function addTsumitateYear(){
+  var y=parseInt(prompt('Year to configure monthly tsumitate for (e.g. 2027):'));
+  if(!y||y<2020||y>2100) return;
+  if(!DATA.nisa.tsumitateByYear) DATA.nisa.tsumitateByYear={};
+  if(!(y in DATA.nisa.tsumitateByYear)) DATA.nisa.tsumitateByYear[y]=getTsumitateForYear(DATA.nisa,y)||0;
+  render();
+}
+function removeTsumitateYear(yr){
+  if(DATA.nisa.tsumitateByYear) delete DATA.nisa.tsumitateByYear[yr];
+  render();
+}
+function updateBankBalance(id,val){
+  var a=(DATA.bankAccounts||[]).find(function(b){return b.id===id;});
+  if(a) a.balance=parseFloat(val)||0;
+  render();
+}
+function addBankAccount(){
+  var name=prompt('Account name (e.g. BNI):');
+  if(!name||!name.trim()) return;
+  var currency=prompt('Currency code (e.g. IDR, JPY, USD):');
+  if(!currency||!currency.trim()) return;
+  if(!DATA.bankAccounts) DATA.bankAccounts=[];
+  DATA.bankAccounts.push({id:uid(),name:name.trim(),currency:currency.trim().toUpperCase(),balance:0});
+  render();
+}
+function deleteBankAccount(id){
+  DATA.bankAccounts=(DATA.bankAccounts||[]).filter(function(a){return a.id!==id;});
+  render();
+}
 function renderSavings(panel){
   var n=DATA.nisa,birthYear=1995;
-  var annualTs=Math.min(n.tsumitateMonthly*12,1200000);
-  var rawAnnualTs=n.tsumitateMonthly*12;
+  var curYearMonthly=getTsumitateForYear(n,new Date().getFullYear());
+  var annualTs=Math.min(curYearMonthly*12,1200000);
+  var rawAnnualTs=curYearMonthly*12;
   var allRows=nisaCalc();
   var capRow=allRows.find(function(r){return r.capReached;});
   var projRows=allRows.filter(function(r){return n.projectionYears.indexOf(r.year)>=0;});
@@ -753,16 +792,17 @@ function renderSavings(panel){
     var lots=(DATA.currencyLots||[]).filter(function(l){return l.code===c.code;});
     var lotsHtml='';
     if(lots.length){
-      var totalCost=lots.reduce(function(s,l){return s+l.amount*l.rateIDR;},0);
+      var totalCost=lots.reduce(function(s,l){return s+l.rateIDR;},0);
       var totalNow=lots.reduce(function(s,l){return s+l.amount*currentIDR;},0);
       var totalPL=Math.round(totalNow-totalCost);
       lotsHtml='<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:5px">'+
         lots.map(function(l){
-          var pl=Math.round(l.amount*currentIDR-l.amount*l.rateIDR);
+          var costPerUnit=l.rateIDR/l.amount;
+          var pl=Math.round((currentIDR-costPerUnit)*l.amount);
           var plColor=pl>=0?'#2d5a3d':'#8b2c2c';
           return '<div style="font-size:9px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;gap:3px;margin-bottom:3px">'+
             '<span>'+l.date.slice(5)+'</span>'+
-            '<span>'+l.amount.toLocaleString()+'@'+Math.round(l.rateIDR).toLocaleString()+'</span>'+
+            '<span>'+l.amount.toLocaleString()+'@'+Math.round(costPerUnit).toLocaleString()+'</span>'+
             '<span style="color:'+plColor+';font-weight:500">'+(pl>=0?'+':'')+'Rp'+Math.abs(pl).toLocaleString()+'</span>'+
             '<button onclick="deleteLot(\''+l.id+'\')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text3);padding:0;line-height:1;flex-shrink:0">×</button>'+
           '</div>';
@@ -835,6 +875,26 @@ function renderSavings(panel){
     }).join('')+
     '</details>':'';
 
+  var bankRows=(DATA.bankAccounts||[]).map(function(a){
+    var jpyVal=a.currency==='JPY'?a.balance:(a.balance*(a.currency==='IDR'?getRate('IDR'):getRate(a.currency)));
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+      '<span style="font-size:12px;font-weight:500;color:var(--text);min-width:48px">'+a.name+'</span>'+
+      '<span style="font-size:10px;color:var(--text3);min-width:28px">'+a.currency+'</span>'+
+      '<input type="number" step="1000" value="'+a.balance+'" onchange="updateBankBalance(\''+a.id+'\',this.value)" style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none">'+
+      '<span style="font-size:11px;color:var(--text2);white-space:nowrap">'+fmtSpend(jpyVal)+'</span>'+
+      '<button onclick="deleteBankAccount(\''+a.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0">×</button>'+
+    '</div>';
+  }).join('');
+  var bankTotalJpy=(DATA.bankAccounts||[]).reduce(function(s,a){
+    return s+(a.currency==='JPY'?a.balance:(a.balance*(a.currency==='IDR'?getRate('IDR'):getRate(a.currency))));
+  },0);
+  var bankSection='<div class="savings-card">'+
+    '<div class="savings-title">bank accounts</div>'+
+    bankRows+
+    '<button onclick="addBankAccount()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add account</button>'+
+    (bankTotalJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtSpend(bankTotalJpy)+'</span></div>':'')+
+  '</div>';
+
   var bondsSection=
     '<div class="savings-card">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
@@ -854,16 +914,22 @@ function renderSavings(panel){
       '<div class="savings-title">新NISA — contribution tracker</div>'+
 
       '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px">'+
-        '<div style="font-size:11px;font-weight:500;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">つみたて投資枠</div>'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-          '<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">monthly (¥)</div>'+
-            '<input type="number" step="1000" value="'+n.tsumitateMonthly+'" onchange="DATA.nisa.tsumitateMonthly=parseInt(this.value)||0;render()" style="width:100%;border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-family:var(--mono);font-size:13px;background:var(--surface);color:var(--text);outline:none">'+
-          '</div>'+
-          '<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">→ yearly</div>'+
-            '<div style="font-family:var(--mono);font-size:13px;font-weight:500;padding:5px 0">¥'+rawAnnualTs.toLocaleString()+'</div>'+
-          '</div>'+
-        '</div>'+
-        '<div style="font-size:10px;color:var(--text3);margin-top:6px">yearly cap: ¥1,200,000'+(rawAnnualTs>1200000?' <span style="color:#8b2c2c">⚠ over cap, will be capped</span>':'')+'</div>'+
+        '<div style="font-size:11px;font-weight:500;color:var(--accent);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">つみたて投資枠 — monthly by year</div>'+
+        '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">yearly cap ¥1,200,000 · add a row each time your monthly amount changes</div>'+
+        Object.keys(n.tsumitateByYear||{}).sort().map(function(yr){
+          var monthly=(n.tsumitateByYear[yr])||0;
+          var yearly=monthly*12;
+          var overCap=yearly>1200000;
+          return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+            '<span style="font-family:var(--mono);font-size:12px;color:var(--text2);width:40px;flex-shrink:0">'+yr+'</span>'+
+            '<span style="font-size:10px;color:var(--text3)">¥</span>'+
+            '<input type="number" step="1000" value="'+monthly+'" onchange="DATA.nisa.tsumitateByYear[\''+yr+'\']=parseInt(this.value)||0;render()" style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none">'+
+            '<span style="font-size:10px;color:var(--text3);white-space:nowrap">→ ¥'+Math.min(yearly,1200000).toLocaleString()+'/yr</span>'+
+            (overCap?'<span style="font-size:9px;color:#8b2c2c">⚠ over cap</span>':'')+
+            '<button onclick="removeTsumitateYear(\''+yr+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0">×</button>'+
+          '</div>';
+        }).join('')+
+        '<button onclick="addTsumitateYear()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add year</button>'+
       '</div>'+
 
       '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px">'+
@@ -882,15 +948,23 @@ function renderSavings(panel){
         '<button onclick="addNisaYear()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add year</button>'+
       '</div>'+
 
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'+
         '<div style="background:var(--accent-light);border:1px solid #f0c8d4;border-radius:var(--radius);padding:10px">'+
-          '<div style="font-size:10px;color:var(--accent);margin-bottom:3px">tsumitate yearly</div>'+
+          '<div style="font-size:10px;color:var(--accent);margin-bottom:3px">tsumitate this yr</div>'+
           '<div style="font-family:var(--mono);font-size:16px;font-weight:500;color:var(--accent)">¥'+annualTs.toLocaleString()+'</div>'+
           '<div style="font-size:9px;color:var(--text3);margin-top:2px">max ¥1,200,000/yr</div>'+
         '</div>'+
         '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px">'+
           '<div style="font-size:10px;color:var(--text2);margin-bottom:3px">start year</div>'+
           '<input type="number" value="'+n.startYear+'" onchange="DATA.nisa.startYear=parseInt(this.value)||2026;render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:16px;font-weight:500;color:var(--text)">'+
+        '</div>'+
+        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px">'+
+          '<div style="font-size:10px;color:var(--text2);margin-bottom:3px">start month</div>'+
+          '<select onchange="DATA.nisa.startMonth=parseInt(this.value);render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text);cursor:pointer">'+
+            ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m,i){
+              return '<option value="'+(i+1)+'"'+(n.startMonth===i+1?' selected':'')+'>'+m+'</option>';
+            }).join('')+
+          '</select>'+
         '</div>'+
       '</div>'+
 
@@ -924,6 +998,7 @@ function renderSavings(panel){
       (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtSpend(allJpy)+'</span></div>':'')+
       '<div style="margin-top:10px;font-size:10px;color:var(--text3)">Rates are editable — click the number next to a currency to update.</div>'+
     '</div>'+
+    bankSection+
     bondsSection+
     '</div>';
 }
@@ -1222,7 +1297,7 @@ function openAddLotModal(code){
     '<input id="lot-date" type="date" value="'+fd(today)+'">'+
     '<label>amount ('+code+' units bought)</label>'+
     '<input id="lot-amount" type="number" min="0" step="any" placeholder="0">'+
-    '<label>rate paid (IDR per 1 '+code+')</label>'+
+    '<label>total IDR spent</label>'+
     '<input id="lot-rate" type="number" min="0" step="any" placeholder="0">'+
     '<div style="display:flex;gap:8px;margin-top:8px">'+
       '<button class="modal-btn primary" onclick="submitAddLot(\''+code+'\')">add lot</button>'+
@@ -1291,7 +1366,7 @@ function toggleBondMatured(id){
 }
 
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[]};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}]};
   seedData();
   startApp();
 }
@@ -1310,6 +1385,11 @@ function startApp(){
     if(DATA.nisa.lumpSumYearly) DATA.nisa.lumpSumByYear[DATA.nisa.startYear]=DATA.nisa.lumpSumYearly;
     delete DATA.nisa.lumpSumYearly;
   }
+  if(!DATA.nisa.tsumitateByYear) DATA.nisa.tsumitateByYear={};
+  if(!Object.keys(DATA.nisa.tsumitateByYear).length&&DATA.nisa.tsumitateMonthly>0)
+    DATA.nisa.tsumitateByYear[DATA.nisa.startYear]=DATA.nisa.tsumitateMonthly;
+  if(!DATA.nisa.startMonth) DATA.nisa.startMonth=1;
+  if(!DATA.bankAccounts) DATA.bankAccounts=[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}];
   document.getElementById('splash').style.display='none';
   const app=document.getElementById('app');
   app.style.display='flex';

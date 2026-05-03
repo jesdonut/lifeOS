@@ -258,6 +258,202 @@ Track Indonesian government retail bonds of any type (ORI, SR, ST, SBR) — mont
 
 ---
 
+## 24. Bug Fix — Currency Lots: rateIDR Is Total Cost, Not Per-Unit Rate
+
+`rateIDR` stored per lot represents the **total IDR spent** for that purchase, not the price per unit. Current calculations treat it as per-unit and multiply by `amount`, causing massively inflated cost basis and P&L figures.
+
+**Fixes required (all in the currencyLots render block ~line 753–771):**
+
+1. `totalCost` — remove the `l.amount *` multiplier:
+   ```js
+   // was: s + l.amount * l.rateIDR
+   s + l.rateIDR
+   ```
+2. Per-lot P&L — derive cost-per-unit first:
+   ```js
+   // was: l.amount * currentIDR - l.amount * l.rateIDR
+   var costPerUnit = l.rateIDR / l.amount;
+   var pl = Math.round((currentIDR - costPerUnit) * l.amount);
+   ```
+3. Display rate — show derived per-unit price, not raw total:
+   ```js
+   // was: Math.round(l.rateIDR).toLocaleString()
+   Math.round(l.rateIDR / l.amount).toLocaleString()
+   ```
+4. Modal label (line 1225) — change `"rate paid (IDR per 1 CODE)"` → `"total IDR spent"` to match actual semantic.
+
+No data migration needed — existing saved lots already store totals.
+
+---
+
+## 25. NISA つみたて — Per-Year Monthly Amount
+
+The tsumitate monthly contribution (`DATA.nisa.tsumitateMonthly`) is a single value for all years. As the amount may change year to year (e.g. ¥60,000/mo in 2026, ¥80,000/mo from 2027 onward), it should be configurable per year.
+
+**Data model change:**
+```js
+// Replace single field:
+nisa.tsumitateMonthly: 60000
+
+// With per-year map (same pattern as lumpSumByYear):
+nisa.tsumitateByYear: { "2026": 60000, "2027": 80000 }
+```
+- Default: if a year has no entry, fall back to the previous year's value (or a hardcoded default of ¥60,000)
+- Migration: on load, if `tsumitateMonthly` exists but `tsumitateByYear` doesn't, seed `tsumitateByYear` with `{ [startYear]: tsumitateMonthly }`
+
+**UI** — same pattern as 成長投資枠 per-year lump sum (#12): a small table in the NISA section with one row per configured year (editable monthly amount) + `+ add year` / `×` controls.
+
+**Calc change** — `nisaCalc()` reads `tsumitateByYear[year] * 12` for the annual tsumitate contribution in each projection year instead of the single monthly value.
+
+**Also added** — `startMonth` field (1–12, default Jan). The start year's contribution is calculated as `monthly × (13 − startMonth)` so a May start correctly contributes 8 months instead of 12. Start month is a dropdown in the NISA UI next to start year.
+
+**Scope** — small-medium. Mirrors existing lumpSumByYear pattern closely.
+
+---
+
+## 26. Bank Account Totals Tracker
+
+Track cash balances across bank accounts. Initial accounts: **BCA** (IDR) and **MUFG** (JPY). Display as part of the Savings view, showing each balance converted to the active base currency.
+
+**Data model** — new array `DATA.bankAccounts`:
+```js
+{ id, name, currency, balance }
+// e.g. { id, name: "BCA", currency: "IDR", balance: 5000000 }
+//      { id, name: "MUFG", currency: "JPY", balance: 0 }
+```
+
+**Display** — new "bank accounts" section in the Savings view (above or below currencies):
+- One row per account: name · balance (native currency) · balance (base currency equivalent)
+- Editable balance field inline
+- Total row: all balances summed in base currency
+- `+ add account` for future accounts (optional for now)
+
+**Scope** — small. Simple editable list with currency conversion using existing `getRate()` / `fmtSpend()` helpers.
+
+---
+
+## 27. Daily Finance Tracker — Income, Bills, Spending
+
+Import and visualize the monthly financial data currently tracked in Excel. This is a significant feature that may warrant splitting `app.js` into multiple files (e.g. `app-core.js`, `app-finance.js`).
+
+**Data model** — new `DATA.finance` keyed by `"YYYY-MM"`:
+```js
+DATA.finance["2025-01"] = {
+  // Income
+  salary: 0,          // 給料
+  transportReimb: 0,  // Transport reimbursement
+  taxWithheld: 0,     // 税金 (as negative or tracked separately)
+  insuranceDed: 0,    // 保険料 deducted at source
+  otherIncome: 0,     // 所得
+  momPays: 0,         // Mom Pays (flights, hotel, etc.)
+
+  // Bills (fixed monthly)
+  rent: 0,            // 家賃
+  gas: 0,             // ガス費
+  water: 0,           // 水道費
+  electricity: 0,     // 電気料金
+  phone: 0,           // 携帯
+  internet: 0,        // インターネット
+
+  // Necessities
+  paperwork: 0,       // 書類仕事
+  medical: 0,         // メディカル
+  necessities: 0,     // 日常生活
+  nhi: 0,             // 国民保険 (NHI)
+
+  // Optional spending
+  food: 0,            // 食べ物
+  transport: 0,       // 電車代金 (non-commute)
+  project: 0,         // ゲーム / Project
+  fun: 0,             // エンターテイメント
+  clothes: 0,         // 服・髪
+
+  // Transport pass (separate from daily transport)
+  commutationPass: 0, // 通勤定期券
+}
+```
+
+**Derived totals per month:**
+- Total Income = salary + transportReimb + otherIncome + momPays − taxWithheld − insuranceDed
+- Clean Salary = salary − taxWithheld − insuranceDed
+- Total Bills = rent + gas + water + electricity + phone + internet
+- Total Necessities = paperwork + medical + necessities + nhi
+- Total Optional = food + transport + project + fun + clothes
+- Balance Remaining = Total Income − commutationPass − Total Bills − Total Necessities − Total Optional
+
+**Display** — new "Finance" view (tab in the main nav, or sub-section of an existing view):
+- Month selector
+- Collapsible sections per group (Income, Bills, Necessities, Optional)
+- Each field: label (Japanese + English) · editable input · currency symbol
+- Summary table at bottom: group totals + Balance Remaining
+- Trend view (future): sparklines or table of monthly balances over time
+
+**File split recommendation** — when this is implemented, split `app.js` into:
+- `app-core.js` — DATA model, save/load, render dispatch, navigation, utilities
+- `app-calendar.js` — day/week/month/year view rendering and event logic
+- `app-finance.js` — savings (NISA, currency, bonds, banks) + new finance tracker
+
+**Scope** — large. New view, large data model, grouped inputs, derived totals. No graphs in first pass.
+
+**Note** — this feature is now shaped by #28 (weekly replaces daily). Finance tracking per month should align with weekly aggregation from #28 rather than per-day inputs.
+
+---
+
+## 28. Remove Day View — Weekly Becomes Primary Calendar + Finance View
+
+The day view is retired. Week becomes the finest granularity of the calendar. The week view gains finance tracking (budget, spending, income) in place of the current day-level spend panel.
+
+**Nav change:** `day | week | month | year | years | savings` → `week | month | year | savings`
+
+**What happens to existing day view data:**
+- Time blocks (`DATA.slots`) keyed by date — still stored, rendered inline on the week view per day column (compact, no drag-to-create; click to view/delete)
+- Per-day spend (`DATA.spend`) — stays keyed by date, aggregated to weekly totals on the week view
+- Day view functions (`renderDay`, `jumpDay`, the `setView('day')` path) — removed
+
+**Week view additions:**
+- Weekly budget target field (editable, stored in `DATA.weeklyBudget` or per-week key)
+- Weekly income total (sum from the Finance tracker, #27/#29, or manual entry)
+- Weekly spend total (sum of per-day spend entries for that week)
+- Weekly balance = income − spend
+- Spend breakdown by category for the week (same 8-category system)
+- Each day column retains: event list, task list, compact time block display, spend entries
+
+**Scope** — medium-large. Removes one view entirely, restructures week render, adds weekly finance summary panel. Coordinates with #27 for monthly rollup.
+
+---
+
+## 29. Merge Year + Years Views → Single "Year" View with Calendar
+
+Currently: `year` shows monthly goal/milestone/note rows for one year; `years` (multiyear) shows a 5-year grid. These serve overlapping purposes and split navigation unnecessarily.
+
+**New unified "year" view** (replaces both `year` and `multiyear`, nav button stays `year`):
+
+Three sections stacked vertically within the same panel:
+
+1. **Annual calendar grid** — 12 month thumbnails in a 4×3 or 6×2 grid. Each cell shows the month name and clickable days (or just the month name as a button to `jumpMonth()`). Gives a full-year at-a-glance calendar feel.
+
+2. **Monthly goal rows** — existing year view content: each of the 12 months with ★ aim / ▶ by this point / — note rows. Kept exactly as-is.
+
+3. **Multi-year strip** — a condensed version of the current multiyear 5-year grid below, for broader context. Navigation arrows change which year is focused.
+
+**Nav change:** `years` button removed from nav. `year` button handles both.
+
+**Data** — `DATA.goals` (keyed `YYYY-M`) and `DATA.multiYearGoals` (if any) remain unchanged. No migration needed.
+
+**Scope** — medium. Remove one view, restructure `renderYear()` to include the calendar grid and optional multi-year strip. Most logic already exists.
+
+---
+
+## 30. Bug Fix — Years View: Day Badges + Equal Column Widths
+
+Two issues in the multiyear (`years`) view:
+
+1. **Events showed text only** — date information was lost when building the items list. Fixed by preserving `{day, text}` objects through the pipeline; events and tasks render a small square badge (e.g. `20`) before the text using the day extracted from the `YYYY-MM-DD` key. Goals (no specific day) get no badge.
+
+2. **Month columns were unequal width** — CSS grid `repeat(12, 1fr)` cells expand to fit content by default (`min-width: auto`). Long event names pushed some columns wider. Fixed by adding `min-width: 0` to `.my-month-cell` and `.my-month-content`, and switching `.my-month-item` to `display:flex` so text truncates via `text-overflow:ellipsis` within its constrained column.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -271,7 +467,7 @@ Track Indonesian government retail bonds of any type (ORI, SR, ST, SBR) — mont
 | 7 | Month View — Remove Expense Summary | ✅ |
 | 8 | Color System — 8 Fixed Swatches | ✅ |
 | 9 | Spend Categories — User-Configurable | ✅ |
-| 10 | Day View — No-Scroll Fixed-Height Grid | ⏳ on hold |
+| 10 | Day View — No-Scroll Fixed-Height Grid | 🚫 cancelled by #28 |
 | 11 | Sidebar — Notes + Upcoming + Countdowns | ✅ |
 | 12 | 成長投資枠 — Per-Year Lump Sum | ✅ |
 | 13 | Currency — Rate Editing + Base Toggle | ✅ |
@@ -282,6 +478,13 @@ Track Indonesian government retail bonds of any type (ORI, SR, ST, SBR) — mont
 | 18 | Bug Fix — NISA Lifetime Cap Description | ✅ |
 | 19 | Year View — Clearer Goal Row Labels + Icons | ✅ |
 | 20 | Currency Cards — Rate Label Respects Base Currency | ✅ |
-| 21 | Day View — Condensed Time Grid | ⏳ pending |
+| 21 | Day View — Condensed Time Grid | 🚫 cancelled by #28 |
 | 22 | Currency — Purchase Lots & P&L Tracking | ✅ |
 | 23 | Government Bonds Tracker (Active + Matured) | ✅ |
+| 24 | Bug Fix — Currency Lots rateIDR Semantics | ✅ |
+| 25 | NISA つみたて — Per-Year Monthly Amount | ✅ |
+| 26 | Bank Account Totals Tracker | ✅ |
+| 27 | Weekly Finance Tracker — Income, Bills, Spending | ⏳ pending |
+| 28 | Remove Day View — Weekly Becomes Primary + Finance | ⏳ pending |
+| 29 | Merge Year + Years → Single Year View with Calendar | ⏳ pending |
+| 30 | Bug Fix — Years View: Day Badges + Equal Column Widths | ✅ |
