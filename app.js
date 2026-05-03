@@ -950,7 +950,7 @@ function openAddCountdownModal(){
     '<input id="cd-label" placeholder="label (e.g. Birthday)" autofocus style="margin-bottom:10px">'+
     '<input id="cd-date" type="date" value="'+fd(today)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
     '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
-      '<input id="cd-yearly" type="checkbox"> repeat yearly'+
+      '<input id="cd-yearly" type="checkbox" style="width:auto;margin:0;flex-shrink:0"> repeat yearly'+
     '</label>'+
     '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
     buildSwatches('cd-color',PALETTE[0])+
@@ -978,7 +978,7 @@ function openEditCountdownModal(id){
     '<input id="cd-label" value="'+c.label+'" autofocus style="margin-bottom:10px">'+
     '<input id="cd-date" type="date" value="'+c.date+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
     '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
-      '<input id="cd-yearly" type="checkbox"'+(c.yearly?' checked':'')+'>  repeat yearly'+
+      '<input id="cd-yearly" type="checkbox"'+(c.yearly?' checked':'')+' style="width:auto;margin:0;flex-shrink:0"> repeat yearly'+
     '</label>'+
     '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
     buildSwatches('cd-color',c.color)+

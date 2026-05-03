@@ -96,6 +96,21 @@ Remove the 💾 save button. On first start/load, prompt once with `showSaveFile
 
 ---
 
+## 15. Countdowns — Since/Until Mode + Smart Elapsed Display
+
+Add a `mode` field (`'until'` | `'since'`) to each countdown entry. Data model: `{id, label, date, yearly, color, mode}`. Old entries default to `'until'`.
+
+**Modal UI**: Two-button toggle `until | since` above the date input.
+
+**Display logic:**
+- `until` → current behavior: "in X days" / "today!"
+- `since`, no yearly repeat → smart elapsed: < 60 days → "X days since" · < 24 months → "X months since" · else → "X yrs Y mo since"
+- `since` + yearly → age/anniversary mode: "X years · next in Y days" (e.g. birthday: "age 30 · turning 31 in 8 days")
+
+**Upcoming tab:** `until` entries show as now; `since` + yearly shows next anniversary "in Y days"; `since` no repeat excluded (it's a tracker, not a future event).
+
+---
+
 ## Implementation Order (remaining)
 
 1. **#8 + #9** Color swatches + category settings — do together, tightly coupled
