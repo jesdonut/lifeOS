@@ -345,7 +345,6 @@ function nav(dir){
   else if(view==='week'){cursor.setDate(cursor.getDate()+dir*7);focusDay=null;}
   else if(view==='month') cursor.setMonth(cursor.getMonth()+dir);
   else if(view==='year') cursor.setFullYear(cursor.getFullYear()+dir);
-  else if(view==='multiyear') multiYearStart+=dir*5;
   var cy=cursor.getFullYear();
   if(cy<MIN_YEAR){cursor=new Date(MIN_YEAR,0,1);}
   if(cy>MAX_YEAR){cursor=new Date(MAX_YEAR,11,31);}
@@ -372,9 +371,6 @@ function render(){
   }else if(view==='year'){
     label.textContent=cursor.getFullYear();
     renderYear(panel,cursor.getFullYear());
-  }else if(view==='multiyear'){
-    label.textContent=multiYearStart+' – '+(multiYearStart+4);
-    renderMultiYear(panel);
   }else if(view==='savings'){
     label.textContent='savings & NISA';
     renderSavings(panel);
@@ -576,6 +572,55 @@ function renderMonth(panel,d){
 
 // ── YEAR VIEW ─────────────────────────────────────────────────────────
 function renderYear(panel,year){
+  multiYearStart=Math.max(MIN_YEAR,Math.min(MAX_YEAR-4,year-2));
+  const birthYear=1995;
+  const allNisaRows=nisaCalc();
+
+  // ── multi-year strip ──
+  let strip='';
+  for(let y=multiYearStart;y<multiYearStart+5;y++){
+    const age=y-birthYear;
+    const focused=y===year;
+    let monthCells='';
+    for(let m=0;m<12;m++){
+      const gkey=y+'-'+(m+1)+'-0';
+      const goal=DATA.goals[gkey]||'';
+      const mkey=y+'-'+String(m+1).padStart(2,'0');
+      const evtKeys=Object.keys(DATA.events).filter(function(k){return k.startsWith(mkey);});
+      const evtItems=evtKeys.map(function(k){var d=parseInt(k.split('-')[2]);return DATA.events[k].map(function(e){return {day:d,text:e.text};});}).flat();
+      const taskKeys=Object.keys(DATA.tasks).filter(function(k){return k.startsWith(mkey);});
+      const taskItems=taskKeys.map(function(k){var d=parseInt(k.split('-')[2]);return DATA.tasks[k].filter(function(t){return !t.done;}).map(function(t){return {day:d,text:t.text};});}).flat();
+      const mTotal=monthSpendTotal(y,m);
+      const goalItems=goal?[{day:null,text:goal}]:[];
+      const items=goalItems.concat(evtItems,taskItems).slice(0,3);
+      monthCells+=
+        '<div class="my-month-cell" onclick="jumpMonth('+y+','+m+')">'+
+          '<div class="my-month-name">'+MS[m]+'</div>'+
+          '<div class="my-month-content">'+
+            items.map(function(item){
+              var badge=item.day?'<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;background:var(--border2);border-radius:2px;font-size:7px;font-weight:600;color:var(--text2);margin-right:2px;flex-shrink:0">'+item.day+'</span>':'';
+              return '<div class="my-month-item">'+badge+'<span>'+item.text+'</span></div>';
+            }).join('')+
+            (mTotal?'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">'+fmtSpend(mTotal)+'</div>':'')+
+          '</div>'+
+        '</div>';
+    }
+    const nisaRow=allNisaRows.find(function(r){return r.year===y;});
+    const contrib=nisaRow?nisaRow.cumulative:0;
+    const capRow=allNisaRows.find(function(r){return r.capReached;});
+    const capThisYear=capRow&&y>=capRow.year;
+    strip+=
+      '<div class="my-year-section'+(focused?' my-year-focused':'')+'">'+
+        '<div class="my-year-hdr">'+
+          '<span class="my-year-num" onclick="cursor=new Date('+y+',0,1);render()" style="cursor:pointer" title="view '+y+'">'+y+'</span>'+
+          '<span class="my-year-age">age '+age+'</span>'+
+        '</div>'+
+        '<div class="my-months-row">'+monthCells+'</div>'+
+        (contrib>0?'<div class="my-nisa-row"><span class="my-nisa-label">NISA:</span><span class="my-nisa-val">¥'+contrib.toLocaleString()+(capThisYear?' 🎉 cap reached!':'')+'</span></div>':'')+
+      '</div>';
+  }
+
+  // ── 12-month detail ──
   let blocks='';
   for(let m=0;m<12;m++){
     const fd_=new Date(year,m,1),startDow=(fd_.getDay()+6)%7,dim=new Date(year,m+1,0).getDate(),prevDim=new Date(year,m,0).getDate();
@@ -593,7 +638,6 @@ function renderYear(panel,year){
     }
     const mTotal=monthSpendTotal(year,m);
     const taskCount=Object.keys(DATA.tasks).filter(function(k){return k.startsWith(year+'-'+String(m+1).padStart(2,'0'));}).reduce(function(s,k){return s+DATA.tasks[k].filter(function(t){return !t.done;}).length;},0);
-
     const goalRows=[0,1,2].map(function(n){
       const gkey=year+'-'+(m+1)+'-'+n;
       return '<div class="ymb-goal-row">'+
@@ -602,7 +646,6 @@ function renderYear(panel,year){
         (DATA.goals[gkey]?'<button class="icon-btn" onclick="DATA.goals[\''+gkey+'\']=\'\';this.closest(\'.ymb-goal-row\').querySelector(\'input\').value=\'\'">×</button>':'')+
       '</div>';
     }).join('');
-
     blocks+=
       '<div class="ymb">'+
         '<div class="ymb-head">'+
@@ -617,59 +660,12 @@ function renderYear(panel,year){
         '<div class="ymb-goals">'+goalRows+'</div>'+
       '</div>';
   }
-  panel.innerHTML='<div class="year-grid">'+blocks+'</div>';
-}
 
-// ── MULTI-YEAR VIEW ───────────────────────────────────────────────────
-function renderMultiYear(panel){
-  const birthYear=1995;
-  const allNisaRows=nisaCalc();
-  let html='';
-  for(let y=multiYearStart;y<multiYearStart+5;y++){
-    const age=y-birthYear;
-    let monthCells='';
-    for(let m=0;m<12;m++){
-      const gkey=y+'-'+(m+1)+'-0';
-      const goal=DATA.goals[gkey]||'';
-      const mkey=y+'-'+String(m+1).padStart(2,'0');
-      const evtKeys=Object.keys(DATA.events).filter(function(k){return k.startsWith(mkey);});
-      const evtItems=evtKeys.map(function(k){var d=parseInt(k.split('-')[2]);return DATA.events[k].map(function(e){return {day:d,text:e.text};});}).flat();
-      const taskKeys=Object.keys(DATA.tasks).filter(function(k){return k.startsWith(mkey);});
-      const taskItems=taskKeys.map(function(k){var d=parseInt(k.split('-')[2]);return DATA.tasks[k].filter(function(t){return !t.done;}).map(function(t){return {day:d,text:t.text};});}).flat();
-      const mTotal=monthSpendTotal(y,m);
-
-      const goalItems=goal?[{day:null,text:goal}]:[];
-      const items=goalItems.concat(evtItems,taskItems).slice(0,3);
-      monthCells+=
-        '<div class="my-month-cell" onclick="cursor=new Date('+y+','+m+',1);setView(\'month\')">'+
-          '<div class="my-month-name">'+MS[m]+'</div>'+
-          '<div class="my-month-content">'+
-            items.map(function(item){
-              var badge=item.day?'<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;background:var(--border2);border-radius:2px;font-size:7px;font-weight:600;color:var(--text2);margin-right:2px;flex-shrink:0">'+item.day+'</span>':'';
-              return '<div class="my-month-item">'+badge+'<span>'+item.text+'</span></div>';
-            }).join('')+
-            (mTotal?'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">'+fmtSpend(mTotal)+'</div>':'')+
-          '</div>'+
-        '</div>';
-    }
-
-    const nisaRow=allNisaRows.find(function(r){return r.year===y;});
-    const contrib=nisaRow?nisaRow.cumulative:0;
-    const capRow=allNisaRows.find(function(r){return r.capReached;});
-    const capThisYear=capRow&&y>=capRow.year;
-
-    html+=
-      '<div class="my-year-section">'+
-        '<div class="my-year-hdr">'+
-          '<span class="my-year-num">'+y+'</span>'+
-          '<span class="my-year-age">age '+age+'</span>'+
-          '<button onclick="cursor=new Date('+y+',0,1);setView(\'year\')" style="margin-left:auto;background:none;border:1px solid var(--border);border-radius:8px;padding:2px 10px;font-size:10px;color:var(--text2);cursor:pointer">view year →</button>'+
-        '</div>'+
-        '<div class="my-months-row">'+monthCells+'</div>'+
-        (contrib>0?'<div class="my-nisa-row"><span class="my-nisa-label">NISA contribution:</span><span class="my-nisa-val">¥'+contrib.toLocaleString()+(capThisYear?' 🎉 cap reached!':'')+'</span></div>':'')+
-      '</div>';
-  }
-  panel.innerHTML=html;
+  panel.innerHTML=
+    '<div style="display:flex;flex-direction:column;gap:16px">'+
+      strip+
+      '<div class="year-grid">'+blocks+'</div>'+
+    '</div>';
 }
 
 // ── SAVINGS VIEW ──────────────────────────────────────────────────────

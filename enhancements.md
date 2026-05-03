@@ -486,5 +486,5 @@ Two issues in the multiyear (`years`) view:
 | 26 | Bank Account Totals Tracker | ✅ |
 | 27 | Weekly Finance Tracker — Income, Bills, Spending | ⏳ pending |
 | 28 | Remove Day View — Weekly Becomes Primary + Finance | ⏳ pending |
-| 29 | Merge Year + Years → Single Year View with Calendar | ⏳ pending |
+| 29 | Merge Year + Years → Single Year View with Calendar | ✅ |
 | 30 | Bug Fix — Years View: Day Badges + Equal Column Widths | ✅ |

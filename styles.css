@@ -127,6 +127,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 
 /* MULTIYEAR */
 .my-year-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px}
+.my-year-focused{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .my-year-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2)}
 .my-year-num{font-family:var(--mono);font-size:18px;font-weight:500}
 .my-year-age{font-size:11px;color:var(--text2)}
