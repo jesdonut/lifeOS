@@ -185,7 +185,7 @@ Medium complexity — involves changing the `HOURS`/`HLABELS` constants or addin
 
 ---
 
-## 22. Currency — Purchase Lots & P&L Tracking
+## ~~22. Currency — Purchase Lots & P&L Tracking~~ ✅ Complete
 
 Track what you paid when you bought each foreign currency so you can see your gain/loss at current rates.
 
@@ -208,7 +208,7 @@ Track what you paid when you bought each foreign currency so you can see your ga
 
 ---
 
-## 23. Government Bonds Tracker (Active + Matured)
+## ~~23. Government Bonds Tracker (Active + Matured)~~ ✅ Complete
 
 Track Indonesian government retail bonds of any type (ORI, SR, ST, SBR) — monthly coupon income, maturity countdowns, and a full archive of past bonds.
 
@@ -283,5 +283,5 @@ Track Indonesian government retail bonds of any type (ORI, SR, ST, SBR) — mont
 | 19 | Year View — Clearer Goal Row Labels + Icons | ✅ |
 | 20 | Currency Cards — Rate Label Respects Base Currency | ✅ |
 | 21 | Day View — Condensed Time Grid | ⏳ pending |
-| 22 | Currency — Purchase Lots & P&L Tracking | ⏳ pending |
-| 23 | Government Bonds Tracker (Active + Matured) | ⏳ pending |
+| 22 | Currency — Purchase Lots & P&L Tracking | ✅ |
+| 23 | Government Bonds Tracker (Active + Matured) | ✅ |

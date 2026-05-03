@@ -55,7 +55,7 @@ let tgDragKey=null,tgDragStart=-1,tgDragEnd=-1,tgDragging=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[]};
 
 const SEED_EVENTS=[
   {date:'2026-05-08',text:'Driving license exam',color:'#2c4a6e'},
@@ -749,6 +749,27 @@ function renderSavings(panel){
     var idrRate=getRate('IDR');
     var displayRate=idrBase?Math.round(rate/idrRate*100)/100:rate;
     var rateLabel=idrBase?'Rp':'¥';
+    var currentIDR=idrRate>0?Math.round(rate/idrRate):0;
+    var lots=(DATA.currencyLots||[]).filter(function(l){return l.code===c.code;});
+    var lotsHtml='';
+    if(lots.length){
+      var totalCost=lots.reduce(function(s,l){return s+l.amount*l.rateIDR;},0);
+      var totalNow=lots.reduce(function(s,l){return s+l.amount*currentIDR;},0);
+      var totalPL=Math.round(totalNow-totalCost);
+      lotsHtml='<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:5px">'+
+        lots.map(function(l){
+          var pl=Math.round(l.amount*currentIDR-l.amount*l.rateIDR);
+          var plColor=pl>=0?'#2d5a3d':'#8b2c2c';
+          return '<div style="font-size:9px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;gap:3px;margin-bottom:3px">'+
+            '<span>'+l.date.slice(5)+'</span>'+
+            '<span>'+l.amount.toLocaleString()+'@'+Math.round(l.rateIDR).toLocaleString()+'</span>'+
+            '<span style="color:'+plColor+';font-weight:500">'+(pl>=0?'+':'')+'Rp'+Math.abs(pl).toLocaleString()+'</span>'+
+            '<button onclick="deleteLot(\''+l.id+'\')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text3);padding:0;line-height:1;flex-shrink:0">×</button>'+
+          '</div>';
+        }).join('')+
+        '<div style="font-size:9px;font-weight:600;color:'+(totalPL>=0?'#2d5a3d':'#8b2c2c')+';padding-top:3px;border-top:1px solid var(--border)">P&L '+(totalPL>=0?'+':'')+'Rp'+Math.abs(totalPL).toLocaleString()+'</div>'+
+      '</div>';
+    }
     return '<div class="curr-card">'+
       '<div style="font-size:16px;margin-bottom:2px">'+c.flag+'</div>'+
       '<div class="curr-code">'+c.code+'</div>'+
@@ -759,8 +780,73 @@ function renderSavings(panel){
         '<span style="font-size:9px;color:var(--text3)">'+rateLabel+'</span>'+
       '</div>'+
       (jpyEq?'<div class="curr-jpy">≈ '+fmtSpend(jpyEq)+'</div>':'')+
+      lotsHtml+
+      '<button onclick="openAddLotModal(\''+c.code+'\')" style="margin-top:5px;width:100%;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-size:9px;color:var(--text2);padding:2px 0;cursor:pointer;font-family:var(--sans)">+ lot</button>'+
     '</div>';
   }).join('');
+
+  var activeBonds=(DATA.bonds||[]).filter(function(b){return !bondIsMatured(b);});
+  var maturedBonds=(DATA.bonds||[]).filter(function(b){return bondIsMatured(b);});
+  var totalMonthlyNet=activeBonds.reduce(function(s,b){return s+bondMonthlyNet(b);},0);
+
+  var activeBondCards=activeBonds.map(function(b){
+    var monthly=bondMonthlyNet(b);
+    var received=bondReceivedNet(b);
+    var total=bondTotalNet(b);
+    var remaining=bondRemainingNet(b);
+    var days=bondDaysToMaturity(b);
+    var daysLabel=days<=0?'matured':days===1?'1 day to maturity':days+' days to maturity';
+    var pct=total>0?Math.round(received/total*100):0;
+    return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+        '<span style="font-weight:600;font-size:13px;font-family:var(--mono)">'+b.series+'</span>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button onclick="toggleBondMatured(\''+b.id+'\')" style="font-size:10px;background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;color:var(--text2);font-family:var(--sans)">mark matured</button>'+
+          '<button onclick="deleteBond(\''+b.id+'\')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--text3);padding:0 2px">×</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text2);margin-bottom:4px">Rp '+b.faceValue.toLocaleString()+' · '+(b.couponRate*100).toFixed(2)+'% gross · '+(b.taxRate*100)+'% tax</div>'+
+      '<div style="display:flex;gap:16px;font-size:11px;margin-bottom:6px">'+
+        '<div><div style="color:var(--text3);font-size:10px">net/month</div><div style="font-family:var(--mono);font-weight:600">Rp '+monthly.toLocaleString()+'</div></div>'+
+        '<div><div style="color:var(--text3);font-size:10px">received</div><div style="font-family:var(--mono)">Rp '+received.toLocaleString()+'</div></div>'+
+        '<div><div style="color:var(--text3);font-size:10px">remaining</div><div style="font-family:var(--mono)">Rp '+remaining.toLocaleString()+'</div></div>'+
+      '</div>'+
+      '<div style="background:var(--border);border-radius:4px;height:4px;margin-bottom:5px"><div style="background:var(--accent);height:4px;border-radius:4px;width:'+pct+'%"></div></div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)">'+
+        '<span>'+pct+'% of Rp '+total.toLocaleString()+' received</span>'+
+        '<span>'+(days<=0?'<span style="color:var(--accent)">matured</span>':daysLabel)+'</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  var maturedArchive=maturedBonds.length?
+    '<details style="margin-top:8px"><summary style="font-size:11px;color:var(--text2);cursor:pointer;padding:4px 0">matured bonds ('+maturedBonds.length+')</summary>'+
+    maturedBonds.map(function(b){
+      var total=bondTotalNet(b);
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">'+
+        '<span style="font-family:var(--mono);font-weight:500">'+b.series+'</span>'+
+        '<span style="color:var(--text2)">Rp '+b.faceValue.toLocaleString()+'</span>'+
+        '<span style="color:var(--text2)">earned Rp '+total.toLocaleString()+'</span>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button onclick="toggleBondMatured(\''+b.id+'\')" style="font-size:10px;background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;color:var(--text2);font-family:var(--sans)">reactivate</button>'+
+          '<button onclick="deleteBond(\''+b.id+'\')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--text3);padding:0 2px">×</button>'+
+        '</div>'+
+      '</div>';
+    }).join('')+
+    '</details>':'';
+
+  var bondsSection=
+    '<div class="savings-card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+        '<div class="savings-title" style="margin-bottom:0">government bonds</div>'+
+        '<button onclick="openAddBondModal()" style="font-size:11px;background:none;border:1px solid var(--border);border-radius:8px;padding:3px 10px;cursor:pointer;color:var(--text2);font-family:var(--sans)">+ add bond</button>'+
+      '</div>'+
+      (activeBonds.length?
+        activeBondCards+
+        (totalMonthlyNet?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total monthly income</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">Rp '+totalMonthlyNet.toLocaleString()+'</span></div>':'')
+        :'<div style="font-size:11px;color:var(--text3);padding:8px 0">no active bonds — click + add bond to get started.</div>')+
+      maturedArchive+
+    '</div>';
 
   panel.innerHTML=
     '<div class="savings-wrap">'+
@@ -838,6 +924,7 @@ function renderSavings(panel){
       (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtSpend(allJpy)+'</span></div>':'')+
       '<div style="margin-top:10px;font-size:10px;color:var(--text3)">Rates are editable — click the number next to a currency to update.</div>'+
     '</div>'+
+    bondsSection+
     '</div>';
 }
 
@@ -890,6 +977,16 @@ function renderSidebar(){
         '<div style="width:4px;height:4px;border-radius:50%;background:var(--lavender-text);margin-top:5px;flex-shrink:0"></div>'+
         '<div><div style="font-size:11px;font-weight:500">'+DATA.goals[gkey]+'</div>'+
         '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">in '+dm+' month'+(dm!==1?'s':'')+'</div></div></div>'});
+    });
+    (DATA.bonds||[]).filter(function(b){return !bondIsMatured(b);}).forEach(function(b){
+      var days=bondDaysToMaturity(b);
+      if(days>=0&&days<=365){
+        var sub=days===0?'matures today! 🎉':'matures in '+days+' day'+(days!==1?'s':'');
+        items.push({s:days,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
+          '<div style="width:4px;height:4px;border-radius:50%;background:#7a6830;margin-top:5px;flex-shrink:0"></div>'+
+          '<div><div style="font-size:11px;font-weight:500">'+b.series+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+sub+'</div></div></div>'});
+      }
     });
     items.sort(function(a,b){return a.s-b.s;});
     sc.innerHTML=
@@ -1091,8 +1188,110 @@ function cdAnniversary(dateStr){
   return years+' yrs · turning '+nextYears+' in '+diff+' day'+(diff!==1?'s':'');
 }
 
+// ── BOND MATH ─────────────────────────────────────────────────────────
+function bondIsMatured(b){return b.matured||fd(today)>=b.maturityDate;}
+function bondMonthlyNet(b){return Math.round(b.faceValue*b.couponRate/12*(1-b.taxRate));}
+function bondDurationMonths(b){
+  var a=new Date(b.firstCouponDate+'T00:00:00');
+  var z=new Date(b.maturityDate+'T00:00:00');
+  return (z.getFullYear()-a.getFullYear())*12+(z.getMonth()-a.getMonth())+1;
+}
+function bondReceivedMonths(b){
+  var todayStr=fd(today);
+  if(todayStr<b.firstCouponDate)return 0;
+  if(todayStr>=b.maturityDate)return bondDurationMonths(b);
+  var a=new Date(b.firstCouponDate+'T00:00:00');
+  var diff=(today.getFullYear()-a.getFullYear())*12+(today.getMonth()-a.getMonth());
+  if(today.getDate()>=a.getDate())diff++;
+  return Math.min(diff,bondDurationMonths(b));
+}
+function bondTotalNet(b){return bondMonthlyNet(b)*bondDurationMonths(b);}
+function bondReceivedNet(b){return bondMonthlyNet(b)*bondReceivedMonths(b);}
+function bondRemainingNet(b){return bondTotalNet(b)-bondReceivedNet(b);}
+function bondDaysToMaturity(b){
+  var z=new Date(b.maturityDate+'T00:00:00');
+  var now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  return Math.round((z-now)/86400000);
+}
+
+// ── CURRENCY LOTS ─────────────────────────────────────────────────────
+function openAddLotModal(code){
+  openModal(
+    '<div class="modal-title">add purchase lot — '+code+'</div>'+
+    '<label>date purchased</label>'+
+    '<input id="lot-date" type="date" value="'+fd(today)+'">'+
+    '<label>amount ('+code+' units bought)</label>'+
+    '<input id="lot-amount" type="number" min="0" step="any" placeholder="0">'+
+    '<label>rate paid (IDR per 1 '+code+')</label>'+
+    '<input id="lot-rate" type="number" min="0" step="any" placeholder="0">'+
+    '<div style="display:flex;gap:8px;margin-top:8px">'+
+      '<button class="modal-btn primary" onclick="submitAddLot(\''+code+'\')">add lot</button>'+
+      '<button class="modal-btn" onclick="closeModal()">cancel</button>'+
+    '</div>'
+  );
+}
+function submitAddLot(code){
+  var date=document.getElementById('lot-date').value;
+  var amount=parseFloat(document.getElementById('lot-amount').value);
+  var rateIDR=parseFloat(document.getElementById('lot-rate').value);
+  if(!date||!amount||isNaN(amount)||!rateIDR||isNaN(rateIDR)){alert('Please fill all fields.');return;}
+  DATA.currencyLots.push({id:uid(),code:code,amount:amount,rateIDR:rateIDR,date:date});
+  closeModal();render();
+}
+function deleteLot(id){
+  DATA.currencyLots=DATA.currencyLots.filter(function(l){return l.id!==id;});
+  render();
+}
+
+// ── BOND CRUD ──────────────────────────────────────────────────────────
+function openAddBondModal(){
+  openModal(
+    '<div class="modal-title">add government bond</div>'+
+    '<label>series (e.g. ORI024, ST009)</label>'+
+    '<input id="bond-series" type="text" placeholder="ORI024">'+
+    '<label>face value (IDR)</label>'+
+    '<input id="bond-face" type="number" min="0" step="any" placeholder="0">'+
+    '<label>coupon rate % (annual gross)</label>'+
+    '<input id="bond-coupon" type="number" min="0" max="100" step="0.01" placeholder="e.g. 7.40">'+
+    '<label>tax rate % (withholding)</label>'+
+    '<input id="bond-tax" type="number" min="0" max="100" step="0.01" placeholder="e.g. 10">'+
+    '<label>settlement date</label>'+
+    '<input id="bond-settlement" type="date">'+
+    '<label>first coupon date</label>'+
+    '<input id="bond-firstcoupon" type="date">'+
+    '<label>maturity date</label>'+
+    '<input id="bond-maturity" type="date">'+
+    '<div style="display:flex;gap:8px;margin-top:8px">'+
+      '<button class="modal-btn primary" onclick="submitAddBond()">add bond</button>'+
+      '<button class="modal-btn" onclick="closeModal()">cancel</button>'+
+    '</div>'
+  );
+}
+function submitAddBond(){
+  var series=document.getElementById('bond-series').value.trim();
+  var faceValue=parseFloat(document.getElementById('bond-face').value);
+  var couponRate=parseFloat(document.getElementById('bond-coupon').value)/100;
+  var taxRate=parseFloat(document.getElementById('bond-tax').value)/100;
+  var settlementDate=document.getElementById('bond-settlement').value;
+  var firstCouponDate=document.getElementById('bond-firstcoupon').value;
+  var maturityDate=document.getElementById('bond-maturity').value;
+  if(!series||isNaN(faceValue)||isNaN(couponRate)||isNaN(taxRate)||!settlementDate||!firstCouponDate||!maturityDate){
+    alert('Please fill all fields.');return;
+  }
+  DATA.bonds.push({id:uid(),series:series,faceValue:faceValue,couponRate:couponRate,taxRate:taxRate,settlementDate:settlementDate,firstCouponDate:firstCouponDate,maturityDate:maturityDate,matured:false});
+  closeModal();render();
+}
+function deleteBond(id){
+  DATA.bonds=DATA.bonds.filter(function(b){return b.id!==id;});
+  render();
+}
+function toggleBondMatured(id){
+  var b=DATA.bonds.find(function(b){return b.id===id;});
+  if(b){b.matured=!b.matured;render();}
+}
+
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY'};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,lumpSumByYear:{},startYear:2026,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[]};
   seedData();
   startApp();
 }
@@ -1104,6 +1303,8 @@ function startApp(){
   if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
   if(!DATA.countdowns) DATA.countdowns=[];
   DATA.countdowns.forEach(function(c){if(!c.mode)c.mode='until';});
+  if(!DATA.currencyLots) DATA.currencyLots=[];
+  if(!DATA.bonds) DATA.bonds=[];
   if(!DATA.nisa.lumpSumByYear){
     DATA.nisa.lumpSumByYear={};
     if(DATA.nisa.lumpSumYearly) DATA.nisa.lumpSumByYear[DATA.nisa.startYear]=DATA.nisa.lumpSumYearly;
