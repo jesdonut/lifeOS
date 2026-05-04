@@ -408,21 +408,51 @@ function renderYear(panel,year){
           (thisYrDelta>0?'<span class="yr-hdr-nisa-d">+¥'+thisYrDelta.toLocaleString()+'</span>':'')+
         '</div>'+
       '</div>';
-    strip+=
-      '<div class="my-year-section'+(focused?' my-year-focused':'')+'">'+
-        '<div class="yr-card-hdr">'+
-          '<div class="yr-card-left">'+
-            '<span class="my-year-num" onclick="cursor=new Date('+y+',0,1);render()" style="cursor:pointer" title="view '+y+'">'+y+'</span>'+
-            '<span class="my-year-age">age '+age+'</span>'+
-            (catBadges?'<div class="yr-cat-badges">'+catBadges+'</div>':'')+
-          '</div>'+
-          '<div class="yr-card-center">'+
-            '<input class="yr-summary-inp" placeholder="year summary..." value="'+(DATA.goals[summaryKey]||'')+'" onchange="DATA.goals[\''+summaryKey+'\']=this.value;autoSave()">'+
-          '</div>'+
-          '<div class="yr-card-right">'+nisaRight+'</div>'+
-        '</div>'+
-        tlHtml+
+    // ── aims footer ──
+    const footerCols=[
+      {icon:'★',placeholder:'aim...',key:y+'-0-0'},
+      {icon:'▶',placeholder:'checkpoint...',key:y+'-0-1'},
+      {icon:'—',placeholder:'note...',key:y+'-0-2'},
+    ];
+    const footerHtml=
+      '<div class="yr-footer">'+
+        footerCols.map(function(fc){
+          return '<div class="yr-footer-col">'+
+            '<span class="yr-footer-icon">'+fc.icon+'</span>'+
+            '<input class="yr-footer-inp" placeholder="'+fc.placeholder+'" value="'+(DATA.goals[fc.key]||'')+'" onchange="DATA.goals[\''+fc.key+'\']=this.value;autoSave()">'+
+          '</div>';
+        }).join('')+
       '</div>';
+
+    // ── collapse sparse years ──
+    const totalEvtCount=Object.values(yCounts).reduce(function(s,n){return s+n;},0);
+    const isExpanded=focused||_yearExpanded===y||totalEvtCount>0;
+    if(!isExpanded){
+      strip+=
+        '<div class="my-year-section yr-collapsed" onclick="_yearExpanded='+y+';render()">'+
+          '<span class="my-year-num">'+y+'</span>'+
+          '<span class="my-year-age">age '+age+'</span>'+
+          '<span class="yr-collapsed-meta">'+(contrib>0?'NISA ¥'+contrib.toLocaleString():'no NISA')+(DATA.goals[summaryKey]?' · '+DATA.goals[summaryKey]:'')+'</span>'+
+          '<span class="yr-collapsed-expand">expand →</span>'+
+        '</div>';
+    } else {
+      strip+=
+        '<div class="my-year-section'+(focused?' my-year-focused':'')+'">'+
+          '<div class="yr-card-hdr">'+
+            '<div class="yr-card-left">'+
+              '<span class="my-year-num" onclick="cursor=new Date('+y+',0,1);render()" style="cursor:pointer" title="view '+y+'">'+y+'</span>'+
+              '<span class="my-year-age">age '+age+'</span>'+
+              (catBadges?'<div class="yr-cat-badges">'+catBadges+'</div>':'')+
+            '</div>'+
+            '<div class="yr-card-center">'+
+              '<input class="yr-summary-inp" placeholder="year summary..." value="'+(DATA.goals[summaryKey]||'')+'" onchange="DATA.goals[\''+summaryKey+'\']=this.value;autoSave()">'+
+            '</div>'+
+            '<div class="yr-card-right">'+nisaRight+'</div>'+
+          '</div>'+
+          tlHtml+
+          footerHtml+
+        '</div>';
+    }
   }
 
   // ── 12-month detail ──
