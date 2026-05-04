@@ -5,19 +5,34 @@ const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec
 const HOURS=[]; const HLABELS=[];
 for(let h=4;h<=23;h++){HOURS.push(h);HLABELS.push(h<12?h+'am':h===12?'12pm':(h-12)+'pm');}
 
-const PALETTE=['#2d5a3d','#2c4a6e','#8b2c2c','#8b5e3c','#5a3c7a','#7a6830','#3c6b6b','#888888'];
+const PALETTE=[
+  {color:'#8FAFA2',label:'education'},
+  {color:'#86AFC5',label:'family'},
+  {color:'#7C9CCB',label:'friends'},
+  {color:'#C79A9A',label:'health'},
+  {color:'#B7A6B5',label:'partner'},
+  {color:'#D69AA5',label:'personal'},
+  {color:'#C49A73',label:'project'},
+  {color:'#D1B36A',label:'travel'},
+  {color:'#B8C89A',label:'work'},
+];
 function buildSwatches(inputId,selected){
-  return '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px">'+
-    PALETTE.map(function(c){
-      return '<span onclick="selectSwatch(\''+c+'\',\''+inputId+'\')" data-swatch="'+inputId+'" data-color="'+c+'" style="display:inline-block;width:22px;height:22px;border-radius:50%;background:'+c+';cursor:pointer;outline:'+(c===selected?'2.5px solid var(--text)':'2px solid transparent')+';outline-offset:2px;transition:.1s"></span>';
+  return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+
+    PALETTE.map(function(p){
+      var sel=p.color===(selected||PALETTE[0].color);
+      return '<span onclick="selectSwatch(\''+p.color+'\',\''+inputId+'\')" data-swatch="'+inputId+'" data-color="'+p.color+'"'+
+        ' style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 5px;border-radius:10px;cursor:pointer;border:1.5px solid '+(sel?'var(--text)':'transparent')+';background:var(--surface2);transition:.1s">'+
+        '<span style="width:10px;height:10px;border-radius:50%;background:'+p.color+';flex-shrink:0"></span>'+
+        '<span style="font-size:10px;color:var(--text2)">'+p.label+'</span>'+
+      '</span>';
     }).join('')+
-    '<input type="hidden" id="'+inputId+'" value="'+(selected||PALETTE[0])+'">'+
+    '<input type="hidden" id="'+inputId+'" value="'+(selected||PALETTE[0].color)+'">'+
   '</div>';
 }
 function selectSwatch(color,inputId){
   var inp=document.getElementById(inputId);if(inp)inp.value=color;
   document.querySelectorAll('[data-swatch="'+inputId+'"]').forEach(function(s){
-    s.style.outline=s.dataset.color===color?'2.5px solid var(--text)':'2px solid transparent';
+    s.style.border=s.dataset.color===color?'1.5px solid var(--text)':'1.5px solid transparent';
   });
 }
 
@@ -164,7 +179,7 @@ function openAddEventModal(key){
     '<input id="evt-text" placeholder="event name..." autofocus>'+
     '<input id="evt-date" type="date" value="'+d+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
     '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
-    buildSwatches('evt-color','#2c4a6e')+
+    buildSwatches('evt-color',PALETTE[0].color)+
     '<div class="modal-row">'+
       '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
       '<button class="modal-btn primary" onclick="submitAddEvent()">add event</button>'+
@@ -328,8 +343,12 @@ function renderMonth(panel,d){
 }
 
 // ── YEAR VIEW ─────────────────────────────────────────────────────────
-var _CAT_MAP={'#c8456c':'work','#5a8fc8':'life','#c87a3a':'learn','#4a8a5a':'travel',
-              '#8b2c2c':'work','#2c4a6e':'life','#5a3c7a':'learn','#2d5a3d':'travel','#3c6b6b':'travel'};
+var _CAT_MAP={
+  '#b8c89a':'work','#c49a73':'work',
+  '#d1b36a':'travel',
+  '#8fafa2':'learn',
+  '#86afc5':'life','#7c9ccb':'life','#c79a9a':'life','#b7a6b5':'life','#d69aa5':'life',
+};
 function evtCat(color){return _CAT_MAP[(color||'').toLowerCase()]||'other';}
 function yearEvtCounts(y){
   var pfx=String(y)+'-';
@@ -1275,7 +1294,7 @@ function openAddCountdownModal(){
       '<input id="cd-yearly" type="checkbox" style="width:auto;margin:0;flex-shrink:0"> repeat yearly <span id="cd-yearly-hint" style="font-size:10px;color:var(--text3);font-weight:400">(recurring event)</span>'+
     '</label>'+
     '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
-    buildSwatches('cd-color',PALETTE[0])+
+    buildSwatches('cd-color',PALETTE[0].color)+
     '<div class="modal-row">'+
       '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
       '<button class="modal-btn primary" onclick="submitAddCountdown()">add</button>'+
