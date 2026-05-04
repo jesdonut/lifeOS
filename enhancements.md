@@ -468,6 +468,30 @@ Redesigned the NISA section in the savings view to be cleaner and more informati
 
 ---
 
+## 32. Year View Redesign — Timeline, Decade Strip, Category Colors
+
+Refactor the year view to match the Claude-designed mockup. Keep existing data model, routing, and JP labels. Only change layout and styling.
+
+**Required changes (in order):**
+
+1. **Decade nav strip** — 11 mini-cards above the year list: year + age + 5-segment activity sparkline (dots per category). Click to jump to that year. Current year highlighted.
+2. **Year card 3-column header** — left: year number + age chip + category counts (work · life · learn · travel); center: one-line editable summary; right: NISA inline meter (cumulative bar toward ¥18M, cumulative value, % of cap, delta this year).
+3. **Continuous timeline** — 12-column CSS grid with month labels above; events positioned with `grid-column: <start> / span <n>`. Multiple parallel tracks so events don't overlap. Faint per-month gridlines behind tracks via `::before`.
+4. **Event category colors** — work (pink `#c8456c`), life (blue `#5a8fc8`), learn (orange `#c87a3a`), travel (green `#4a8a5a`). Each event = colored chip with leading dot + label, `text-overflow: ellipsis`, `title` attr for full text on hover.
+5. **Aims / Checkpoint / Note footer** — 3-column strip per year card, separated from timeline by a dashed border. Inline-editable (click to type).
+6. **Collapsed empty years** — year with 0–1 events renders as a single-line card: `year | age chip | one-line meta (N events · NISA ¥X · goal text) | expand →`. Click to expand.
+7. **Planner grid only for focused year** — the existing 12-month mini-calendar grid only shows for the focused/expanded year, and only renders months that have at least one event.
+8. **New color tokens** — `--tsumitate: #e85a8a`, `--growth: #5a8fc8`, `--c-work: #c8456c`, `--c-life: #5a8fc8`, `--c-learn: #c87a3a`, `--c-travel: #4a8a5a`. `--accent` updates to `#c8456c` (matches mockup's rose).
+
+**Data shape notes:**
+- Events already stored as `DATA.events["YYYY-MM-DD"]: [{text, color}]` — use existing color to infer category (map hex → category key).
+- Goals already stored as `DATA.goals["YYYY-MM-N"]` — use for aims/checkpoint/note (Q1→aim, Q2→checkpoint, Q3→note, or keep existing structure).
+- No new data fields required; category assignment is a display-layer concern based on event color.
+
+**Scope** — large. Touches `renderYear`, `renderMultiYear` (already deleted), CSS tokens, and adds new CSS classes. Computation logic (NISA, events) unchanged.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -498,8 +522,9 @@ Redesigned the NISA section in the savings view to be cleaner and more informati
 | 24 | Bug Fix — Currency Lots rateIDR Semantics | ✅ |
 | 25 | NISA つみたて — Per-Year Monthly Amount | ✅ |
 | 26 | Bank Account Totals Tracker | ✅ |
-| 27 | Weekly Finance Tracker — Income, Bills, Spending | ⏳ pending |
+| 27 | Weekly Finance Tracker — Income, Bills, Spending | ✅ |
 | 28 | Remove Day View — Weekly Becomes Primary + Finance | ✅ |
 | 29 | Merge Year + Years → Single Year View with Calendar | ✅ |
 | 30 | Bug Fix — Years View: Day Badges + Equal Column Widths | ✅ |
 | 31 | NISA Tracker UI Redesign | ✅ |
+| 32 | Year View Redesign — Timeline, Decade Strip, Category Colors | ⏳ pending |

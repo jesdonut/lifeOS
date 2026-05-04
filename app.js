@@ -55,7 +55,7 @@ let _nisaLsExpanded=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}]};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}],finance:{}};
 
 const SEED_EVENTS=[
   {date:'2026-05-08',text:'Driving license exam',color:'#2c4a6e'},
@@ -205,6 +205,7 @@ function nav(dir){
   if(view==='week'){cursor.setDate(cursor.getDate()+dir*7);focusDay=null;}
   else if(view==='month') cursor.setMonth(cursor.getMonth()+dir);
   else if(view==='year') cursor.setFullYear(cursor.getFullYear()+dir);
+  else if(view==='finance') cursor.setMonth(cursor.getMonth()+dir);
   var cy=cursor.getFullYear();
   if(cy<MIN_YEAR){cursor=new Date(MIN_YEAR,0,1);}
   if(cy>MAX_YEAR){cursor=new Date(MAX_YEAR,11,31);}
@@ -230,6 +231,9 @@ function render(){
   }else if(view==='savings'){
     label.textContent='savings & NISA';
     renderSavings(panel);
+  }else if(view==='finance'){
+    label.textContent=MONTHS[cursor.getMonth()]+' '+cursor.getFullYear();
+    renderFinance(panel,cursor.getFullYear(),cursor.getMonth());
   }
   renderSidebar();
   autoSave();
@@ -775,6 +779,129 @@ function renderSavings(panel){
     '</div>';
 }
 
+// ── FINANCE ───────────────────────────────────────────────────────────
+var _finOpen={income:true,bills:true,necessities:true,optional:true};
+function finToggle(sec){_finOpen[sec]=!_finOpen[sec];render();}
+
+function getFinMonth(y,m){
+  var key=y+'-'+(m<9?'0':'')+(m+1);
+  if(!DATA.finance[key]) DATA.finance[key]={};
+  return DATA.finance[key];
+}
+function finVal(d,k){return d[k]||0;}
+function finSet(y,m,k,v){
+  var key=y+'-'+(m<9?'0':'')+(m+1);
+  if(!DATA.finance[key]) DATA.finance[key]={};
+  DATA.finance[key][k]=parseFloat(v)||0;
+  autoSave();
+}
+function finTotals(d){
+  var income=(finVal(d,'salary')+finVal(d,'transportReimb')+finVal(d,'otherIncome')+finVal(d,'momPays'))
+             -(finVal(d,'taxWithheld')+finVal(d,'insuranceDed'));
+  var bills=finVal(d,'rent')+finVal(d,'gas')+finVal(d,'water')+finVal(d,'electricity')+finVal(d,'phone')+finVal(d,'internet');
+  var necessities=finVal(d,'paperwork')+finVal(d,'medical')+finVal(d,'necessities')+finVal(d,'nhi');
+  var optional=finVal(d,'food')+finVal(d,'transport')+finVal(d,'project')+finVal(d,'fun')+finVal(d,'clothes');
+  var commute=finVal(d,'commutationPass');
+  var balance=income-commute-bills-necessities-optional;
+  return {income:income,bills:bills,necessities:necessities,optional:optional,commute:commute,balance:balance};
+}
+
+function finRow(y,m,k,jpLabel,enLabel,step,negative){
+  var key=y+'-'+(m<9?'0':'')+(m+1);
+  var val=finVal(DATA.finance[key]||{},k);
+  var disp=negative&&val?'(¥'+val.toLocaleString()+')':'¥'+val.toLocaleString();
+  return '<div class="fin-row">'+
+    '<div class="fin-labels"><span class="fin-jp">'+jpLabel+'</span><span class="fin-en">'+enLabel+(negative?' (−)':'')+'</span></div>'+
+    '<input class="fin-inp'+(negative?' fin-neg':'')+'" type="number" step="'+(step||1000)+'" value="'+(val||'')+'" placeholder="0"'+
+      ' onchange="finSet('+y+','+m+',\''+k+'\',this.value);render()"'+
+    '>'+
+    '<span class="fin-disp'+(negative?' fin-neg':'')+'">'+(val?disp:'')+'</span>'+
+  '</div>';
+}
+
+function finSection(title,jpTitle,sec,rows,total,negative){
+  var open=_finOpen[sec];
+  return '<div class="fin-section">'+
+    '<div class="fin-sec-hdr" onclick="finToggle(\''+sec+'\')">'+
+      '<span class="fin-sec-arrow">'+(open?'▾':'▸')+'</span>'+
+      '<span class="fin-sec-title">'+title+'</span>'+
+      '<span class="fin-sec-jp">'+jpTitle+'</span>'+
+      '<span class="fin-sec-total'+(negative?' fin-neg':'')+'">'+(negative?'−':'')+'¥'+total.toLocaleString()+'</span>'+
+    '</div>'+
+    (open?'<div class="fin-rows">'+rows+'</div>':'')+
+  '</div>';
+}
+
+function renderFinance(panel,y,m){
+  var d=getFinMonth(y,m);
+  var t=finTotals(d);
+  var balColor=t.balance>=0?'var(--good,#2d5a3d)':'#8b2c2c';
+
+  var incomeRows=
+    finRow(y,m,'salary','給料','Salary',1000,false)+
+    finRow(y,m,'transportReimb','交通費補助','Transport reimb.',1000,false)+
+    finRow(y,m,'otherIncome','所得','Other income',1000,false)+
+    finRow(y,m,'momPays','親の援助','Mom pays',1000,false)+
+    finRow(y,m,'taxWithheld','税金','Tax withheld',1000,true)+
+    finRow(y,m,'insuranceDed','保険料','Insurance ded.',1000,true);
+
+  var billsRows=
+    finRow(y,m,'commutationPass','通勤定期券','Commutation pass',1000,false)+
+    finRow(y,m,'rent','家賃','Rent',1000,false)+
+    finRow(y,m,'gas','ガス費','Gas',100,false)+
+    finRow(y,m,'water','水道費','Water',100,false)+
+    finRow(y,m,'electricity','電気料金','Electricity',100,false)+
+    finRow(y,m,'phone','携帯','Phone',100,false)+
+    finRow(y,m,'internet','インターネット','Internet',100,false);
+
+  var necRows=
+    finRow(y,m,'paperwork','書類仕事','Paperwork',1000,false)+
+    finRow(y,m,'medical','メディカル','Medical',1000,false)+
+    finRow(y,m,'necessities','日常生活','Necessities',1000,false)+
+    finRow(y,m,'nhi','国民保険','NHI',1000,false);
+
+  var optRows=
+    finRow(y,m,'food','食べ物','Food',1000,false)+
+    finRow(y,m,'transport','電車代金','Transport',1000,false)+
+    finRow(y,m,'project','ゲーム/プロジェクト','Game/Project',1000,false)+
+    finRow(y,m,'fun','エンターテイメント','Entertainment',1000,false)+
+    finRow(y,m,'clothes','服・髪','Clothes/Hair',1000,false);
+
+  panel.innerHTML=
+    '<div class="fin-wrap">'+
+      '<div class="fin-summary-bar">'+
+        '<div class="fin-sum-cell">'+
+          '<div class="fin-sum-lab">income</div>'+
+          '<div class="fin-sum-val" style="color:var(--good,#2d5a3d)">¥'+t.income.toLocaleString()+'</div>'+
+        '</div>'+
+        '<div class="fin-sum-sep">−</div>'+
+        '<div class="fin-sum-cell">'+
+          '<div class="fin-sum-lab">bills + commute</div>'+
+          '<div class="fin-sum-val">¥'+(t.bills+t.commute).toLocaleString()+'</div>'+
+        '</div>'+
+        '<div class="fin-sum-sep">−</div>'+
+        '<div class="fin-sum-cell">'+
+          '<div class="fin-sum-lab">necessities</div>'+
+          '<div class="fin-sum-val">¥'+t.necessities.toLocaleString()+'</div>'+
+        '</div>'+
+        '<div class="fin-sum-sep">−</div>'+
+        '<div class="fin-sum-cell">'+
+          '<div class="fin-sum-lab">optional</div>'+
+          '<div class="fin-sum-val">¥'+t.optional.toLocaleString()+'</div>'+
+        '</div>'+
+        '<div class="fin-sum-sep">=</div>'+
+        '<div class="fin-sum-cell">'+
+          '<div class="fin-sum-lab">balance</div>'+
+          '<div class="fin-sum-val" style="color:'+balColor+';font-size:18px">¥'+t.balance.toLocaleString()+'</div>'+
+        '</div>'+
+      '</div>'+
+      finSection('Income','収入','income',incomeRows,t.income,false)+
+      finSection('Bills & Commute','固定費','bills',billsRows,t.bills+t.commute,false)+
+      finSection('Necessities','生活費','necessities',necRows,t.necessities,false)+
+      finSection('Optional','任意支出','optional',optRows,t.optional,false)+
+    '</div>';
+}
+
 // ── SIDEBAR ───────────────────────────────────────────────────────────
 function renderSidebar(){
   const sc=document.getElementById('sidebar-body');
@@ -1162,6 +1289,7 @@ function startApp(){
     DATA.nisa.tsumitateByYear[DATA.nisa.startYear]=DATA.nisa.tsumitateMonthly;
   if(!DATA.nisa.startMonth) DATA.nisa.startMonth=1;
   if(!DATA.bankAccounts) DATA.bankAccounts=[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}];
+  if(!DATA.finance) DATA.finance={};
   document.getElementById('splash').style.display='none';
   const app=document.getElementById('app');
   app.style.display='flex';
