@@ -1133,6 +1133,7 @@ function renderFinance(panel,y,m){
             '<span><i style="background:var(--c-fixed)"></i>Fixed <b>'+pF+'%</b></span>'+
             '<span><i style="background:var(--c-food)"></i>Food <b>'+pFo+'%</b></span>'+
             '<span><i style="background:var(--c-necessities)"></i>Nec <b>'+pNe+'%</b></span>'+
+            '<span><i style="background:var(--c-optional)"></i>Optional <b>'+pOp+'%</b></span>'+
             '<span><i style="background:var(--border2);border:1px solid var(--border2)"></i>Saved <b>'+pSv+'%</b></span>'+
           '</div>'+
         '</div>'+
