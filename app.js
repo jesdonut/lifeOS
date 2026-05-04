@@ -23,6 +23,7 @@ function selectSwatch(color,inputId){
 
 const SPEND_CATS=[
   {key:'food',       jp:'食べ物',          en:'Food',          group:'food'},
+  {key:'commute',    jp:'通勤費',           en:'Commute',       group:'transport'},
   {key:'transport',  jp:'電車代金',         en:'Transport',     group:'transport'},
   {key:'paperwork',  jp:'書類仕事',         en:'Paperwork',     group:'necessities'},
   {key:'medical',    jp:'メディカル',       en:'Medical',       group:'necessities'},
@@ -1015,7 +1016,9 @@ function renderFinance(panel,y,m){
     finRow(y,m,'phone','携帯','Phone',100,false)+
     finRow(y,m,'internet','インターネット','Internet',100,false);
   var foodRows=finReadRow('食べ物','Food',monthSpendCat(y,m,'food'));
-  var transportRows=finReadRow('電車代金','Transport',monthSpendCat(y,m,'transport'));
+  var transportRows=
+    finReadRow('通勤費','Commute',monthSpendCat(y,m,'commute'))+
+    finReadRow('電車代金','Transport',monthSpendCat(y,m,'transport'));
   var necRows=
     finReadRow('書類仕事','Paperwork',monthSpendCat(y,m,'paperwork'))+
     finReadRow('メディカル','Medical',monthSpendCat(y,m,'medical'))+
