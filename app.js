@@ -363,30 +363,33 @@ function renderYear(panel,year){
   for(let y=multiYearStart;y<multiYearStart+5;y++){
     const age=y-birthYear;
     const focused=y===year;
-    let monthCells='';
-    for(let m=0;m<12;m++){
-      const gkey=y+'-'+(m+1)+'-0';
-      const goal=DATA.goals[gkey]||'';
-      const mkey=y+'-'+String(m+1).padStart(2,'0');
-      const evtKeys=Object.keys(DATA.events).filter(function(k){return k.startsWith(mkey);});
-      const evtItems=evtKeys.map(function(k){var d=parseInt(k.split('-')[2]);return DATA.events[k].map(function(e){return {day:d,text:e.text};});}).flat();
-      const taskKeys=Object.keys(DATA.tasks).filter(function(k){return k.startsWith(mkey);});
-      const taskItems=taskKeys.map(function(k){var d=parseInt(k.split('-')[2]);return DATA.tasks[k].filter(function(t){return !t.done;}).map(function(t){return {day:d,text:t.text};});}).flat();
-      const mTotal=monthSpendTotal(y,m);
-      const goalItems=goal?[{day:null,text:goal}]:[];
-      const items=goalItems.concat(evtItems,taskItems).slice(0,3);
-      monthCells+=
-        '<div class="my-month-cell" onclick="jumpMonth('+y+','+m+')">'+
-          '<div class="my-month-name">'+MS[m]+'</div>'+
-          '<div class="my-month-content">'+
-            items.map(function(item){
-              var badge=item.day?'<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;background:var(--border2);border-radius:2px;font-size:7px;font-weight:600;color:var(--text2);margin-right:2px;flex-shrink:0">'+item.day+'</span>':'';
-              return '<div class="my-month-item">'+badge+'<span>'+item.text+'</span></div>';
-            }).join('')+
-            (mTotal?'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">'+fmtSpend(mTotal)+'</div>':'')+
-          '</div>'+
-        '</div>';
+    // ── timeline ──
+    const tlByMonth={};
+    for(let tlm=0;tlm<12;tlm++){
+      const tmk=String(y)+'-'+String(tlm+1).padStart(2,'0');
+      Object.keys(DATA.events).filter(function(k){return k.startsWith(tmk);}).forEach(function(k){
+        DATA.events[k].forEach(function(e){
+          if(!tlByMonth[tlm+1]) tlByMonth[tlm+1]=[];
+          tlByMonth[tlm+1].push({text:e.text,color:e.color});
+        });
+      });
     }
+    let tlTracks=0;
+    for(let tmi=1;tmi<=12;tmi++) tlTracks=Math.max(tlTracks,(tlByMonth[tmi]||[]).length);
+    const tlMLabels=Array.from({length:12},function(_,i){return '<div class="yr-tl-mlabel" style="grid-column:'+(i+1)+'">'+MS[i]+'</div>';}).join('');
+    const tlChips=Array.from({length:Math.max(tlTracks,0)},function(){return '';});
+    for(let tmi=1;tmi<=12;tmi++){
+      (tlByMonth[tmi]||[]).forEach(function(e,ti){
+        const cat=evtCat(e.color);
+        tlChips[ti]+='<div class="yr-tl-chip yr-tl-'+cat+'" style="grid-column:'+tmi+'" title="'+e.text.replace(/"/g,'&quot;')+'">'+
+          '<span class="yr-tl-dot"></span><span class="yr-tl-txt">'+e.text+'</span></div>';
+      });
+    }
+    const tlHtml=
+      '<div class="yr-timeline">'+
+        '<div class="yr-tl-header">'+tlMLabels+'</div>'+
+        tlChips.map(function(c){return '<div class="yr-tl-track">'+c+'</div>';}).join('')+
+      '</div>';
     const nisaRow=allNisaRows.find(function(r){return r.year===y;});
     const contrib=nisaRow?nisaRow.cumulative:0;
     const thisYrDelta=nisaRow?nisaRow.total:0;
@@ -418,7 +421,7 @@ function renderYear(panel,year){
           '</div>'+
           '<div class="yr-card-right">'+nisaRight+'</div>'+
         '</div>'+
-        '<div class="my-months-row">'+monthCells+'</div>'+
+        tlHtml+
       '</div>';
   }
 
