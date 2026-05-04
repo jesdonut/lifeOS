@@ -24,13 +24,13 @@ function selectSwatch(color,inputId){
 const SPEND_CATS=[
   {key:'food',       jp:'食べ物',          en:'Food',          group:'food'},
   {key:'commute',    jp:'通勤費',           en:'Commute',       group:'transport'},
-  {key:'transport',  jp:'電車代金',         en:'Transport',     group:'transport'},
+  {key:'transport',  jp:'電車代金',         en:'Transport',     group:'necessities'},
   {key:'paperwork',  jp:'書類仕事',         en:'Paperwork',     group:'necessities'},
   {key:'medical',    jp:'メディカル',       en:'Medical',       group:'necessities'},
-  {key:'necessities',jp:'日常生活',         en:'Necessities',   group:'necessities'},
+  {key:'necessities',jp:'日常生活',         en:'Daily',         group:'necessities'},
   {key:'nhi',        jp:'国民保険',         en:'NHI',           group:'necessities'},
-  {key:'project',    jp:'ゲーム/P',         en:'Game/Project',  group:'optional'},
-  {key:'fun',        jp:'エンタメ',         en:'Entertainment', group:'optional'},
+  {key:'project',    jp:'ゲーム/P',         en:'Project/Game',  group:'optional'},
+  {key:'fun',        jp:'エンターテインメント', en:'Entertainment', group:'optional'},
   {key:'clothes',    jp:'服・髪',           en:'Clothes/Hair',  group:'optional'},
 ];
 
@@ -875,7 +875,7 @@ function renderSavings(panel){
 }
 
 // ── FINANCE ───────────────────────────────────────────────────────────
-var _finOpen={income:true,fixed:false,food:false,transport:false,necessities:false,optional:false};
+var _finOpen={income:true,commute:false,food:false,fixed:false,necessities:false,optional:false};
 function finToggle(sec){_finOpen[sec]=!_finOpen[sec];render();}
 
 function getFinMonth(y,m){
@@ -902,16 +902,20 @@ function monthSpendGroup(y,m,group){
   return SPEND_CATS.filter(function(c){return c.group===group;}).reduce(function(s,c){return s+monthSpendCat(y,m,c.key);},0);
 }
 function finTotals(d,y,m){
-  var income=(finVal(d,'salary')+finVal(d,'transportReimb')+finVal(d,'otherIncome')+finVal(d,'momPays'))
-             -(finVal(d,'taxWithheld')+finVal(d,'insuranceDed'));
-  var commute=finVal(d,'commutationPass');
+  var isNewIns=y>2025||(y===2025&&m>=4);
+  var deductions=isNewIns
+    ?(finVal(d,'healthIns')+finVal(d,'careIns')+finVal(d,'childRearing')+finVal(d,'pensionIns')+finVal(d,'employmentIns')+finVal(d,'incomeTax')+finVal(d,'residentTax'))
+    :(finVal(d,'taxWithheld')+finVal(d,'insuranceDed'));
+  var income=(finVal(d,'salary')+finVal(d,'transportReimb')+finVal(d,'otherIncome')+finVal(d,'momPays'))-deductions;
+  var commutePass=finVal(d,'commutationPass');
+  var commuteSpend=monthSpendGroup(y,m,'transport');
+  var commute=commutePass+commuteSpend;
   var bills=finVal(d,'rent')+finVal(d,'gas')+finVal(d,'water')+finVal(d,'electricity')+finVal(d,'phone')+finVal(d,'internet');
   var food=monthSpendGroup(y,m,'food');
-  var transport=monthSpendGroup(y,m,'transport');
   var necessities=monthSpendGroup(y,m,'necessities');
   var optional=monthSpendGroup(y,m,'optional');
-  var balance=income-commute-bills-food-transport-necessities-optional;
-  return {income:income,commute:commute,bills:bills,food:food,transport:transport,necessities:necessities,optional:optional,balance:balance};
+  var balance=income-commute-bills-food-necessities-optional;
+  return {income:income,commute:commute,commutePass:commutePass,commuteSpend:commuteSpend,bills:bills,food:food,necessities:necessities,optional:optional,balance:balance,isNewIns:isNewIns};
 }
 
 function finRow(y,m,k,jpLabel,enLabel,step,negative){
@@ -967,7 +971,6 @@ function finAutoSection(title,jpTitle,sec,rows,total){
 function renderFinance(panel,y,m){
   var d=getFinMonth(y,m);
   var t=finTotals(d,y,m);
-  var fixed_total=t.commute+t.bills;
   var balColor=t.balance>=0?'var(--c-income)':'var(--bad)';
   // prev months helper
   function pmy(yi,mi){while(mi<0){mi+=12;yi--;}return{y:yi,m:mi};}
@@ -983,32 +986,47 @@ function renderFinance(panel,y,m){
   var spColor=t.balance>=0?'#2d5a3d':'#8b2c2c',spSoft=t.balance>=0?'#e6f0ea':'#f6e3e3';
   // proportion bar widths
   var pInc=Math.max(t.income,1);
-  var pF=Math.min(100,Math.round(fixed_total/pInc*100));
-  var pFo=Math.min(100-pF,Math.round(t.food/pInc*100));
-  var pTr=Math.min(100-pF-pFo,Math.round(t.transport/pInc*100));
-  var pNe=Math.min(100-pF-pFo-pTr,Math.round(t.necessities/pInc*100));
-  var pOp=Math.min(100-pF-pFo-pTr-pNe,Math.round(t.optional/pInc*100));
+  var pCo=Math.min(100,Math.round(t.commute/pInc*100));
+  var pF=Math.min(100-pCo,Math.round(t.bills/pInc*100));
+  var pFo=Math.min(100-pCo-pF,Math.round(t.food/pInc*100));
+  var pNe=Math.min(100-pCo-pF-pFo,Math.round(t.necessities/pInc*100));
+  var pOp=Math.min(100-pCo-pF-pFo-pNe,Math.round(t.optional/pInc*100));
   var pSv=Math.max(0,Math.round(t.balance/pInc*100));
   // filled counts
   var fkey=y+'-'+(m<9?'0':'')+(m+1),fd2=DATA.finance[fkey]||{};
-  var incFill=['salary','transportReimb','otherIncome','momPays','taxWithheld','insuranceDed'].filter(function(k){return fd2[k]>0;}).length;
-  var fixFill=['commutationPass','rent','gas','water','electricity','phone','internet'].filter(function(k){return fd2[k]>0;}).length;
+  var incFields=t.isNewIns
+    ?['salary','transportReimb','otherIncome','momPays','healthIns','careIns','childRearing','pensionIns','employmentIns','incomeTax','residentTax']
+    :['salary','transportReimb','otherIncome','momPays','taxWithheld','insuranceDed'];
+  var incFill=incFields.filter(function(k){return fd2[k]>0;}).length;
+  var fixFill=['rent','gas','water','electricity','phone','internet'].filter(function(k){return fd2[k]>0;}).length;
+  var commuteFill=['commutationPass'].filter(function(k){return fd2[k]>0;}).length;
   // cumulative net since Jan 2025
-  var cumNet=0,cumCount=0;
+  var cumNet=0;
   for(var cny=2025;cny<=y;cny++){
     var cnmEnd=cny<y?11:m;
-    for(var cnm=0;cnm<=cnmEnd;cnm++){cumNet+=finTotals(getFinMonth(cny,cnm),cny,cnm).balance;cumCount++;}
+    for(var cnm=0;cnm<=cnmEnd;cnm++){cumNet+=finTotals(getFinMonth(cny,cnm),cny,cnm).balance;}
   }
   // rows
+  var insRows=t.isNewIns
+    ?(finRow(y,m,'healthIns','健康保険','Health Insurance',100,true)+
+      finRow(y,m,'careIns','介護保険','Care Insurance',100,true)+
+      finRow(y,m,'childRearing','子ども・子育て支援','Child-Rearing Support',100,true)+
+      finRow(y,m,'pensionIns','厚生年金保険','Welfare Pension',100,true)+
+      finRow(y,m,'employmentIns','雇用保険','Employment Insurance',100,true)+
+      finRow(y,m,'incomeTax','所得税','Income Tax',100,true)+
+      finRow(y,m,'residentTax','住民税','Resident Tax',100,true))
+    :(finRow(y,m,'taxWithheld','税金','Tax Withheld',1000,true)+
+      finRow(y,m,'insuranceDed','保険料','Insurance',1000,true));
   var incomeRows=
     finRow(y,m,'salary','給料','Salary',1000,false)+
-    finRow(y,m,'transportReimb','交通費補助','Transport reimb.',1000,false)+
-    finRow(y,m,'otherIncome','所得','Other income',1000,false)+
-    finRow(y,m,'momPays','親の援助','Mom pays',1000,false)+
-    finRow(y,m,'taxWithheld','税金','Tax withheld',1000,true)+
-    finRow(y,m,'insuranceDed','保険料','Insurance ded.',1000,true);
+    finRow(y,m,'transportReimb','交通費補助','Transport Reimbursement',1000,false)+
+    finRow(y,m,'otherIncome','所得','Other Income',1000,false)+
+    finRow(y,m,'momPays','親の援助','Mom Pays',1000,false)+
+    insRows;
+  var commuteRows=
+    finRow(y,m,'commutationPass','通勤定期券','Commutation Pass',1000,false)+
+    finReadRow('通勤費','Daily Commute',monthSpendCat(y,m,'commute'));
   var fixedRows=
-    finRow(y,m,'commutationPass','通勤定期券','Commutation pass',1000,false)+
     finRow(y,m,'rent','家賃','Rent',1000,false)+
     finRow(y,m,'gas','ガス費','Gas',100,false)+
     finRow(y,m,'water','水道費','Water',100,false)+
@@ -1016,17 +1034,15 @@ function renderFinance(panel,y,m){
     finRow(y,m,'phone','携帯','Phone',100,false)+
     finRow(y,m,'internet','インターネット','Internet',100,false);
   var foodRows=finReadRow('食べ物','Food',monthSpendCat(y,m,'food'));
-  var transportRows=
-    finReadRow('通勤費','Commute',monthSpendCat(y,m,'commute'))+
-    finReadRow('電車代金','Transport',monthSpendCat(y,m,'transport'));
   var necRows=
+    finReadRow('電車代金','Transport',monthSpendCat(y,m,'transport'))+
     finReadRow('書類仕事','Paperwork',monthSpendCat(y,m,'paperwork'))+
     finReadRow('メディカル','Medical',monthSpendCat(y,m,'medical'))+
-    finReadRow('日常生活','Necessities',monthSpendCat(y,m,'necessities'))+
+    finReadRow('日常生活','Daily',monthSpendCat(y,m,'necessities'))+
     finReadRow('国民保険','NHI',monthSpendCat(y,m,'nhi'));
   var optRows=
-    finReadRow('ゲーム/P','Game/Project',monthSpendCat(y,m,'project'))+
-    finReadRow('エンタメ','Entertainment',monthSpendCat(y,m,'fun'))+
+    finReadRow('ゲーム/P','Project/Game',monthSpendCat(y,m,'project'))+
+    finReadRow('エンターテインメント','Entertainment',monthSpendCat(y,m,'fun'))+
     finReadRow('服・髪','Clothes/Hair',monthSpendCat(y,m,'clothes'));
 
   panel.innerHTML=
@@ -1053,16 +1069,16 @@ function renderFinance(panel,y,m){
           '<div class="fin-hero-lab">Income ¥'+t.income.toLocaleString()+' → distribution</div>'+
           '<div class="fin-prop">'+
             (t.income>0?
-              '<i style="width:'+pF+'%;background:var(--c-fixed)" title="Fixed ¥'+fixed_total.toLocaleString()+'"></i>'+
+              '<i style="width:'+pCo+'%;background:var(--c-transport)" title="Commute ¥'+t.commute.toLocaleString()+'"></i>'+
+              '<i style="width:'+pF+'%;background:var(--c-fixed)" title="Fixed ¥'+t.bills.toLocaleString()+'"></i>'+
               '<i style="width:'+pFo+'%;background:var(--c-food)" title="Food ¥'+t.food.toLocaleString()+'"></i>'+
-              '<i style="width:'+pTr+'%;background:var(--c-transport)" title="Transport ¥'+t.transport.toLocaleString()+'"></i>'+
               '<i style="width:'+pNe+'%;background:var(--c-necessities)" title="Necessities ¥'+t.necessities.toLocaleString()+'"></i>'+
               '<i style="width:'+pOp+'%;background:var(--c-optional)" title="Optional ¥'+t.optional.toLocaleString()+'"></i>':'')+
           '</div>'+
           '<div class="fin-prop-leg">'+
+            '<span><i style="background:var(--c-transport)"></i>Commute <b>'+pCo+'%</b></span>'+
             '<span><i style="background:var(--c-fixed)"></i>Fixed <b>'+pF+'%</b></span>'+
             '<span><i style="background:var(--c-food)"></i>Food <b>'+pFo+'%</b></span>'+
-            '<span><i style="background:var(--c-transport)"></i>Transport <b>'+pTr+'%</b></span>'+
             '<span><i style="background:var(--c-necessities)"></i>Nec <b>'+pNe+'%</b></span>'+
             '<span><i style="background:var(--border2);border:1px solid var(--border2)"></i>Saved <b>'+pSv+'%</b></span>'+
           '</div>'+
@@ -1070,10 +1086,10 @@ function renderFinance(panel,y,m){
       '</div>'+
       '<div class="fin-2col">'+
         '<div class="fin-left">'+
-          finSection('Income','収入','income',incomeRows,t.income,false,incFill+' of 6 filled')+
-          finSection('Fixed Monthly','固定費','fixed',fixedRows,fixed_total,false,fixFill+' of 7 filled')+
+          finSection('Income','収入','income',incomeRows,t.income,false,incFill+' of '+incFields.length+' filled')+
+          finSection('Commute','通勤','commute',commuteRows,t.commute,true,commuteFill+' of 1 filled')+
           finAutoSection('Food','食べ物','food',foodRows,t.food)+
-          finAutoSection('Transport','電車代金','transport',transportRows,t.transport)+
+          finSection('Fixed Monthly','固定費','fixed',fixedRows,t.bills,true,fixFill+' of 6 filled')+
           finAutoSection('Necessities','生活費','necessities',necRows,t.necessities)+
           finAutoSection('Optional','任意支出','optional',optRows,t.optional)+
         '</div>'+
@@ -1082,9 +1098,9 @@ function renderFinance(panel,y,m){
             '<div class="fin-cumnet">'+
               '<div class="fin-compare-h" style="margin-bottom:8px">'+MONTHS[m]+' '+y+'</div>'+
               '<div class="fin-cum-row"><span>Income</span><span style="color:var(--c-income)">+¥'+t.income.toLocaleString()+'</span></div>'+
-              '<div class="fin-cum-row"><span>Fixed</span><span>−¥'+(t.commute+t.bills).toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row"><span>Commute</span><span>−¥'+t.commute.toLocaleString()+'</span></div>'+
               '<div class="fin-cum-row"><span>Food</span><span>−¥'+t.food.toLocaleString()+'</span></div>'+
-              '<div class="fin-cum-row"><span>Transport</span><span>−¥'+t.transport.toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row"><span>Fixed</span><span>−¥'+t.bills.toLocaleString()+'</span></div>'+
               '<div class="fin-cum-row"><span>Necessities</span><span>−¥'+t.necessities.toLocaleString()+'</span></div>'+
               '<div class="fin-cum-row"><span>Optional</span><span>−¥'+t.optional.toLocaleString()+'</span></div>'+
               '<div class="fin-cum-row fin-cum-total"><span>Net</span><span style="color:'+(t.balance>=0?'var(--c-income)':'var(--bad)')+'">'+
