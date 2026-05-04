@@ -16,6 +16,7 @@ const PALETTE=[
   {color:'#D1B36A',label:'travel'},
   {color:'#B8C89A',label:'work'},
 ];
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 function buildSwatches(inputId,selected){
   return '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+
     PALETTE.map(function(p){
@@ -1175,9 +1176,10 @@ function renderSidebar(){
   if(stab==='notes'){
     sc.innerHTML=
       DATA.notes.map(function(n,i){
-        return '<div class="note-card"><textarea onchange="DATA.notes['+i+'].text=this.value" placeholder="note...">'+n.text+'</textarea><div class="note-meta"><span>'+n.date+'</span><button class="note-del icon-btn" onclick="DATA.notes.splice('+i+',1);renderSidebar()">×</button></div></div>';
+        return '<div class="note-card"><textarea oninput="autoResize(this);DATA.notes['+i+'].text=this.value" onchange="DATA.notes['+i+'].text=this.value" placeholder="note..." style="height:auto">'+n.text+'</textarea><div class="note-meta"><span>'+n.date+'</span><button class="note-del icon-btn" onclick="DATA.notes.splice('+i+',1);renderSidebar()">×</button></div></div>';
       }).join('')+
       '<button class="add-btn" onclick="DATA.notes.unshift({id:\''+uid()+'\',text:\'\',date:\''+fd(today)+'\'});renderSidebar()">+ add note</button>';
+    sc.querySelectorAll('.note-card textarea').forEach(autoResize);
   } else if(stab==='upcoming'){
     const now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     const items=[];
