@@ -21,7 +21,7 @@ There is no backend, no database, no bundler, and no package manager. The entire
 ## Getting Started
 
 1. Open `index.html` in Chrome (recommended) or another modern browser.
-2. On the splash screen, choose **start fresh** to begin with seed data, or **load save file** to restore a previous session.
+2. On the splash screen, choose **start fresh** to begin with a blank slate, or **load save file** to restore a previous session.
 3. On first start you'll be asked once where to save your file (`lifeOS-save.json`). After that the app auto-saves silently after every change. A faint "✓ saved" indicator appears in the top bar.
 4. Next time, click **load** in the top bar (or use the splash screen) to reopen your save file.
 
@@ -44,16 +44,23 @@ DATA = {
   events:       { "YYYY-MM-DD": [{ id, text, color }] }
   tasks:        { "YYYY-MM-DD": [{ id, text, done }] }
   slots:        { "YYYY-MM-DD": [{ id, startH, startM, endH, endM, text }] }
-  spend:        { "YYYY-MM-DD": { food: { raw, val }, transport: { raw, val }, ... } }
-  goals:        { "YYYY-M-N": "string" }                 // N = 0 (goal), 1 (milestone), 2 (note)
+  spend:        { "YYYY-MM-DD": { food: number, transport: number, ... } }
+  goals:        { "YYYY-M-N": string }   // N = 0 (aim), 1 (checkpoint), 2 (note)
+                                          // month 0 = year-level entry
+                                          // key "YYYY-sum" = one-line year summary
   notes:        [{ id, text, date }]
-  catLabels:    { catKey: "custom label" }
-  catColors:    { catKey: "#hexcolor" }
   countdowns:   [{ id, label, date, yearly, color, mode }]  // mode: 'until' | 'since'
-  nisa:         { tsumitateMonthly, lumpSumByYear, startYear, projectionYears[] }
+  nisa:         { tsumitateByYear, lumpSumByYear, startYear, startMonth, projectionYears[] }
   currencies:   { "JPY": amount, "USD": amount, ... }
-  currencyRates: { "USD": 149.5, ... }                   // JPY base = 1
+  currencyRates: { "USD": 149.5, ... }   // JPY base = 1
   baseCurrency: "JPY" | "IDR"
+  currencyLots: [{ id, code, amount, rateIDR, date }]
+  bonds:        [{ id, series, faceValue, couponRate, taxRate,
+                   settlementDate, firstCouponDate, maturityDate, matured }]
+  bankAccounts: [{ id, name, currency, balance }]
+  finance:      { "YYYY-MM": { salary, transportReimb, otherIncome, momPays,
+                               taxWithheld, insuranceDed, commutationPass,
+                               rent, gas, water, electricity, phone, internet } }
 }
 ```
 
@@ -61,42 +68,104 @@ DATA = {
 
 ## Views
 
-Navigation is done via the view buttons in the top bar. The **← →** arrows move the current period forward or backward. Clicking the **lifeOS** logo jumps to today in day view.
+Navigation is in the top bar. The **← →** arrows move the current period. Clicking the **lifeOS** logo jumps to today's week.
 
-### Day
-The default view. Shows a single day with a two-column layout (time grid left, spend right):
-- **Events** — colour-coded pills at the top. Click **+ event** to add one via a modal (name, colour, date).
-- **Tasks** — a checklist. Type and press Enter to add. Click the checkbox to mark done; click × to delete.
-- **Time blocks** — drag on the 30-minute grid (4 am–11 pm) to create blocks with arbitrary start/end times. Click a block to edit or delete. Blocks store start hour, start minute, end hour, end minute, and text.
-- **Spend** — a grid of 8 spending categories. Supports plain numbers or arithmetic expressions (e.g. `90+450+20`). Running total shown at the bottom.
+Nav order: **week → month → year → finance → savings**
 
-Clicking a day header in week view navigates here. Clicking the large date number in week view also navigates here.
+---
 
 ### Week
-A 7-column grid (Mon–Sun). Each column shows events, up to 3 time block previews, tasks, and the daily spend total. Clicking a column header navigates to day view for that date.
+
+A 7-column grid (Mon–Sun). Each column shows events, tasks, and a daily spend total. Click any column header to jump to that date's week.
+
+**Spend panel** — click **▾ log spending** below the grid to open a spreadsheet-style panel: 9 category rows × 7 day columns. Type any amount and it saves immediately. Totals per day update live. The Finance tab reads these entries automatically.
+
+---
 
 ### Month
-A full calendar grid. Each day cell shows up to 2 events, 1 open task, 1 time block preview, and the daily spend total. Clicking any day cell navigates to day view. Clicking the month name in week view navigates here.
+
+A full calendar grid. Each day cell shows up to 2 events, 1 open task, and the daily spend total. Click any cell to jump to that week.
+
+---
 
 ### Year
-A 3-column grid of all 12 months. Each month block contains a mini calendar with colour-coded day indicators and 3 editable goal rows per month: **→ goal**, **◎ milestone**, **· note**. Double-click the month name to jump to month view. Clicking any mini-calendar day navigates to day view.
 
-### Years (Multi-Year)
-A 5-year overview (advances in 5-year increments). Each year shows a 12-month row with primary goals, events, and open tasks. Includes a **NISA contribution tracker** row with a 🎉 flag at the ¥18M lifetime cap. Click a month cell to jump to its month view.
+A redesigned multi-year view showing 5 years at a time.
+
+**Decade strip** — 11 clickable mini-cards at the top: year, age, and coloured dots showing which event categories have activity that year. Click any card to jump to that year.
+
+**Year cards** — each year renders as a card with:
+- **3-column header**: year + age + category count badges (work / life / learn / travel) | one-line editable summary | NISA progress bar + cumulative total + % of ¥18M cap
+- **Timeline** — 12-column CSS grid showing events as coloured chips positioned by month, stacked into parallel tracks if a month has multiple events
+- **Footer** — 3-column row: ★ aim / ▶ checkpoint / — note (year-level, inline editable)
+
+Years with no events collapse to a single line. Click to expand.
+
+**Planner grid** — the detailed 12-month mini-calendar (with clickable days and per-month goal rows) only appears for the currently focused year, and only for months that have at least one event.
+
+**Event category colours** — inferred from event colour:
+| Category | Colour |
+|---|---|
+| work | `#c8456c` (rose) |
+| life | `#5a8fc8` (blue) |
+| learn | `#c87a3a` (orange) |
+| travel | `#4a8a5a` (green) |
+
+---
+
+### Finance
+
+A monthly income and spending tracker. Navigate months with the **← →** arrows.
+
+Sections:
+
+| Section | Input type | Fields |
+|---|---|---|
+| **Income** | Manual | Salary, transport reimbursement, other income, mom pays, tax withheld (−), insurance deducted (−) |
+| **Fixed Monthly** | Manual | Commutation pass, rent, gas, water, electricity, phone, internet |
+| **Food** | Auto from daily spend | 食べ物 |
+| **Transport** | Auto from daily spend | 電車代金 |
+| **Necessities** | Auto from daily spend | Paperwork, medical, necessities, NHI |
+| **Optional** | Auto from daily spend | Game/project, entertainment, clothes/hair |
+
+The four auto sections pull directly from daily entries logged in the week view's spend panel. You never type these totals manually — they aggregate automatically.
+
+**Balance formula:** Income − Fixed − Food − Transport − Necessities − Optional
+
+All sections are collapsible. Auto sections are marked with a "from daily entries" badge.
+
+---
 
 ### Savings
-A financial planning screen with two sections:
 
-**新NISA — contribution tracker**
-- Configure a monthly **つみたて投資枠** amount and a per-year **成長投資枠** table (each year has its own editable lump sum).
-- The app calculates years until the ¥18M lifetime cap is reached.
-- A grid of year snapshots shows cumulative contributions at chosen checkpoints.
+A financial planning screen with four sections.
+
+**NISA tracker**
+- Hero strip: lifetime plan total + stacked progress bar (つみたて pink / 成長 navy), projected cap year, this year's total, average per year
+- Two-panel editor: つみたて 投資枠 (per-year monthly amount table) | 成長投資枠 (per-year lump sum table, collapses empty rows)
+- Meta strip: start year, start month, this year's monthly contribution
+- Snapshot table: chosen checkpoint years with cumulative totals and mini progress bars
+- Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined
+
+**Bank accounts**
+- Track cash balances across accounts (BCA in IDR, MUFG in JPY, etc.)
+- Editable balances with live conversion to base currency
+- Total row in base currency
 
 **Currencies**
-- Enter amounts held in 8 currencies: JPY, IDR, USD, GBP, CNY, KRW, MYR, EUR.
-- Each card shows the equivalent in your base currency using editable exchange rates.
-- Toggle between **JPY** and **IDR** as the base currency at the top of the section.
-- Edit any exchange rate directly in the card.
+- Enter amounts held in 8 currencies: JPY, IDR, USD, GBP, CNY, KRW, MYR, EUR
+- Toggle **JPY / IDR** as base currency; all cards and totals update
+- Edit exchange rates inline per card
+- **Purchase lots** — per-currency collapsible table tracking individual purchases: date, amount, total IDR cost, current rate, P&L
+- **Total held** row across all currencies in base currency
+
+**Government bonds**
+- Track Indonesian retail bonds (ORI, SR, ST, SBR, etc.)
+- Fields: series, face value, coupon rate, tax rate, settlement date, first coupon date, maturity date
+- Derived per bond: gross/net monthly coupon, total coupons earned, coupons remaining, months to maturity
+- Active bonds and matured archive (collapsed)
+- Summary: total net monthly income across all active bonds
+- Maturity dates appear in the **upcoming** sidebar tab
 
 ---
 
@@ -107,41 +176,34 @@ The right-hand sidebar is always visible and has three tabs:
 | Tab | Content |
 |---|---|
 | **notes** | Free-text sticky notes with a timestamp. Add, edit inline, delete. |
-| **upcoming** | Unified feed sorted soonest first: countdown timers, events within 60 days, and goals for future months. |
-| **countdowns** | Add, edit, and delete named date trackers. Each entry has a label, date, optional yearly repeat, colour, and mode (until / since). |
+| **upcoming** | Unified feed sorted soonest first: countdown timers, events within 60 days, bond maturity dates, and goals for future months. |
+| **countdowns** | Add, edit, and delete named date trackers. Each entry has a label, date, optional yearly repeat, colour, and mode. |
 
 ---
 
 ## Countdowns
 
-Countdowns live in the **countdowns** sidebar tab. Each entry has a **mode**:
+Each countdown has a **mode**:
 
-- **until** — counts down to a future date. Shows "in X days" or "today!". With yearly repeat, shows "· recurring" and resets each year.
-- **since** — tracks elapsed time from a past date. Shows "X days since", "X months since", or "X yrs Y mo since" depending on how long ago. With yearly repeat, switches to birthday/anniversary mode: "X yrs · turning Y in Z days".
+- **until** — counts down to a future date. Shows "in X days" or "today!". With yearly repeat, recurs annually.
+- **since** — tracks elapsed time from a past date. Shows "X days since", "X months since", or "X yrs Y mo since". With yearly repeat, switches to birthday/anniversary mode: "age X · turning Y in Z days".
 
-In the **upcoming** tab, `until` entries and `since + yearly` entries (birthdays/anniversaries) appear as future events. Plain `since` entries (one-off trackers) are excluded.
+In the **upcoming** tab, `until` entries and `since + yearly` entries appear as future events. Plain `since` entries (one-off trackers) are excluded.
 
 ---
 
 ## Spend Categories
 
-Eight fixed categories, each with a configurable label and colour. Open **Settings** (gear icon in the spend section) to rename any category and reassign its colour from the 8-colour palette.
+Nine fixed categories used in the week view spend panel and aggregated into the Finance tab:
 
-| Key | Default Label |
-|---|---|
-| `food` | Food |
-| `transport` | Transport |
-| `health` | Health |
-| `shopping` | Shopping |
-| `entertainment` | Entertainment |
-| `utilities` | Utilities |
-| `education` | Education |
-| `other` | Other |
-
-Spend inputs accept arithmetic expressions. Entering `500+200+90` displays the sum (`790`) and preserves the raw expression so you can see the breakdown.
-
----
-
-## Seed Data
-
-Clicking **start fresh** pre-loads sample events and goals as a starting point (driving exam, JLPT N1, PR eligibility, etc.). These are fully editable and deletable. Loading an existing save file skips seeding entirely.
+| Key | Japanese | English | Finance group |
+|---|---|---|---|
+| `food` | 食べ物 | Food | Food |
+| `transport` | 電車代金 | Transport | Transport |
+| `paperwork` | 書類仕事 | Paperwork | Necessities |
+| `medical` | メディカル | Medical | Necessities |
+| `necessities` | 日常生活 | Necessities | Necessities |
+| `nhi` | 国民保険 | NHI | Necessities |
+| `project` | ゲーム/P | Game/Project | Optional |
+| `fun` | エンタメ | Entertainment | Optional |
+| `clothes` | 服・髪 | Clothes/Hair | Optional |
