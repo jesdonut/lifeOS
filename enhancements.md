@@ -536,6 +536,34 @@ Replaced the flat single-column finance layout with a more information-dense des
 
 ---
 
+## ~~36. Finance — Formula Input in All Fields~~ ✅ Complete
+
+All manual finance fields (income, fixed monthly) and the weekly spend panel now accept arithmetic expressions. Typing `50000*2` or `1200+800` evaluates on blur and saves the result. Implemented by routing all inputs through the existing `parseExpr()` helper. Spend inputs changed from `type="number"` to `type="text"` (with `inputmode="decimal"`) so browsers don't block non-numeric characters.
+
+---
+
+## ~~37. Finance — Per-Month Breakdown Panel + Cumulative Net~~ ✅ Complete
+
+Replaced the 3-month comparison panel (right column of finance view) with a per-month breakdown showing Income, Fixed, Food, Transport, Necessities, Optional, and Net for the current month. A "Total since Jan 2025" line at the bottom sums all monthly balances from Jan 2025 to the current month, giving a running lifetime net.
+
+---
+
+## ~~38. Currencies — Dual Independent JPY + IDR Rates~~ ✅ Complete
+
+Replaced the JPY/IDR base currency toggle with dual independent rate fields per currency card. Each card now shows two editable rate inputs: `1 CODE = X ¥` and `1 CODE = Y Rp`. Changing one does not affect the other.
+
+**Data model change:** `currencyRates` entries upgraded from a single number to `{ jpy: number, idr: number }`. Old single-number saves load correctly (JPY rate preserved, IDR derived on first encounter).
+
+All totals (currency "total held", bank accounts) now show both ¥ and Rp simultaneously. The JPY/IDR toggle button is removed entirely.
+
+---
+
+## ~~39. Week View — Spend Panel Always Visible, Toggle Removed~~ ✅ Complete
+
+Removed the "▾ log spending / ▴ hide spending" toggle button from the week view. The spend panel is now permanently visible. The `_spendOpen` flag and `toggleSpend()` function are deleted.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -575,3 +603,7 @@ Replaced the flat single-column finance layout with a more information-dense des
 | 33 | Spend Panel Auto-Expand + Week Grid Compact | ✅ |
 | 34 | Finance View Redesign — Hero, Accordions, Compare | ✅ |
 | 35 | Bug Fix — Daily Spend Always in ¥ | ✅ |
+| 36 | Finance — Formula Input in All Fields | ✅ |
+| 37 | Finance — Per-Month Breakdown + Cumulative Net | ✅ |
+| 38 | Currencies — Dual Independent JPY + IDR Rates | ✅ |
+| 39 | Week View — Spend Panel Always Visible | ✅ |

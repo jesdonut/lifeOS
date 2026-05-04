@@ -52,8 +52,7 @@ DATA = {
   countdowns:   [{ id, label, date, yearly, color, mode }]  // mode: 'until' | 'since'
   nisa:         { tsumitateByYear, lumpSumByYear, startYear, startMonth, projectionYears[] }
   currencies:   { "JPY": amount, "USD": amount, ... }
-  currencyRates: { "USD": 149.5, ... }   // JPY base = 1
-  baseCurrency: "JPY" | "IDR"
+  currencyRates: { "USD": { jpy: 149.5, idr: 16000 }, ... }  // independent rates per currency
   currencyLots: [{ id, code, amount, rateIDR, date }]
   bonds:        [{ id, series, faceValue, couponRate, taxRate,
                    settlementDate, firstCouponDate, maturityDate, matured }]
@@ -78,7 +77,7 @@ Nav order: **week → month → year → finance → savings**
 
 A 7-column grid (Mon–Sun). Each column shows events, tasks, and a daily spend total. Click any column header to jump to that date's week.
 
-**Spend panel** — always visible below the event grid: 9 category rows × 7 day columns. Type any amount and it saves immediately. Totals per day update live. The Finance tab reads these entries automatically.
+**Spend panel** — always visible below the event grid: 9 category rows × 7 day columns. Type any amount (or an arithmetic expression like `1200+800`) and it saves immediately. Negative values are supported. Totals per day update live. The Finance tab reads these entries automatically.
 
 ---
 
@@ -124,7 +123,7 @@ A monthly income and spending tracker. Navigate months with the **← →** arro
 
 **Two-column body:**
 - Left: accordion sections (Income open by default, others collapsed)
-- Right: sticky 3-month comparison panel — category totals for current + 2 prior months, balance row, YTD average and annual pace
+- Right: per-month breakdown — Income, Fixed, Food, Transport, Necessities, Optional, Net for the current month; plus a **Total since Jan 2025** cumulative net at the bottom
 
 **Sections:**
 
@@ -137,7 +136,7 @@ A monthly income and spending tracker. Navigate months with the **← →** arro
 | **Necessities** | Auto from daily spend | Paperwork, medical, necessities, NHI |
 | **Optional** | Auto from daily spend | Game/project, entertainment, clothes/hair |
 
-The four auto sections pull directly from daily entries logged in the week view's spend panel — aggregated automatically, displayed as read-only chips. Manual sections show a fill count (e.g. "3 of 6 filled") and highlight entered fields with an accent border.
+The four auto sections pull directly from daily entries logged in the week view's spend panel — aggregated automatically, displayed as read-only chips. Manual sections show a fill count (e.g. "3 of 6 filled") and highlight entered fields with an accent border. All manual fields accept arithmetic expressions (e.g. `50000*2`).
 
 **Balance formula:** Income − Fixed − Food − Transport − Necessities − Optional
 
@@ -156,15 +155,15 @@ A financial planning screen with four sections.
 
 **Bank accounts**
 - Track cash balances across accounts (BCA in IDR, MUFG in JPY, etc.)
-- Editable balances with live conversion to base currency
-- Total row in base currency
+- Editable balances with live conversion shown in both ¥ and Rp
+- Total row in both ¥ and Rp
 
 **Currencies**
 - Enter amounts held in 8 currencies: JPY, IDR, USD, GBP, CNY, KRW, MYR, EUR
-- Toggle **JPY / IDR** as base currency; all cards and totals update
-- Edit exchange rates inline per card
+- Each currency card has two independent editable rate fields: `1 CODE = X ¥` and `1 CODE = Y Rp` — changing one does not affect the other
+- Equivalent shown as both ¥ and Rp on every card
 - **Purchase lots** — per-currency collapsible table tracking individual purchases: date, amount, total IDR cost, current rate, P&L
-- **Total held** row across all currencies in base currency
+- **Total held** row shows both ¥ and Rp totals
 
 **Government bonds**
 - Track Indonesian retail bonds (ORI, SR, ST, SBR, etc.)

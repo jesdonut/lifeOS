@@ -45,8 +45,6 @@ const MIN_YEAR=1995,MAX_YEAR=2095;
 let view='week',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
 let _nisaLsExpanded=false;
 let _yearExpanded=null;
-let _spendOpen=true;
-function toggleSpend(){_spendOpen=!_spendOpen;render();}
 
 // DATA MODEL
 // events: "YYYY-MM-DD": [{id, text, color}]
@@ -66,21 +64,34 @@ function fd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
 function isToday(d){return fd(d)===fd(today);}
 function getMon(d){let day=d.getDay(),diff=day===0?-6:1-day,m=new Date(d);m.setDate(m.getDate()+diff);return m;}
 
-function getRate(code){return(DATA.currencyRates&&DATA.currencyRates[code]!=null)?DATA.currencyRates[code]:CURRENCIES.find(function(c){return c.code===code;}).rate;}
-function setRate(code,displayedVal){
-  var v=parseFloat(displayedVal);if(!v||isNaN(v))return;
+function getRate(code){
+  var r=DATA.currencyRates&&DATA.currencyRates[code];
+  if(r==null) return CURRENCIES.find(function(c){return c.code===code;}).rate;
+  return(typeof r==='object')?r.jpy||0:r;
+}
+function getRateIDR(code){
+  var r=DATA.currencyRates&&DATA.currencyRates[code];
+  if(r&&typeof r==='object'&&r.idr) return r.idr;
+  var jpyRate=getRate(code),idrJpy=getRate('IDR');
+  return idrJpy>0?Math.round(jpyRate/idrJpy):0;
+}
+function setRateJPY(code,val){
+  var v=parseFloat(val);if(!v||isNaN(v))return;
   if(!DATA.currencyRates)DATA.currencyRates={};
-  DATA.currencyRates[code]=DATA.baseCurrency==='IDR'?v*getRate('IDR'):v;
+  var ex=DATA.currencyRates[code];
+  var idr=(ex&&typeof ex==='object')?ex.idr:null;
+  DATA.currencyRates[code]={jpy:v,idr:idr||getRateIDR(code)};
+  render();
+}
+function setRateIDR(code,val){
+  var v=parseFloat(val);if(!v||isNaN(v))return;
+  if(!DATA.currencyRates)DATA.currencyRates={};
+  var ex=DATA.currencyRates[code];
+  var jpy=(ex&&typeof ex==='object')?ex.jpy:(typeof ex==='number'?ex:getRate(code));
+  DATA.currencyRates[code]={jpy:jpy,idr:v};
   render();
 }
 function fmtSpend(jpyVal){
-  return '¥'+Math.round(jpyVal).toLocaleString();
-}
-function fmtBase(jpyVal){
-  if(DATA.baseCurrency==='IDR'){
-    const idrRate=getRate('IDR');
-    return 'Rp '+(idrRate>0?Math.round(jpyVal/idrRate):0).toLocaleString();
-  }
   return '¥'+Math.round(jpyVal).toLocaleString();
 }
 
@@ -89,7 +100,7 @@ function parseExpr(str){
   if(!str&&str!==0) return 0;
   const s=str.toString().trim().replace(/[^0-9+\-*/.() ]/g,'');
   if(!s) return 0;
-  try{const v=Function('"use strict";return('+s+')')();return(isFinite(v)&&v>=0)?Math.round(v*100)/100:0;}
+  try{const v=Function('"use strict";return('+s+')')();return isFinite(v)?Math.round(v*100)/100:0;}
   catch(e){return parseFloat(s)||0;}
 }
 function spendVal(e){if(!e)return 0;if(typeof e==='object')return e.val||0;return parseFloat(e)||0;}
@@ -255,33 +266,28 @@ function renderWeek(panel,mon){
   // ── spend panel ──
   const wkDays=[];
   for(let si=0;si<7;si++){const sd=new Date(mon);sd.setDate(mon.getDate()+si);wkDays.push({d:sd,key:fd(sd)});}
-  var spendPanel='';
-  if(_spendOpen){
-    var spHdr='<div class="wk-sp-corner">spend</div>'+
-      wkDays.map(function(di,i){return '<div class="wk-sp-hdr">'+DAYS[i][0]+'<span class="wk-sp-hdr-n">'+di.d.getDate()+'</span></div>';}).join('');
-    var spRows=SPEND_CATS.map(function(cat){
-      return '<div class="wk-sp-lab"><span class="wk-sp-jp">'+cat.jp+'</span><span class="wk-sp-en">'+cat.en+'</span></div>'+
-        wkDays.map(function(di){
-          var val=spendVal((DATA.spend[di.key]||{})[cat.key]);
-          return '<div class="wk-sp-cell"><input class="wk-sp-inp" type="number" min="0" value="'+(val||'')+'" placeholder="0"'+
-            ' onchange="commitSpend(this,\''+di.key+'\',\''+cat.key+'\');render()"></div>';
-        }).join('');
-    }).join('');
-    var spTots='<div class="wk-sp-corner wk-sp-tot-lab">total</div>'+
+  var spHdr='<div class="wk-sp-corner">spend</div>'+
+    wkDays.map(function(di,i){return '<div class="wk-sp-hdr">'+DAYS[i][0]+'<span class="wk-sp-hdr-n">'+di.d.getDate()+'</span></div>';}).join('');
+  var spRows=SPEND_CATS.map(function(cat){
+    return '<div class="wk-sp-lab"><span class="wk-sp-jp">'+cat.jp+'</span><span class="wk-sp-en">'+cat.en+'</span></div>'+
       wkDays.map(function(di){
-        var tot=daySpendTotal(di.key);
-        return '<div class="wk-sp-tot">'+(tot?fmtSpend(tot):'—')+'</div>';
+        var val=spendVal((DATA.spend[di.key]||{})[cat.key]);
+        return '<div class="wk-sp-cell"><input class="wk-sp-inp" type="text" inputmode="decimal" value="'+(val||'')+'" placeholder="0"'+
+          ' onchange="commitSpend(this,\''+di.key+'\',\''+cat.key+'\');render()"></div>';
       }).join('');
-    spendPanel=spHdr+spRows+spTots;
-  }
+  }).join('');
+  var spTots='<div class="wk-sp-corner wk-sp-tot-lab">total</div>'+
+    wkDays.map(function(di){
+      var tot=daySpendTotal(di.key);
+      return '<div class="wk-sp-tot">'+(tot?fmtSpend(tot):'—')+'</div>';
+    }).join('');
 
   panel.style.display='flex';
   panel.style.flexDirection='column';
   panel.innerHTML=
-    '<div class="week-shell"><div class="wk-shell-spacer"></div>'+cols+spendPanel+'</div>'+
+    '<div class="week-shell"><div class="wk-shell-spacer"></div>'+cols+spHdr+spRows+spTots+'</div>'+
     '<div class="wk-spend-toggle">'+
       '<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">week '+fmtSpend(weekTotal)+'</span>'+
-      '<button onclick="toggleSpend()" class="wk-spend-btn">'+(_spendOpen?'▴ hide spending':'▾ log spending')+'</button>'+
     '</div>';
 }
 
@@ -657,25 +663,23 @@ function renderSavings(panel){
   }).join('');
 
   var allJpy=CURRENCIES.filter(function(c){return c.code!=='JPY';}).reduce(function(s,c){var a=parseFloat(DATA.currencies[c.code]||0);return s+(a?Math.round(a*getRate(c.code)):0);},0);
+  var allIdr=CURRENCIES.filter(function(c){return c.code!=='JPY'&&c.code!=='IDR';}).reduce(function(s,c){var a=parseFloat(DATA.currencies[c.code]||0);return s+(a?Math.round(a*getRateIDR(c.code)):0);},0);
   var currCards=CURRENCIES.filter(function(c){return c.code!=='JPY';}).map(function(c){
     var amt=DATA.currencies[c.code]||'';
-    var rate=getRate(c.code);
-    var jpyEq=amt?Math.round(parseFloat(amt)*rate):0;
-    var idrBase=DATA.baseCurrency==='IDR';
-    var idrRate=getRate('IDR');
-    var displayRate=idrBase?Math.round(rate/idrRate*100)/100:rate;
-    var rateLabel=idrBase?'Rp':'¥';
-    var currentIDR=idrRate>0?Math.round(rate/idrRate):0;
+    var jpyRate=getRate(c.code);
+    var idrRate=getRateIDR(c.code);
+    var jpyEq=amt?Math.round(parseFloat(amt)*jpyRate):0;
+    var idrEq=amt?Math.round(parseFloat(amt)*idrRate):0;
     var lots=(DATA.currencyLots||[]).filter(function(l){return l.code===c.code;});
     var lotsHtml='';
     if(lots.length){
       var totalCost=lots.reduce(function(s,l){return s+l.rateIDR;},0);
-      var totalNow=lots.reduce(function(s,l){return s+l.amount*currentIDR;},0);
+      var totalNow=lots.reduce(function(s,l){return s+l.amount*idrRate;},0);
       var totalPL=Math.round(totalNow-totalCost);
       lotsHtml='<div style="margin-top:6px;border-top:1px solid var(--border);padding-top:5px">'+
         lots.map(function(l){
           var costPerUnit=l.rateIDR/l.amount;
-          var pl=Math.round((currentIDR-costPerUnit)*l.amount);
+          var pl=Math.round((idrRate-costPerUnit)*l.amount);
           var plColor=pl>=0?'#2d5a3d':'#8b2c2c';
           return '<div style="font-size:9px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;gap:3px;margin-bottom:3px">'+
             '<span>'+l.date.slice(5)+'</span>'+
@@ -691,12 +695,14 @@ function renderSavings(panel){
       '<div style="font-size:16px;margin-bottom:2px">'+c.flag+'</div>'+
       '<div class="curr-code">'+c.code+'</div>'+
       '<input class="curr-input" type="number" placeholder="0" value="'+amt+'" onchange="DATA.currencies[\''+c.code+'\']=this.value;render()" />'+
-      '<div style="display:flex;align-items:center;gap:4px;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'+
-        '<span style="font-size:9px;color:var(--text3)">1'+c.code+'=</span>'+
-        '<input type="number" step="any" value="'+displayRate+'" onchange="setRate(\''+c.code+'\',this.value)" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
-        '<span style="font-size:9px;color:var(--text3)">'+rateLabel+'</span>'+
+      '<div style="display:flex;align-items:center;gap:3px;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'+
+        '<span style="font-size:9px;color:var(--text3);flex-shrink:0">1'+c.code+'=</span>'+
+        '<input type="number" step="any" value="'+jpyRate+'" onchange="setRateJPY(\''+c.code+'\',this.value)" style="width:50px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
+        '<span style="font-size:9px;color:var(--text3)">¥</span>'+
+        '<input type="number" step="any" value="'+idrRate+'" onchange="setRateIDR(\''+c.code+'\',this.value)" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
+        '<span style="font-size:9px;color:var(--text3)">Rp</span>'+
       '</div>'+
-      (jpyEq?'<div class="curr-jpy">≈ '+fmtBase(jpyEq)+'</div>':'')+
+      (jpyEq?'<div class="curr-jpy">¥'+jpyEq.toLocaleString()+' · Rp'+idrEq.toLocaleString()+'</div>':'')+
       lotsHtml+
       '<button onclick="openAddLotModal(\''+c.code+'\')" style="margin-top:5px;width:100%;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-size:9px;color:var(--text2);padding:2px 0;cursor:pointer;font-family:var(--sans)">+ lot</button>'+
     '</div>';
@@ -754,22 +760,26 @@ function renderSavings(panel){
 
   var bankRows=(DATA.bankAccounts||[]).map(function(a){
     var jpyVal=a.currency==='JPY'?a.balance:(a.balance*(a.currency==='IDR'?getRate('IDR'):getRate(a.currency)));
+    var idrVal=a.currency==='IDR'?a.balance:(a.currency==='JPY'?Math.round(a.balance/getRate('IDR')):Math.round(a.balance*getRateIDR(a.currency)));
     return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
       '<span style="font-size:12px;font-weight:500;color:var(--text);min-width:48px">'+a.name+'</span>'+
       '<span style="font-size:10px;color:var(--text3);min-width:28px">'+a.currency+'</span>'+
       '<input type="number" step="1000" value="'+a.balance+'" onchange="updateBankBalance(\''+a.id+'\',this.value)" style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none">'+
-      '<span style="font-size:11px;color:var(--text2);white-space:nowrap">'+fmtBase(jpyVal)+'</span>'+
+      '<span style="font-size:10px;color:var(--text2);white-space:nowrap">¥'+Math.round(jpyVal).toLocaleString()+' · Rp'+idrVal.toLocaleString()+'</span>'+
       '<button onclick="deleteBankAccount(\''+a.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0">×</button>'+
     '</div>';
   }).join('');
   var bankTotalJpy=(DATA.bankAccounts||[]).reduce(function(s,a){
     return s+(a.currency==='JPY'?a.balance:(a.balance*(a.currency==='IDR'?getRate('IDR'):getRate(a.currency))));
   },0);
+  var bankTotalIdr=(DATA.bankAccounts||[]).reduce(function(s,a){
+    return s+(a.currency==='IDR'?a.balance:(a.currency==='JPY'?Math.round(a.balance/getRate('IDR')):Math.round(a.balance*getRateIDR(a.currency))));
+  },0);
   var bankSection='<div class="savings-card">'+
     '<div class="savings-title">bank accounts</div>'+
     bankRows+
     '<button onclick="addBankAccount()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add account</button>'+
-    (bankTotalJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtBase(bankTotalJpy)+'</span></div>':'')+
+    (bankTotalJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total</span><span style="font-family:var(--mono);font-size:12px;font-weight:500">¥'+Math.round(bankTotalJpy).toLocaleString()+' · Rp'+bankTotalIdr.toLocaleString()+'</span></div>':'')+
   '</div>';
 
   var bondsSection=
@@ -854,17 +864,9 @@ function renderSavings(panel){
       '<div style="margin-top:10px;font-size:10px;color:var(--text3);line-height:1.6">Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined.</div>'+
     '</div>'+
     '<div class="savings-card">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
-        '<div class="savings-title" style="margin-bottom:0">currencies — enter amounts you hold</div>'+
-        '<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">'+
-          'base:'+
-          '<button onclick="DATA.baseCurrency=\'JPY\';render()" style="padding:3px 10px;border-radius:10px;border:1px solid var(--border);background:'+(DATA.baseCurrency==='JPY'?'var(--accent)':'none')+';color:'+(DATA.baseCurrency==='JPY'?'#fff':'var(--text2)')+';font-size:11px;cursor:pointer;font-family:var(--sans)">JPY</button>'+
-          '<button onclick="DATA.baseCurrency=\'IDR\';render()" style="padding:3px 10px;border-radius:10px;border:1px solid var(--border);background:'+(DATA.baseCurrency==='IDR'?'var(--accent)':'none')+';color:'+(DATA.baseCurrency==='IDR'?'#fff':'var(--text2)')+';font-size:11px;cursor:pointer;font-family:var(--sans)">IDR</button>'+
-        '</div>'+
-      '</div>'+
+      '<div class="savings-title">currencies — enter amounts you hold</div>'+
       '<div class="curr-grid">'+currCards+'</div>'+
-      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtBase(allJpy)+'</span></div>':'')+
-      '<div style="margin-top:10px;font-size:10px;color:var(--text3)">Rates are editable — click the number next to a currency to update.</div>'+
+      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:12px;font-weight:500">¥'+Math.round(allJpy).toLocaleString()+' · Rp'+Math.round(allIdr).toLocaleString()+'</span></div>':'')+
     '</div>'+
     bankSection+
     bondsSection+
@@ -884,7 +886,7 @@ function finVal(d,k){return d[k]||0;}
 function finSet(y,m,k,v){
   var key=y+'-'+(m<9?'0':'')+(m+1);
   if(!DATA.finance[key]) DATA.finance[key]={};
-  DATA.finance[key][k]=parseFloat(v)||0;
+  DATA.finance[key][k]=parseExpr(v);
   autoSave();
 }
 function monthSpendCat(y,m,catKey){
@@ -968,9 +970,8 @@ function renderFinance(panel,y,m){
   var balColor=t.balance>=0?'var(--c-income)':'var(--bad)';
   // prev months helper
   function pmy(yi,mi){while(mi<0){mi+=12;yi--;}return{y:yi,m:mi};}
-  var p1=pmy(y,m-1),p2=pmy(y,m-2);
+  var p1=pmy(y,m-1);
   var t1=finTotals(getFinMonth(p1.y,p1.m),p1.y,p1.m);
-  var t2=finTotals(getFinMonth(p2.y,p2.m),p2.y,p2.m);
   var delta=t.balance-t1.balance;
   // sparkline — last 6 months
   var sp6=[],sp6L=[];
@@ -991,12 +992,12 @@ function renderFinance(panel,y,m){
   var fkey=y+'-'+(m<9?'0':'')+(m+1),fd2=DATA.finance[fkey]||{};
   var incFill=['salary','transportReimb','otherIncome','momPays','taxWithheld','insuranceDed'].filter(function(k){return fd2[k]>0;}).length;
   var fixFill=['commutationPass','rent','gas','water','electricity','phone','internet'].filter(function(k){return fd2[k]>0;}).length;
-  // ytd avg balance
-  var ytdSum=0;
-  for(var mi3=0;mi3<=m;mi3++){ytdSum+=finTotals(getFinMonth(y,mi3),y,mi3).balance;}
-  var ytdAvg=Math.round(ytdSum/(m+1));
-  // compact formatter
-  function fmtK(v){if(!v)return'—';var s=v<0?'-':'';var a=Math.abs(v);return a>=1000?s+Math.round(a/1000)+'K':s+'¥'+a.toLocaleString();}
+  // cumulative net since Jan 2025
+  var cumNet=0,cumCount=0;
+  for(var cny=2025;cny<=y;cny++){
+    var cnmEnd=cny<y?11:m;
+    for(var cnm=0;cnm<=cnmEnd;cnm++){cumNet+=finTotals(getFinMonth(cny,cnm),cny,cnm).balance;cumCount++;}
+  }
   // rows
   var incomeRows=
     finRow(y,m,'salary','給料','Salary',1000,false)+
@@ -1075,22 +1076,18 @@ function renderFinance(panel,y,m){
         '</div>'+
         '<div>'+
           '<div class="fin-compare">'+
-            '<div class="fin-compare-h">3-month compare</div>'+
-            '<div class="fin-cg">'+
-              '<div class="fin-cg-hdr l">Category</div><div class="fin-cg-hdr">'+MS[p2.m]+'</div><div class="fin-cg-hdr">'+MS[p1.m]+'</div><div class="fin-cg-hdr">'+MS[m]+'</div>'+
-              '<div class="fin-cg-lab">Income 収入</div><div class="fin-cg-v">'+fmtK(t2.income)+'</div><div class="fin-cg-v">'+fmtK(t1.income)+'</div><div class="fin-cg-v cur">'+fmtK(t.income)+'</div>'+
-              '<div class="fin-cg-lab">Fixed 固定費</div><div class="fin-cg-v">'+fmtK(t2.commute+t2.bills)+'</div><div class="fin-cg-v">'+fmtK(t1.commute+t1.bills)+'</div><div class="fin-cg-v cur">'+fmtK(fixed_total)+'</div>'+
-              '<div class="fin-cg-lab">Food 食べ物</div><div class="fin-cg-v">'+fmtK(t2.food)+'</div><div class="fin-cg-v">'+fmtK(t1.food)+'</div><div class="fin-cg-v cur">'+fmtK(t.food)+'</div>'+
-              '<div class="fin-cg-lab">Transport</div><div class="fin-cg-v">'+fmtK(t2.transport)+'</div><div class="fin-cg-v">'+fmtK(t1.transport)+'</div><div class="fin-cg-v cur">'+fmtK(t.transport)+'</div>'+
-              '<div class="fin-cg-lab">Necessities</div><div class="fin-cg-v">'+fmtK(t2.necessities)+'</div><div class="fin-cg-v">'+fmtK(t1.necessities)+'</div><div class="fin-cg-v cur">'+fmtK(t.necessities)+'</div>'+
-              '<div class="fin-cg-lab">Optional</div><div class="fin-cg-v">'+fmtK(t2.optional)+'</div><div class="fin-cg-v">'+fmtK(t1.optional)+'</div><div class="fin-cg-v cur">'+fmtK(t.optional)+'</div>'+
-              '<div class="fin-cg-lab fin-cg-total">Balance</div><div class="fin-cg-v fin-cg-total">'+fmtK(t2.balance)+'</div><div class="fin-cg-v fin-cg-total">'+fmtK(t1.balance)+'</div><div class="fin-cg-v cur fin-cg-total" style="color:'+balColor+'">'+fmtK(t.balance)+'</div>'+
-            '</div>'+
-            '<div class="fin-ytd">'+
-              '<div class="fin-ytd-lab">Avg balance YTD</div>'+
-              '<div class="fin-ytd-val">¥'+ytdAvg.toLocaleString()+'/mo</div>'+
-              '<div class="fin-ytd-lab" style="margin-top:8px">Annual saved at this pace</div>'+
-              '<div class="fin-ytd-val">¥'+(ytdAvg*12).toLocaleString()+'</div>'+
+            '<div class="fin-cumnet">'+
+              '<div class="fin-compare-h" style="margin-bottom:8px">'+MONTHS[m]+' '+y+'</div>'+
+              '<div class="fin-cum-row"><span>Income</span><span style="color:var(--c-income)">+¥'+t.income.toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row"><span>Fixed</span><span>−¥'+(t.commute+t.bills).toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row"><span>Food</span><span>−¥'+t.food.toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row"><span>Transport</span><span>−¥'+t.transport.toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row"><span>Necessities</span><span>−¥'+t.necessities.toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row"><span>Optional</span><span>−¥'+t.optional.toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row fin-cum-total"><span>Net</span><span style="color:'+(t.balance>=0?'var(--c-income)':'var(--bad)')+'">'+
+                (t.balance>=0?'+':'')+t.balance.toLocaleString()+'</span></div>'+
+              '<div class="fin-cum-row fin-cum-total" style="margin-top:8px;padding-top:8px"><span>Total since Jan 2025</span><span style="color:'+(cumNet>=0?'var(--c-income)':'var(--bad)')+'">'+
+                (cumNet>=0?'+':'')+cumNet.toLocaleString()+'</span></div>'+
             '</div>'+
           '</div>'+
         '</div>'+
@@ -1475,7 +1472,6 @@ function startApp(){
     });
   });
   if(!DATA.currencyRates) DATA.currencyRates={};
-  if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
   if(!DATA.countdowns) DATA.countdowns=[];
   DATA.countdowns.forEach(function(c){if(!c.mode)c.mode='until';});
   if(!DATA.currencyLots) DATA.currencyLots=[];
