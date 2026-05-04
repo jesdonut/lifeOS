@@ -79,7 +79,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 /* WEEK */
 .week-shell{display:grid;grid-template-columns:90px repeat(7,1fr);column-gap:5px;overflow-x:auto;flex-shrink:0;min-width:500px}
 .wk-shell-spacer{}
-.week-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:8px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;height:400px}
+.week-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:8px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;height:200px;margin-bottom:10px}
 .week-col.today-col{border-color:var(--accent);border-width:1.5px}
 .week-col.focus-col{background:#fce8ee;border-color:#c2607a;border-width:1.5px}
 .wc-head{text-align:center;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:2px;flex-shrink:0;cursor:pointer}

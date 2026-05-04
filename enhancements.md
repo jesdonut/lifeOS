@@ -564,6 +564,38 @@ Removed the "▾ log spending / ▴ hide spending" toggle button from the week v
 
 ---
 
+## ~~40. Finance — Commute Category + Section Restructure~~ ✅ Complete
+
+Added `commute` (通勤費) as a new spend category distinct from `transport` (電車代金). Work commute (reimbursable) and personal transport are now tracked separately.
+
+**Spend categories:**
+- `commute` (通勤費) — daily commute to work; maps to the Commute Finance section
+- `transport` (電車代金) — personal/leisure transport; now maps to the Necessities Finance group
+- `necessities` (日常生活) en label changed to "Daily" to distinguish from the Finance section header "Necessities"
+- `project` (ゲーム/P) en label: "Project/Game"; `fun` jp updated to full katakana エンターテインメント
+
+**Finance section order:** Income → Commute → Food → Fixed Monthly → Necessities → Optional
+
+**Commute section** (new, hybrid manual + auto): combines 通勤定期券 commutation pass (manual input) and 通勤費 daily commute spend (auto). Commutation pass removed from Fixed Monthly.
+
+**Fixed Monthly** now contains only bills: rent, gas, water, electricity, phone, internet (6 fields).
+
+**Necessities** now includes 電車代金 (personal transport) alongside paperwork, medical, daily, NHI.
+
+**Income deductions — insurance split (May 2025+):** From May 2025 onwards, the single `insuranceDed` field is replaced by 7 separate deduction fields: health insurance, care insurance, child-rearing support, welfare pension, employment insurance, income tax, resident tax. Pre-May 2025 months continue to use `taxWithheld` + `insuranceDed`. Backward compatible: if new fields are empty, old values are used.
+
+**Balance formula:** Income − Commute − Food − Fixed − Necessities − Optional
+
+**Proportion bar:** Commute segment replaces the old Transport segment.
+
+---
+
+## ~~41. Week View — Event Column Height + Spend Panel Spacing~~ ✅ Complete
+
+Reduced event column height from 400px to 200px so the spend panel fits within the viewport without scrolling. Added `margin-bottom: 10px` to event columns and increased spend row padding (`6px/7px` from `3px/4px`) to give breathing room between the event cards and the spend panel table.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -607,3 +639,5 @@ Removed the "▾ log spending / ▴ hide spending" toggle button from the week v
 | 37 | Finance — Per-Month Breakdown + Cumulative Net | ✅ |
 | 38 | Currencies — Dual Independent JPY + IDR Rates | ✅ |
 | 39 | Week View — Spend Panel Always Visible | ✅ |
+| 40 | Finance — Commute Category + Section Restructure | ✅ |
+| 41 | Week View — Event Column Height + Spend Panel Spacing | ✅ |

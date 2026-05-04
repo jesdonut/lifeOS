@@ -58,7 +58,14 @@ DATA = {
                    settlementDate, firstCouponDate, maturityDate, matured }]
   bankAccounts: [{ id, name, currency, balance }]
   finance:      { "YYYY-MM": { salary, transportReimb, otherIncome, momPays,
-                               taxWithheld, insuranceDed, commutationPass,
+                               // pre-May 2025 deductions:
+                               taxWithheld, insuranceDed,
+                               // May 2025+ deductions (7 split fields):
+                               healthIns, careIns, childRearing, pensionIns,
+                               employmentIns, incomeTax, residentTax,
+                               // commute:
+                               commutationPass,
+                               // fixed bills:
                                rent, gas, water, electricity, phone, internet } }
 }
 ```
@@ -77,7 +84,7 @@ Nav order: **week → month → year → finance → savings**
 
 A 7-column grid (Mon–Sun). Each column shows events, tasks, and a daily spend total. Click any column header to jump to that date's week.
 
-**Spend panel** — always visible below the event grid: 9 category rows × 7 day columns. Type any amount (or an arithmetic expression like `1200+800`) and it saves immediately. Negative values are supported. Totals per day update live. The Finance tab reads these entries automatically.
+**Spend panel** — always visible below the event grid: 10 category rows × 7 day columns. Type any amount (or an arithmetic expression like `1200+800`) and it saves immediately. Negative values are supported. Totals per day update live. The Finance tab reads these entries automatically.
 
 ---
 
@@ -123,22 +130,22 @@ A monthly income and spending tracker. Navigate months with the **← →** arro
 
 **Two-column body:**
 - Left: accordion sections (Income open by default, others collapsed)
-- Right: per-month breakdown — Income, Fixed, Food, Transport, Necessities, Optional, Net for the current month; plus a **Total since Jan 2025** cumulative net at the bottom
+- Right: per-month breakdown — Income, Commute, Food, Fixed, Necessities, Optional, Net for the current month; plus a **Total since Jan 2025** cumulative net at the bottom
 
-**Sections:**
+**Sections (in order):**
 
 | Section | Input type | Fields |
 |---|---|---|
-| **Income** | Manual | Salary, transport reimbursement, other income, mom pays, tax withheld (−), insurance deducted (−) |
-| **Fixed Monthly** | Manual | Commutation pass, rent, gas, water, electricity, phone, internet |
+| **Income** | Manual | Salary, transport reimbursement, other income, mom pays; pre-May 2025: tax withheld (−), insurance (−); May 2025+: 7 split deductions (health, care, child-rearing, pension, employment, income tax, resident tax) |
+| **Commute** | Manual + Auto | 通勤定期券 commutation pass (manual) + 通勤費 daily commute spend (auto) |
 | **Food** | Auto from daily spend | 食べ物 |
-| **Transport** | Auto from daily spend | 電車代金 |
-| **Necessities** | Auto from daily spend | Paperwork, medical, necessities, NHI |
-| **Optional** | Auto from daily spend | Game/project, entertainment, clothes/hair |
+| **Fixed Monthly** | Manual | Rent, gas, water, electricity, phone, internet |
+| **Necessities** | Auto from daily spend | Transport (電車代金), paperwork, medical, daily (日常生活), NHI |
+| **Optional** | Auto from daily spend | Project/game, entertainment, clothes/hair |
 
-The four auto sections pull directly from daily entries logged in the week view's spend panel — aggregated automatically, displayed as read-only chips. Manual sections show a fill count (e.g. "3 of 6 filled") and highlight entered fields with an accent border. All manual fields accept arithmetic expressions (e.g. `50000*2`).
+Auto sections pull directly from daily entries in the week view spend panel. Manual sections show a fill count and highlight entered fields with an accent border. All manual fields accept arithmetic expressions (e.g. `50000*2`).
 
-**Balance formula:** Income − Fixed − Food − Transport − Necessities − Optional
+**Balance formula:** Income − Commute − Food − Fixed − Necessities − Optional
 
 ---
 
@@ -200,16 +207,17 @@ In the **upcoming** tab, `until` entries and `since + yearly` entries appear as 
 
 ## Spend Categories
 
-Nine fixed categories used in the week view spend panel and aggregated into the Finance tab:
+Ten fixed categories used in the week view spend panel and aggregated into the Finance tab:
 
 | Key | Japanese | English | Finance group |
 |---|---|---|---|
 | `food` | 食べ物 | Food | Food |
-| `transport` | 電車代金 | Transport | Transport |
+| `commute` | 通勤費 | Commute | Commute (transport group) |
+| `transport` | 電車代金 | Transport | Necessities |
 | `paperwork` | 書類仕事 | Paperwork | Necessities |
 | `medical` | メディカル | Medical | Necessities |
-| `necessities` | 日常生活 | Necessities | Necessities |
+| `necessities` | 日常生活 | Daily | Necessities |
 | `nhi` | 国民保険 | NHI | Necessities |
-| `project` | ゲーム/P | Game/Project | Optional |
-| `fun` | エンタメ | Entertainment | Optional |
+| `project` | ゲーム/P | Project/Game | Optional |
+| `fun` | エンターテインメント | Entertainment | Optional |
 | `clothes` | 服・髪 | Clothes/Hair | Optional |
