@@ -103,7 +103,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .wk-sp-inp{width:100%;border:none;outline:none;background:none;font-family:var(--mono);font-size:10px;text-align:right;padding:4px 5px;color:var(--text)}.wk-sp-inp:focus{background:var(--accent-light)}.wk-sp-inp::-webkit-inner-spin-button,.wk-sp-inp::-webkit-outer-spin-button{-webkit-appearance:none}
 .wk-sp-tot-lab{font-weight:600;border-top:1px solid var(--border2)}
 .wk-sp-tot{font-family:var(--mono);font-size:9px;text-align:right;padding:4px 5px;color:var(--text2);background:var(--surface2);border-right:1px solid var(--border);border-top:1px solid var(--border2)}
-.wc-evt{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:3px;padding:2px 6px;flex-shrink:0;display:flex;align-items:center;gap:3px}
+.wc-evt{font-size:10px;border-radius:3px;padding:2px 6px;flex-shrink:0;display:flex;align-items:center;gap:3px}
 .wc-slot{font-size:10px;color:var(--text2);line-height:1.4;padding:1px 0}
 
 /* MONTH */

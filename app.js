@@ -287,7 +287,7 @@ function renderWeek(panel,mon){
     weekTotal+=spend;
 
     const evtHtml=evts.map(function(e){
-      return '<div class="wc-evt" style="cursor:pointer" onclick="openEditEventModal(\''+key+'\',\''+e.id+'\')">'+
+      return '<div class="wc-evt" style="cursor:pointer;background:'+e.color+'18;color:'+e.color+'" onclick="openEditEventModal(\''+key+'\',\''+e.id+'\')">'+
         '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">'+e.text+'</span>'+
         '<button style="background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:10px;flex-shrink:0" onclick="event.stopPropagation();deleteEvent(\''+key+'\',\''+e.id+'\');render()">×</button>'+
       '</div>';
@@ -442,9 +442,8 @@ function renderYear(panel,year){
     const tlChips=Array.from({length:Math.max(tlTracks,0)},function(){return '';});
     for(let tmi=1;tmi<=12;tmi++){
       (tlByMonth[tmi]||[]).forEach(function(e,ti){
-        const cat=evtCat(e.color);
-        tlChips[ti]+='<div class="yr-tl-chip yr-tl-'+cat+'" style="grid-column:'+tmi+'" title="'+e.text.replace(/"/g,'&quot;')+'">'+
-          '<span class="yr-tl-dot"></span><span class="yr-tl-txt">'+e.text+'</span></div>';
+        tlChips[ti]+='<div class="yr-tl-chip" style="grid-column:'+tmi+';background:'+e.color+'18" title="'+e.text.replace(/"/g,'&quot;')+'">'+
+          '<span class="yr-tl-dot" style="background:'+e.color+'"></span><span class="yr-tl-txt" style="color:'+e.color+'">'+e.text+'</span></div>';
       });
     }
     const tlHtml=
