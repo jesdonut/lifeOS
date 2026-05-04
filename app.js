@@ -21,15 +21,16 @@ function selectSwatch(color,inputId){
   });
 }
 
-const CATS=[
-  {key:'food',label:'Food',color:'#a0697a'},
-  {key:'transport',label:'Transport',color:'#2c4a6e'},
-  {key:'health',label:'Health',color:'#8b2c2c'},
-  {key:'shopping',label:'Shopping',color:'#8b5e3c'},
-  {key:'entertainment',label:'Entertainment',color:'#5a3c7a'},
-  {key:'utilities',label:'Utilities',color:'#a06e54'},
-  {key:'education',label:'Education',color:'#5b7fa5'},
-  {key:'other',label:'Other',color:'#888'},
+const SPEND_CATS=[
+  {key:'food',       jp:'食べ物',          en:'Food',          group:'food'},
+  {key:'transport',  jp:'電車代金',         en:'Transport',     group:'transport'},
+  {key:'paperwork',  jp:'書類仕事',         en:'Paperwork',     group:'necessities'},
+  {key:'medical',    jp:'メディカル',       en:'Medical',       group:'necessities'},
+  {key:'necessities',jp:'日常生活',         en:'Necessities',   group:'necessities'},
+  {key:'nhi',        jp:'国民保険',         en:'NHI',           group:'necessities'},
+  {key:'project',    jp:'ゲーム/P',         en:'Game/Project',  group:'optional'},
+  {key:'fun',        jp:'エンタメ',         en:'Entertainment', group:'optional'},
+  {key:'clothes',    jp:'服・髪',           en:'Clothes/Hair',  group:'optional'},
 ];
 
 const CURRENCIES=[
@@ -44,6 +45,8 @@ const MIN_YEAR=1995,MAX_YEAR=2095;
 let view='week',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
 let _nisaLsExpanded=false;
 let _yearExpanded=null;
+let _spendOpen=false;
+function toggleSpend(){_spendOpen=!_spendOpen;render();}
 
 // DATA MODEL
 // events: "YYYY-MM-DD": [{id, text, color}]
@@ -52,19 +55,16 @@ let _yearExpanded=null;
 // spend:  "YYYY-MM-DD": {food:{raw,val}, transport:{raw,val},...}
 // goals:  "YYYY-MM-N":  string
 // notes:  [{id, text, date}]
-// catLabels: {key: label}
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}],finance:{}};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}],finance:{}};
 
 // ── UTILS ─────────────────────────────────────────────────────────────
 let _uid=0; function uid(){return 'id'+(++_uid)+Date.now();}
 function fd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function isToday(d){return fd(d)===fd(today);}
 function getMon(d){let day=d.getDay(),diff=day===0?-6:1-day,m=new Date(d);m.setDate(m.getDate()+diff);return m;}
-function catLabel(k){return DATA.catLabels[k]||CATS.find(c=>c.key===k).label;}
-function catColor(k){return(DATA.catColors&&DATA.catColors[k])||CATS.find(c=>c.key===k).color;}
 
 function getRate(code){return(DATA.currencyRates&&DATA.currencyRates[code]!=null)?DATA.currencyRates[code]:CURRENCIES.find(function(c){return c.code===code;}).rate;}
 function setRate(code,displayedVal){
@@ -92,7 +92,7 @@ function parseExpr(str){
 function spendVal(e){if(!e)return 0;if(typeof e==='object')return e.val||0;return parseFloat(e)||0;}
 function daySpendTotal(key){
   const sp=DATA.spend[key]||{};
-  return CATS.reduce(function(s,c){return s+spendVal(sp[c.key]);},0);
+  return SPEND_CATS.reduce(function(s,c){return s+spendVal(sp[c.key]);},0);
 }
 function monthSpendTotal(y,m){
   let t=0,dim=new Date(y,m+1,0).getDate();
@@ -101,18 +101,11 @@ function monthSpendTotal(y,m){
 }
 
 function commitSpend(input,dayKey,catKey){
-  const raw=input.value.trim();
-  const val=parseExpr(raw);
+  const val=parseExpr(input.value.trim());
   if(!DATA.spend[dayKey]) DATA.spend[dayKey]={};
-  DATA.spend[dayKey][catKey]={raw:raw,val:val};
+  DATA.spend[dayKey][catKey]=val||0;
   input.value=val||'';
-  input.dataset.raw=raw;
-  const hasB=raw&&(raw.includes('+')||raw.includes('-')||raw.includes('*')||raw.includes('/'));
-  const hint=input.closest('.spend-cat').querySelector('.spend-breakdown');
-  if(hint){hint.textContent=hasB&&val?raw+' = '+Math.round(val).toLocaleString():'';hint.style.display=hasB&&val?'block':'none';}
-  const tot=document.getElementById('day-spend-total');
-  if(tot) tot.textContent=fmtSpend(daySpendTotal(dayKey));
-  renderSidebar();
+  autoSave();
 }
 
 // ── EVENTS CRUD ───────────────────────────────────────────────────────
@@ -195,6 +188,7 @@ function jumpMonth(y,m){cursor=new Date(y,m,1);setView('month');}
 function render(){
   const panel=document.getElementById('main-panel');
   const label=document.getElementById('period-label');
+  panel.style.display='';panel.style.flexDirection='';
   if(view==='week'){
     const mon=getMon(new Date(cursor)),sun=new Date(mon);sun.setDate(sun.getDate()+6);
     label.textContent=MS[mon.getMonth()]+' '+mon.getDate()+' – '+MS[sun.getMonth()]+' '+sun.getDate()+' '+mon.getFullYear();
@@ -255,9 +249,38 @@ function renderWeek(panel,mon){
         (spend?'<div class="wc-spend">'+fmtSpend(spend)+'</div>':'')+
       '</div>';
   }
+  // ── spend panel ──
+  const wkDays=[];
+  for(let si=0;si<7;si++){const sd=new Date(mon);sd.setDate(mon.getDate()+si);wkDays.push({d:sd,key:fd(sd)});}
+  var spendPanel='';
+  if(_spendOpen){
+    var spHdr='<div class="wk-sp-corner">spend</div>'+
+      wkDays.map(function(di,i){return '<div class="wk-sp-hdr">'+DAYS[i][0]+'<span class="wk-sp-hdr-n">'+di.d.getDate()+'</span></div>';}).join('');
+    var spRows=SPEND_CATS.map(function(cat){
+      return '<div class="wk-sp-lab"><span class="wk-sp-jp">'+cat.jp+'</span><span class="wk-sp-en">'+cat.en+'</span></div>'+
+        wkDays.map(function(di){
+          var val=spendVal((DATA.spend[di.key]||{})[cat.key]);
+          return '<div class="wk-sp-cell"><input class="wk-sp-inp" type="number" min="0" value="'+(val||'')+'" placeholder="0"'+
+            ' onchange="commitSpend(this,\''+di.key+'\',\''+cat.key+'\');render()"></div>';
+        }).join('');
+    }).join('');
+    var spTots='<div class="wk-sp-corner wk-sp-tot-lab">total</div>'+
+      wkDays.map(function(di){
+        var tot=daySpendTotal(di.key);
+        return '<div class="wk-sp-tot">'+(tot?fmtSpend(tot):'—')+'</div>';
+      }).join('');
+    spendPanel='<div class="wk-spend-panel"><div class="wk-sp-grid">'+spHdr+spRows+spTots+'</div></div>';
+  }
+
+  panel.style.display='flex';
+  panel.style.flexDirection='column';
   panel.innerHTML=
     '<div class="week-grid">'+cols+'</div>'+
-    '<div style="text-align:right;padding:6px 2px;font-family:var(--mono);font-size:11px;color:var(--text2)">week total '+fmtSpend(weekTotal)+'</div>';
+    '<div class="wk-spend-toggle">'+
+      '<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">week '+fmtSpend(weekTotal)+'</span>'+
+      '<button onclick="toggleSpend()" class="wk-spend-btn">'+(_spendOpen?'▴ hide spending':'▾ log spending')+'</button>'+
+    '</div>'+
+    spendPanel;
 }
 
 // ── MONTH VIEW ────────────────────────────────────────────────────────
@@ -847,7 +870,7 @@ function renderSavings(panel){
 }
 
 // ── FINANCE ───────────────────────────────────────────────────────────
-var _finOpen={income:true,bills:true,necessities:true,optional:true};
+var _finOpen={income:true,fixed:true,food:true,transport:true,necessities:true,optional:true};
 function finToggle(sec){_finOpen[sec]=!_finOpen[sec];render();}
 
 function getFinMonth(y,m){
@@ -862,15 +885,28 @@ function finSet(y,m,k,v){
   DATA.finance[key][k]=parseFloat(v)||0;
   autoSave();
 }
-function finTotals(d){
+function monthSpendCat(y,m,catKey){
+  var total=0,dim=new Date(y,m+1,0).getDate();
+  for(var i=1;i<=dim;i++){
+    var sp=DATA.spend[fd(new Date(y,m,i))]||{};
+    total+=spendVal(sp[catKey]);
+  }
+  return total;
+}
+function monthSpendGroup(y,m,group){
+  return SPEND_CATS.filter(function(c){return c.group===group;}).reduce(function(s,c){return s+monthSpendCat(y,m,c.key);},0);
+}
+function finTotals(d,y,m){
   var income=(finVal(d,'salary')+finVal(d,'transportReimb')+finVal(d,'otherIncome')+finVal(d,'momPays'))
              -(finVal(d,'taxWithheld')+finVal(d,'insuranceDed'));
-  var bills=finVal(d,'rent')+finVal(d,'gas')+finVal(d,'water')+finVal(d,'electricity')+finVal(d,'phone')+finVal(d,'internet');
-  var necessities=finVal(d,'paperwork')+finVal(d,'medical')+finVal(d,'necessities')+finVal(d,'nhi');
-  var optional=finVal(d,'food')+finVal(d,'transport')+finVal(d,'project')+finVal(d,'fun')+finVal(d,'clothes');
   var commute=finVal(d,'commutationPass');
-  var balance=income-commute-bills-necessities-optional;
-  return {income:income,bills:bills,necessities:necessities,optional:optional,commute:commute,balance:balance};
+  var bills=finVal(d,'rent')+finVal(d,'gas')+finVal(d,'water')+finVal(d,'electricity')+finVal(d,'phone')+finVal(d,'internet');
+  var food=monthSpendGroup(y,m,'food');
+  var transport=monthSpendGroup(y,m,'transport');
+  var necessities=monthSpendGroup(y,m,'necessities');
+  var optional=monthSpendGroup(y,m,'optional');
+  var balance=income-commute-bills-food-transport-necessities-optional;
+  return {income:income,commute:commute,bills:bills,food:food,transport:transport,necessities:necessities,optional:optional,balance:balance};
 }
 
 function finRow(y,m,k,jpLabel,enLabel,step,negative){
@@ -883,6 +919,12 @@ function finRow(y,m,k,jpLabel,enLabel,step,negative){
       ' onchange="finSet('+y+','+m+',\''+k+'\',this.value);render()"'+
     '>'+
     '<span class="fin-disp'+(negative?' fin-neg':'')+'">'+(val?disp:'')+'</span>'+
+  '</div>';
+}
+function finReadRow(jpLabel,enLabel,val){
+  return '<div class="fin-row">'+
+    '<div class="fin-labels"><span class="fin-jp">'+jpLabel+'</span><span class="fin-en">'+enLabel+'</span></div>'+
+    '<span class="fin-disp fin-auto">'+(val?'¥'+val.toLocaleString():'—')+'</span>'+
   '</div>';
 }
 
@@ -898,11 +940,24 @@ function finSection(title,jpTitle,sec,rows,total,negative){
     (open?'<div class="fin-rows">'+rows+'</div>':'')+
   '</div>';
 }
+function finAutoSection(title,jpTitle,sec,rows,total){
+  var open=_finOpen[sec];
+  return '<div class="fin-section fin-auto-sec">'+
+    '<div class="fin-sec-hdr" onclick="finToggle(\''+sec+'\')">'+
+      '<span class="fin-sec-arrow">'+(open?'▾':'▸')+'</span>'+
+      '<span class="fin-sec-title">'+title+'</span>'+
+      '<span class="fin-sec-jp">'+jpTitle+'</span>'+
+      '<span class="fin-auto-badge">from daily entries</span>'+
+      '<span class="fin-sec-total">¥'+total.toLocaleString()+'</span>'+
+    '</div>'+
+    (open?'<div class="fin-rows">'+rows+'</div>':'')+
+  '</div>';
+}
 
 function renderFinance(panel,y,m){
   var d=getFinMonth(y,m);
-  var t=finTotals(d);
-  var balColor=t.balance>=0?'var(--good,#2d5a3d)':'#8b2c2c';
+  var t=finTotals(d,y,m);
+  var balColor=t.balance>=0?'#2d5a3d':'#8b2c2c';
 
   var incomeRows=
     finRow(y,m,'salary','給料','Salary',1000,false)+
@@ -912,7 +967,7 @@ function renderFinance(panel,y,m){
     finRow(y,m,'taxWithheld','税金','Tax withheld',1000,true)+
     finRow(y,m,'insuranceDed','保険料','Insurance ded.',1000,true);
 
-  var billsRows=
+  var fixedRows=
     finRow(y,m,'commutationPass','通勤定期券','Commutation pass',1000,false)+
     finRow(y,m,'rent','家賃','Rent',1000,false)+
     finRow(y,m,'gas','ガス費','Gas',100,false)+
@@ -921,51 +976,44 @@ function renderFinance(panel,y,m){
     finRow(y,m,'phone','携帯','Phone',100,false)+
     finRow(y,m,'internet','インターネット','Internet',100,false);
 
+  var foodRows=finReadRow('食べ物','Food',monthSpendCat(y,m,'food'));
+
+  var transportRows=finReadRow('電車代金','Transport',monthSpendCat(y,m,'transport'));
+
   var necRows=
-    finRow(y,m,'paperwork','書類仕事','Paperwork',1000,false)+
-    finRow(y,m,'medical','メディカル','Medical',1000,false)+
-    finRow(y,m,'necessities','日常生活','Necessities',1000,false)+
-    finRow(y,m,'nhi','国民保険','NHI',1000,false);
+    finReadRow('書類仕事','Paperwork',monthSpendCat(y,m,'paperwork'))+
+    finReadRow('メディカル','Medical',monthSpendCat(y,m,'medical'))+
+    finReadRow('日常生活','Necessities',monthSpendCat(y,m,'necessities'))+
+    finReadRow('国民保険','NHI',monthSpendCat(y,m,'nhi'));
 
   var optRows=
-    finRow(y,m,'food','食べ物','Food',1000,false)+
-    finRow(y,m,'transport','電車代金','Transport',1000,false)+
-    finRow(y,m,'project','ゲーム/プロジェクト','Game/Project',1000,false)+
-    finRow(y,m,'fun','エンターテイメント','Entertainment',1000,false)+
-    finRow(y,m,'clothes','服・髪','Clothes/Hair',1000,false);
+    finReadRow('ゲーム/P','Game/Project',monthSpendCat(y,m,'project'))+
+    finReadRow('エンタメ','Entertainment',monthSpendCat(y,m,'fun'))+
+    finReadRow('服・髪','Clothes/Hair',monthSpendCat(y,m,'clothes'));
 
   panel.innerHTML=
     '<div class="fin-wrap">'+
       '<div class="fin-summary-bar">'+
-        '<div class="fin-sum-cell">'+
-          '<div class="fin-sum-lab">income</div>'+
-          '<div class="fin-sum-val" style="color:var(--good,#2d5a3d)">¥'+t.income.toLocaleString()+'</div>'+
-        '</div>'+
+        '<div class="fin-sum-cell"><div class="fin-sum-lab">income</div><div class="fin-sum-val" style="color:#2d5a3d">¥'+t.income.toLocaleString()+'</div></div>'+
         '<div class="fin-sum-sep">−</div>'+
-        '<div class="fin-sum-cell">'+
-          '<div class="fin-sum-lab">bills + commute</div>'+
-          '<div class="fin-sum-val">¥'+(t.bills+t.commute).toLocaleString()+'</div>'+
-        '</div>'+
+        '<div class="fin-sum-cell"><div class="fin-sum-lab">fixed</div><div class="fin-sum-val">¥'+(t.commute+t.bills).toLocaleString()+'</div></div>'+
         '<div class="fin-sum-sep">−</div>'+
-        '<div class="fin-sum-cell">'+
-          '<div class="fin-sum-lab">necessities</div>'+
-          '<div class="fin-sum-val">¥'+t.necessities.toLocaleString()+'</div>'+
-        '</div>'+
+        '<div class="fin-sum-cell"><div class="fin-sum-lab">food</div><div class="fin-sum-val">¥'+t.food.toLocaleString()+'</div></div>'+
         '<div class="fin-sum-sep">−</div>'+
-        '<div class="fin-sum-cell">'+
-          '<div class="fin-sum-lab">optional</div>'+
-          '<div class="fin-sum-val">¥'+t.optional.toLocaleString()+'</div>'+
-        '</div>'+
+        '<div class="fin-sum-cell"><div class="fin-sum-lab">transport</div><div class="fin-sum-val">¥'+t.transport.toLocaleString()+'</div></div>'+
+        '<div class="fin-sum-sep">−</div>'+
+        '<div class="fin-sum-cell"><div class="fin-sum-lab">necessities</div><div class="fin-sum-val">¥'+t.necessities.toLocaleString()+'</div></div>'+
+        '<div class="fin-sum-sep">−</div>'+
+        '<div class="fin-sum-cell"><div class="fin-sum-lab">optional</div><div class="fin-sum-val">¥'+t.optional.toLocaleString()+'</div></div>'+
         '<div class="fin-sum-sep">=</div>'+
-        '<div class="fin-sum-cell">'+
-          '<div class="fin-sum-lab">balance</div>'+
-          '<div class="fin-sum-val" style="color:'+balColor+';font-size:18px">¥'+t.balance.toLocaleString()+'</div>'+
-        '</div>'+
+        '<div class="fin-sum-cell"><div class="fin-sum-lab">balance</div><div class="fin-sum-val" style="color:'+balColor+';font-size:18px">¥'+t.balance.toLocaleString()+'</div></div>'+
       '</div>'+
       finSection('Income','収入','income',incomeRows,t.income,false)+
-      finSection('Bills & Commute','固定費','bills',billsRows,t.bills+t.commute,false)+
-      finSection('Necessities','生活費','necessities',necRows,t.necessities,false)+
-      finSection('Optional','任意支出','optional',optRows,t.optional,false)+
+      finSection('Fixed Monthly','固定費','fixed',fixedRows,t.commute+t.bills,false)+
+      finAutoSection('Food','食べ物','food',foodRows,t.food)+
+      finAutoSection('Transport','電車代金','transport',transportRows,t.transport)+
+      finAutoSection('Necessities','生活費','necessities',necRows,t.necessities)+
+      finAutoSection('Optional','任意支出','optional',optRows,t.optional)+
     '</div>';
 }
 
@@ -1332,13 +1380,19 @@ function toggleBondMatured(id){
 }
 
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}]};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}]};
   startApp();
 }
 
 function startApp(){
   DATA.slots={};
-  if(!DATA.catColors) DATA.catColors={};
+  // migrate old spend format {raw,val} → plain number
+  Object.keys(DATA.spend||{}).forEach(function(dk){
+    var sp=DATA.spend[dk];
+    Object.keys(sp).forEach(function(ck){
+      if(sp[ck]&&typeof sp[ck]==='object') sp[ck]=sp[ck].val||0;
+    });
+  });
   if(!DATA.currencyRates) DATA.currencyRates={};
   if(!DATA.baseCurrency) DATA.baseCurrency='JPY';
   if(!DATA.countdowns) DATA.countdowns=[];
