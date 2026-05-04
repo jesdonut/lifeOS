@@ -58,30 +58,6 @@ let _yearExpanded=null;
 
 let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}],finance:{}};
 
-const SEED_EVENTS=[
-  {date:'2026-05-08',text:'Driving license exam',color:'#2c4a6e'},
-  {date:'2026-05-21',text:'Driving camp ends',color:'#c2607a'},
-  {date:'2026-08-01',text:'JLPT N1 registration opens',color:'#8b5e3c'},
-  {date:'2026-12-06',text:'JLPT N1 exam',color:'#5a3c7a'},
-];
-const SEED_GOALS=[
-  {key:'2026-5-0',val:'Pass driving license exam'},
-  {key:'2026-7-0',val:'Decide on Cybernation offer'},
-  {key:'2026-8-0',val:'Register for JLPT N1'},
-  {key:'2026-12-0',val:'JLPT N1 exam'},
-  {key:'2027-4-0',val:'Enroll in 日本語教師 course'},
-  {key:'2028-6-0',val:'Target: 登録日本語教員 license'},
-  {key:'2032-3-0',val:'10-yr residence → PR eligible'},
-];
-
-function seedData(){
-  SEED_EVENTS.forEach(function(e){
-    if(!DATA.events[e.date]) DATA.events[e.date]=[];
-    DATA.events[e.date].push({id:uid(),text:e.text,color:e.color});
-  });
-  SEED_GOALS.forEach(function(g){ if(!DATA.goals[g.key]) DATA.goals[g.key]=g.val; });
-}
-
 // ── UTILS ─────────────────────────────────────────────────────────────
 let _uid=0; function uid(){return 'id'+(++_uid)+Date.now();}
 function fd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -1357,7 +1333,6 @@ function toggleBondMatured(id){
 
 function startFresh(){
   DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],catLabels:{},catColors:{},countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}]};
-  seedData();
   startApp();
 }
 
