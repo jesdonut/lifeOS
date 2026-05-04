@@ -198,6 +198,41 @@ function submitAddEvent(){
   render();
 }
 
+function openEditEventModal(key,id){
+  var evt=(DATA.events[key]||[]).find(function(e){return e.id===id;});
+  if(!evt) return;
+  var dateStyle='width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px';
+  openModal(
+    '<div class="modal-title">edit event</div>'+
+    '<input id="evt-text" value="'+evt.text.replace(/"/g,'&quot;')+'" placeholder="event name...">'+
+    '<input id="evt-date" type="date" value="'+key+'" style="'+dateStyle+'">'+
+    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    buildSwatches('evt-color',evt.color)+
+    '<div class="modal-row">'+
+      '<button class="modal-btn ghost" style="color:var(--bad)" onclick="deleteEvent(\''+key+'\',\''+id+'\');closeModal();render()">delete</button>'+
+      '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
+      '<button class="modal-btn primary" onclick="submitEditEvent(\''+key+'\',\''+id+'\')">save</button>'+
+    '</div>'
+  );
+  setTimeout(function(){var el=document.getElementById('evt-text');if(el){el.focus();el.select();}},50);
+}
+function submitEditEvent(origKey,id){
+  var text=document.getElementById('evt-text').value.trim();
+  var color=document.getElementById('evt-color').value;
+  var newKey=document.getElementById('evt-date').value;
+  if(!text) return;
+  if(newKey===origKey){
+    var evt=(DATA.events[origKey]||[]).find(function(e){return e.id===id;});
+    if(evt){evt.text=text;evt.color=color;}
+  } else {
+    deleteEvent(origKey,id);
+    addEvent(newKey,text,color);
+  }
+  autoSave();
+  closeModal();
+  render();
+}
+
 // ── VIEW / NAV ────────────────────────────────────────────────────────
 function setView(v){view=v;document.querySelectorAll('.vbtn').forEach(function(b){b.classList.toggle('active',b.textContent===v);});render();}
 function setSTab(t){stab=t;document.querySelectorAll('.stab').forEach(function(b){b.classList.toggle('active',b.textContent===t);});renderSidebar();}
@@ -252,9 +287,9 @@ function renderWeek(panel,mon){
     weekTotal+=spend;
 
     const evtHtml=evts.map(function(e){
-      return '<div class="wc-evt">'+
-        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.text+'</span>'+
-        '<button style="background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:10px;flex-shrink:0" onclick="deleteEvent(\''+key+'\',\''+e.id+'\');render()">×</button>'+
+      return '<div class="wc-evt" style="cursor:pointer" onclick="openEditEventModal(\''+key+'\',\''+e.id+'\')">'+
+        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">'+e.text+'</span>'+
+        '<button style="background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:10px;flex-shrink:0" onclick="event.stopPropagation();deleteEvent(\''+key+'\',\''+e.id+'\');render()">×</button>'+
       '</div>';
     }).join('');
 
@@ -327,7 +362,7 @@ function renderMonth(panel,d){
     cells+=
       '<div class="mc'+(isTod?' today-mc':'')+(other?' other':'')+'" onclick="jumpWeek(\''+ckey+'\')">'+
         '<div class="mc-num">'+cd+'</div>'+
-        evts.slice(0,2).map(function(e){return '<div class="mc-item" style="background:'+e.color+'18;color:'+e.color+'">'+e.text+'</div>';}).join('')+
+        evts.slice(0,2).map(function(e){return '<div class="mc-item" style="background:'+e.color+'18;color:'+e.color+';cursor:pointer" onclick="event.stopPropagation();openEditEventModal(\''+ckey+'\',\''+e.id+'\')">'+e.text+'</div>';}).join('')+
         tasks.slice(0,1).map(function(t){return '<div class="mc-item" style="background:#e8e0f5;color:#9b7ec8">'+t.text+'</div>';}).join('')+
         (spend?'<div class="mc-spend">'+fmtSpend(spend)+'</div>':'')+
       '</div>';
