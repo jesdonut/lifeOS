@@ -813,29 +813,6 @@ function renderSavings(panel){
     }).join('')+
     '</details>':'';
 
-  var bankRows=(DATA.bankAccounts||[]).map(function(a){
-    var jpyVal=a.currency==='JPY'?a.balance:(a.balance*(a.currency==='IDR'?getRate('IDR'):getRate(a.currency)));
-    var idrVal=a.currency==='IDR'?a.balance:(a.currency==='JPY'?Math.round(a.balance/getRate('IDR')):Math.round(a.balance*getRateIDR(a.currency)));
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
-      '<span style="font-size:12px;font-weight:500;color:var(--text);min-width:48px">'+a.name+'</span>'+
-      '<span style="font-size:10px;color:var(--text3);min-width:28px">'+a.currency+'</span>'+
-      '<input type="number" step="1000" value="'+a.balance+'" onchange="updateBankBalance(\''+a.id+'\',this.value)" style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none">'+
-      '<span style="font-size:10px;color:var(--text2);white-space:nowrap">¥'+Math.round(jpyVal).toLocaleString()+' · Rp'+idrVal.toLocaleString()+'</span>'+
-      '<button onclick="deleteBankAccount(\''+a.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0">×</button>'+
-    '</div>';
-  }).join('');
-  var bankTotalJpy=(DATA.bankAccounts||[]).reduce(function(s,a){
-    return s+(a.currency==='JPY'?a.balance:(a.balance*(a.currency==='IDR'?getRate('IDR'):getRate(a.currency))));
-  },0);
-  var bankTotalIdr=(DATA.bankAccounts||[]).reduce(function(s,a){
-    return s+(a.currency==='IDR'?a.balance:(a.currency==='JPY'?Math.round(a.balance/getRate('IDR')):Math.round(a.balance*getRateIDR(a.currency))));
-  },0);
-  var bankSection='<div class="savings-card">'+
-    '<div class="savings-title">bank accounts</div>'+
-    bankRows+
-    '<button onclick="addBankAccount()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add account</button>'+
-    (bankTotalJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total</span><span style="font-family:var(--mono);font-size:12px;font-weight:500">¥'+Math.round(bankTotalJpy).toLocaleString()+' · Rp'+bankTotalIdr.toLocaleString()+'</span></div>':'')+
-  '</div>';
 
   var bondsSection=
     '<div class="savings-card">'+
@@ -923,7 +900,6 @@ function renderSavings(panel){
       '<div class="curr-grid">'+currCards+'</div>'+
       (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:12px;font-weight:500">¥'+Math.round(allJpy).toLocaleString()+' · Rp'+Math.round(allIdr).toLocaleString()+'</span></div>':'')+
     '</div>'+
-    bankSection+
     bondsSection+
     '</div>';
 }
@@ -1176,10 +1152,17 @@ function renderSidebar(){
   if(stab==='notes'){
     sc.innerHTML=
       DATA.notes.map(function(n,i){
-        return '<div class="note-card"><textarea oninput="autoResize(this);DATA.notes['+i+'].text=this.value" onchange="DATA.notes['+i+'].text=this.value" placeholder="note..." style="height:auto">'+n.text+'</textarea><div class="note-meta"><span>'+n.date+'</span><button class="note-del icon-btn" onclick="DATA.notes.splice('+i+',1);renderSidebar()">×</button></div></div>';
+        return '<div class="note-card">'+
+          '<div class="note-toolbar">'+
+            '<button class="note-fmt-btn" onmousedown="event.preventDefault();document.execCommand(\'bold\')"><b>B</b></button>'+
+            '<button class="note-fmt-btn" onmousedown="event.preventDefault();document.execCommand(\'underline\')" style="text-decoration:underline">U</button>'+
+            '<button class="note-fmt-btn" onmousedown="event.preventDefault();document.execCommand(\'strikeThrough\')" style="text-decoration:line-through">S</button>'+
+          '</div>'+
+          '<div class="note-content" contenteditable="true" oninput="DATA.notes['+i+'].text=this.innerHTML" data-placeholder="note...">'+n.text+'</div>'+
+          '<div class="note-meta"><span>'+n.date+'</span><button class="note-del icon-btn" onclick="DATA.notes.splice('+i+',1);renderSidebar()">×</button></div>'+
+        '</div>';
       }).join('')+
       '<button class="add-btn" onclick="DATA.notes.unshift({id:\''+uid()+'\',text:\'\',date:\''+fd(today)+'\'});renderSidebar()">+ add note</button>';
-    sc.querySelectorAll('.note-card textarea').forEach(autoResize);
   } else if(stab==='upcoming'){
     const now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     const items=[];
@@ -1305,8 +1288,6 @@ function showSavedIndicator(){
 async function initAutoSave(){
   if(!window.showSaveFilePicker){
     const btn=document.getElementById('manual-save-btn');if(btn)btn.style.display='';
-    const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    if(isSafari){const ind=document.getElementById('saved-indicator');if(ind){ind.textContent='use Chrome for auto-save';ind.style.opacity='1';}}
     return;
   }
   try{

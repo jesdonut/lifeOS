@@ -669,3 +669,5 @@ Swatches now render as labelled pills (dot + name) instead of plain circles. All
 | 41 | Week View — Event Column Height + Spend Panel Spacing | ✅ |
 | 42 | Events — Editable (text, date, colour) | ✅ |
 | 43 | Events — Labelled Colour Palette + Consistent Colours Across Views | ✅ |
+| 44 | Remove Bank Accounts Section | ✅ |
+| 45 | Notes — Bold, Underline, Strikethrough Formatting | ✅ |
