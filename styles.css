@@ -2,8 +2,10 @@
 :root{
   --bg:#fdf6f8;--surface:#fff;--surface2:#fdf0f3;--border:#f0d9e0;--border2:#ddb8c4;
   --text:#2d1f25;--text2:#8a6672;--text3:#c4a0aa;
-  --accent:#c2607a;--accent-light:#fce8ee;
+  --accent:#c8456c;--accent-light:#fce8ee;
   --lavender:#e8e0f5;--lavender-text:#9b7ec8;
+  --tsumitate:#e85a8a;--growth:#5a8fc8;
+  --c-work:#c8456c;--c-life:#5a8fc8;--c-learn:#c87a3a;--c-travel:#4a8a5a;
   --radius:8px;--radius-lg:14px;
   --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
 }
@@ -139,6 +141,27 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .my-nisa-row{display:flex;align-items:center;gap:8px;padding:6px 14px;border-top:1px solid var(--border);background:var(--accent-light)}
 .my-nisa-label{font-size:10px;color:var(--accent);font-family:var(--mono)}
 .my-nisa-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent)}
+
+/* YEAR REDESIGN */
+.yr-strip{display:flex;gap:6px;padding:2px 0 10px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.yr-strip::-webkit-scrollbar{display:none}
+.yr-strip-card{flex:0 0 auto;width:62px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:6px 4px;cursor:pointer;text-align:center;transition:.1s}.yr-strip-card:hover{border-color:var(--border2);background:var(--surface2)}.yr-strip-card.yr-strip-cur{border-color:var(--accent);background:var(--accent-light)}
+.yr-strip-yr{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text)}
+.yr-strip-age{font-size:9px;color:var(--text3);margin-bottom:4px}
+.yr-strip-dots{display:flex;flex-wrap:wrap;justify-content:center;min-height:12px;gap:2px}
+.yr-card-hdr{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.yr-card-left{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.yr-cat-badges{display:flex;flex-wrap:wrap;gap:4px}
+.yr-cat-badge{font-size:9px;font-family:var(--mono);padding:1px 6px;border-radius:10px;font-weight:500}
+.yr-cat-work{background:#f8e0e5;color:var(--c-work)}.yr-cat-life{background:#deeaf8;color:var(--c-life)}.yr-cat-learn{background:#f8ece0;color:var(--c-learn)}.yr-cat-travel{background:#ddf0e5;color:var(--c-travel)}
+.yr-card-center{min-width:0}
+.yr-summary-inp{width:100%;background:none;border:1px solid transparent;outline:none;font-family:var(--sans);font-size:12px;color:var(--text);padding:3px 6px;border-radius:4px}.yr-summary-inp:hover{border-color:var(--border)}.yr-summary-inp:focus{background:var(--surface);border-color:var(--border2)}.yr-summary-inp::placeholder{color:var(--text3)}
+.yr-card-right{min-width:130px}
+.yr-hdr-nisa{display:flex;flex-direction:column;gap:4px}
+.yr-hdr-nisa-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.yr-hdr-nisa-fill{height:100%;background:linear-gradient(90deg,var(--tsumitate),var(--growth));border-radius:2px}
+.yr-hdr-nisa-vals{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:9px}
+.yr-hdr-nisa-v{color:var(--text);font-weight:500}.yr-hdr-nisa-p{color:var(--text3)}.yr-hdr-nisa-d{color:var(--c-travel);font-weight:500}
 
 /* SAVINGS */
 .savings-wrap{display:flex;flex-direction:column;gap:12px}

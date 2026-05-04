@@ -43,6 +43,7 @@ const today=new Date();
 const MIN_YEAR=1995,MAX_YEAR=2095;
 let view='week',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
 let _nisaLsExpanded=false;
+let _yearExpanded=null;
 
 // DATA MODEL
 // events: "YYYY-MM-DD": [{id, text, color}]
@@ -319,12 +320,45 @@ function renderMonth(panel,d){
 }
 
 // ── YEAR VIEW ─────────────────────────────────────────────────────────
+var _CAT_MAP={'#c8456c':'work','#5a8fc8':'life','#c87a3a':'learn','#4a8a5a':'travel',
+              '#8b2c2c':'work','#2c4a6e':'life','#5a3c7a':'learn','#2d5a3d':'travel','#3c6b6b':'travel'};
+function evtCat(color){return _CAT_MAP[(color||'').toLowerCase()]||'other';}
+function yearEvtCounts(y){
+  var pfx=String(y)+'-';
+  var c={work:0,life:0,learn:0,travel:0,other:0};
+  Object.keys(DATA.events).filter(function(k){return k.startsWith(pfx);}).forEach(function(k){
+    DATA.events[k].forEach(function(e){c[evtCat(e.color)]++;});
+  });
+  return c;
+}
 function renderYear(panel,year){
   multiYearStart=Math.max(MIN_YEAR,Math.min(MAX_YEAR-4,year-2));
   const birthYear=1995;
   const allNisaRows=nisaCalc();
 
-  // ── multi-year strip ──
+  // ── decade nav strip ──
+  var decStart=Math.max(MIN_YEAR,year-5);
+  var decEnd=Math.min(MAX_YEAR,decStart+10);
+  decStart=Math.max(MIN_YEAR,decEnd-10);
+  var decStrip='<div class="yr-strip">';
+  for(var dy=decStart;dy<=decEnd;dy++){
+    var dage=dy-birthYear;
+    var dcounts=yearEvtCounts(dy);
+    var catKeys=['work','life','learn','travel','other'];
+    var catClrs={work:'var(--c-work)',life:'var(--c-life)',learn:'var(--c-learn)',travel:'var(--c-travel)',other:'var(--text3)'};
+    var ddots=catKeys.filter(function(c){return dcounts[c]>0;}).map(function(c){
+      return '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+catClrs[c]+';margin:1px"></span>';
+    }).join('');
+    decStrip+=
+      '<div class="yr-strip-card'+(dy===year?' yr-strip-cur':'')+'" onclick="cursor=new Date('+dy+',0,1);render()" title="'+dy+'">'+
+        '<div class="yr-strip-yr">'+dy+'</div>'+
+        '<div class="yr-strip-age">age '+dage+'</div>'+
+        '<div class="yr-strip-dots">'+ddots+'</div>'+
+      '</div>';
+  }
+  decStrip+='</div>';
+
+  // ── year cards ──
   let strip='';
   for(let y=multiYearStart;y<multiYearStart+5;y++){
     const age=y-birthYear;
@@ -355,16 +389,36 @@ function renderYear(panel,year){
     }
     const nisaRow=allNisaRows.find(function(r){return r.year===y;});
     const contrib=nisaRow?nisaRow.cumulative:0;
-    const capRow=allNisaRows.find(function(r){return r.capReached;});
-    const capThisYear=capRow&&y>=capRow.year;
+    const thisYrDelta=nisaRow?nisaRow.total:0;
+    const nisPct=Math.min(100,Math.round(contrib/180000));
+    const yCounts=yearEvtCounts(y);
+    const summaryKey=y+'-sum';
+    const catBadges=['work','life','learn','travel'].filter(function(c){return yCounts[c]>0;}).map(function(c){
+      return '<span class="yr-cat-badge yr-cat-'+c+'">'+yCounts[c]+' '+c+'</span>';
+    }).join('');
+    const nisaRight=
+      '<div class="yr-hdr-nisa">'+
+        '<div class="yr-hdr-nisa-bar"><div class="yr-hdr-nisa-fill" style="width:'+nisPct+'%"></div></div>'+
+        '<div class="yr-hdr-nisa-vals">'+
+          '<span class="yr-hdr-nisa-v">¥'+contrib.toLocaleString()+'</span>'+
+          '<span class="yr-hdr-nisa-p">'+nisPct+'%</span>'+
+          (thisYrDelta>0?'<span class="yr-hdr-nisa-d">+¥'+thisYrDelta.toLocaleString()+'</span>':'')+
+        '</div>'+
+      '</div>';
     strip+=
       '<div class="my-year-section'+(focused?' my-year-focused':'')+'">'+
-        '<div class="my-year-hdr">'+
-          '<span class="my-year-num" onclick="cursor=new Date('+y+',0,1);render()" style="cursor:pointer" title="view '+y+'">'+y+'</span>'+
-          '<span class="my-year-age">age '+age+'</span>'+
+        '<div class="yr-card-hdr">'+
+          '<div class="yr-card-left">'+
+            '<span class="my-year-num" onclick="cursor=new Date('+y+',0,1);render()" style="cursor:pointer" title="view '+y+'">'+y+'</span>'+
+            '<span class="my-year-age">age '+age+'</span>'+
+            (catBadges?'<div class="yr-cat-badges">'+catBadges+'</div>':'')+
+          '</div>'+
+          '<div class="yr-card-center">'+
+            '<input class="yr-summary-inp" placeholder="year summary..." value="'+(DATA.goals[summaryKey]||'')+'" onchange="DATA.goals[\''+summaryKey+'\']=this.value;autoSave()">'+
+          '</div>'+
+          '<div class="yr-card-right">'+nisaRight+'</div>'+
         '</div>'+
         '<div class="my-months-row">'+monthCells+'</div>'+
-        (contrib>0?'<div class="my-nisa-row"><span class="my-nisa-label">NISA:</span><span class="my-nisa-val">¥'+contrib.toLocaleString()+(capThisYear?' 🎉 cap reached!':'')+'</span></div>':'')+
       '</div>';
   }
 
@@ -411,6 +465,7 @@ function renderYear(panel,year){
 
   panel.innerHTML=
     '<div style="display:flex;flex-direction:column;gap:16px">'+
+      decStrip+
       strip+
       '<div class="year-grid">'+blocks+'</div>'+
     '</div>';
