@@ -596,6 +596,32 @@ Reduced event column height from 400px to 200px so the spend panel fits within t
 
 ---
 
+## ~~42. Events — Editable (text, date, colour)~~ ✅ Complete
+
+Clicking any event pill in the week or month view opens an edit modal pre-filled with the event's current name, date, and colour. Saving updates in place; changing the date moves the event to the new date. A delete button is also available inside the modal. The × on the pill still deletes directly without opening the modal.
+
+---
+
+## ~~43. Events — Labelled Colour Palette + Consistent Colours Across Views~~ ✅ Complete
+
+Replaced the 8 anonymous colour swatches with 9 named category colours:
+
+| Label | Hex |
+|---|---|
+| education | `#8FAFA2` |
+| family | `#86AFC5` |
+| friends | `#7C9CCB` |
+| health | `#C79A9A` |
+| partner | `#B7A6B5` |
+| personal | `#D69AA5` |
+| project | `#C49A73` |
+| travel | `#D1B36A` |
+| work | `#B8C89A` |
+
+Swatches now render as labelled pills (dot + name) instead of plain circles. All three views (week, month, year) now use the same colour treatment: `background: color+'18'` tint with `color` text, matching the existing month view style. The year timeline chips no longer depend on category CSS classes.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -641,3 +667,5 @@ Reduced event column height from 400px to 200px so the spend panel fits within t
 | 39 | Week View — Spend Panel Always Visible | ✅ |
 | 40 | Finance — Commute Category + Section Restructure | ✅ |
 | 41 | Week View — Event Column Height + Spend Panel Spacing | ✅ |
+| 42 | Events — Editable (text, date, colour) | ✅ |
+| 43 | Events — Labelled Colour Palette + Consistent Colours Across Views | ✅ |

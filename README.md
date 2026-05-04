@@ -84,6 +84,8 @@ Nav order: **week → month → year → finance → savings**
 
 A 7-column grid (Mon–Sun). Each column shows events, tasks, and a daily spend total. Click any column header to jump to that date's week.
 
+**Events** — click any event pill to edit its name, date, or colour. The × button deletes directly. Adding an event opens a modal with a labelled colour picker (9 named categories).
+
 **Spend panel** — always visible below the event grid: 10 category rows × 7 day columns. Type any amount (or an arithmetic expression like `1200+800`) and it saves immediately. Negative values are supported. Totals per day update live. The Finance tab reads these entries automatically.
 
 ---
@@ -109,13 +111,19 @@ Years with no events collapse to a single line. Click to expand.
 
 **Planner grid** — the detailed 12-month mini-calendar (with clickable days and per-month goal rows) only appears for the currently focused year, and only for months that have at least one event.
 
-**Event category colours** — inferred from event colour:
-| Category | Colour |
-|---|---|
-| work | `#c8456c` (rose) |
-| life | `#5a8fc8` (blue) |
-| learn | `#c87a3a` (orange) |
-| travel | `#4a8a5a` (green) |
+**Event colours** — each event carries its own colour chosen at creation. All views (week, month, year timeline) render events with a tinted background and coloured text using the event's colour directly. The 9 available colours and their labels:
+
+| Label | Hex | Year category |
+|---|---|---|
+| education | `#8FAFA2` | learn |
+| family | `#86AFC5` | life |
+| friends | `#7C9CCB` | life |
+| health | `#C79A9A` | life |
+| partner | `#B7A6B5` | life |
+| personal | `#D69AA5` | life |
+| project | `#C49A73` | work |
+| travel | `#D1B36A` | travel |
+| work | `#B8C89A` | work |
 
 ---
 
