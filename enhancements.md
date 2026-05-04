@@ -468,7 +468,7 @@ Redesigned the NISA section in the savings view to be cleaner and more informati
 
 ---
 
-## 32. Year View Redesign — Timeline, Decade Strip, Category Colors
+## ~~32. Year View Redesign — Timeline, Decade Strip, Category Colors~~ ✅ Complete
 
 Refactor the year view to match the Claude-designed mockup. Keep existing data model, routing, and JP labels. Only change layout and styling.
 
@@ -527,4 +527,4 @@ Refactor the year view to match the Claude-designed mockup. Keep existing data m
 | 29 | Merge Year + Years → Single Year View with Calendar | ✅ |
 | 30 | Bug Fix — Years View: Day Badges + Equal Column Widths | ✅ |
 | 31 | NISA Tracker UI Redesign | ✅ |
-| 32 | Year View Redesign — Timeline, Decade Strip, Category Colors | ⏳ pending |
+| 32 | Year View Redesign — Timeline, Decade Strip, Category Colors | ✅ |

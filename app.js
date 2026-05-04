@@ -455,9 +455,12 @@ function renderYear(panel,year){
     }
   }
 
-  // ── 12-month detail ──
+  // ── 12-month detail (focused year only, months with events) ──
   let blocks='';
   for(let m=0;m<12;m++){
+    const mKeyFilt=year+'-'+String(m+1).padStart(2,'0');
+    const mHasEv=Object.keys(DATA.events).some(function(k){return k.startsWith(mKeyFilt);});
+    if(!mHasEv) continue;
     const fd_=new Date(year,m,1),startDow=(fd_.getDay()+6)%7,dim=new Date(year,m+1,0).getDate(),prevDim=new Date(year,m,0).getDate();
     let cells=DAYS.map(function(d){return '<div class="ymb-mini-dow">'+d[0]+'</div>';}).join('');
     for(let i=0;i<startDow;i++) cells+='<div class="ymb-mini-day other">'+(prevDim-startDow+1+i)+'</div>';
@@ -500,7 +503,7 @@ function renderYear(panel,year){
     '<div style="display:flex;flex-direction:column;gap:16px">'+
       decStrip+
       strip+
-      '<div class="year-grid">'+blocks+'</div>'+
+      (blocks?'<div class="year-grid">'+blocks+'</div>':'')+
     '</div>';
 }
 
