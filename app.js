@@ -45,7 +45,7 @@ const MIN_YEAR=1995,MAX_YEAR=2095;
 let view='week',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
 let _nisaLsExpanded=false;
 let _yearExpanded=null;
-let _spendOpen=false;
+let _spendOpen=true;
 function toggleSpend(){_spendOpen=!_spendOpen;render();}
 
 // DATA MODEL
@@ -74,6 +74,9 @@ function setRate(code,displayedVal){
   render();
 }
 function fmtSpend(jpyVal){
+  return '¥'+Math.round(jpyVal).toLocaleString();
+}
+function fmtBase(jpyVal){
   if(DATA.baseCurrency==='IDR'){
     const idrRate=getRate('IDR');
     return 'Rp '+(idrRate>0?Math.round(jpyVal/idrRate):0).toLocaleString();
@@ -694,7 +697,7 @@ function renderSavings(panel){
         '<input type="number" step="any" value="'+displayRate+'" onchange="setRate(\''+c.code+'\',this.value)" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
         '<span style="font-size:9px;color:var(--text3)">'+rateLabel+'</span>'+
       '</div>'+
-      (jpyEq?'<div class="curr-jpy">≈ '+fmtSpend(jpyEq)+'</div>':'')+
+      (jpyEq?'<div class="curr-jpy">≈ '+fmtBase(jpyEq)+'</div>':'')+
       lotsHtml+
       '<button onclick="openAddLotModal(\''+c.code+'\')" style="margin-top:5px;width:100%;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-size:9px;color:var(--text2);padding:2px 0;cursor:pointer;font-family:var(--sans)">+ lot</button>'+
     '</div>';
@@ -756,7 +759,7 @@ function renderSavings(panel){
       '<span style="font-size:12px;font-weight:500;color:var(--text);min-width:48px">'+a.name+'</span>'+
       '<span style="font-size:10px;color:var(--text3);min-width:28px">'+a.currency+'</span>'+
       '<input type="number" step="1000" value="'+a.balance+'" onchange="updateBankBalance(\''+a.id+'\',this.value)" style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none">'+
-      '<span style="font-size:11px;color:var(--text2);white-space:nowrap">'+fmtSpend(jpyVal)+'</span>'+
+      '<span style="font-size:11px;color:var(--text2);white-space:nowrap">'+fmtBase(jpyVal)+'</span>'+
       '<button onclick="deleteBankAccount(\''+a.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0">×</button>'+
     '</div>';
   }).join('');
@@ -767,7 +770,7 @@ function renderSavings(panel){
     '<div class="savings-title">bank accounts</div>'+
     bankRows+
     '<button onclick="addBankAccount()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add account</button>'+
-    (bankTotalJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtSpend(bankTotalJpy)+'</span></div>':'')+
+    (bankTotalJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtBase(bankTotalJpy)+'</span></div>':'')+
   '</div>';
 
   var bondsSection=
@@ -861,7 +864,7 @@ function renderSavings(panel){
         '</div>'+
       '</div>'+
       '<div class="curr-grid">'+currCards+'</div>'+
-      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtSpend(allJpy)+'</span></div>':'')+
+      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">'+fmtBase(allJpy)+'</span></div>':'')+
       '<div style="margin-top:10px;font-size:10px;color:var(--text3)">Rates are editable — click the number next to a currency to update.</div>'+
     '</div>'+
     bankSection+
@@ -870,7 +873,7 @@ function renderSavings(panel){
 }
 
 // ── FINANCE ───────────────────────────────────────────────────────────
-var _finOpen={income:true,fixed:true,food:true,transport:true,necessities:true,optional:true};
+var _finOpen={income:true,fixed:false,food:false,transport:false,necessities:false,optional:false};
 function finToggle(sec){_finOpen[sec]=!_finOpen[sec];render();}
 
 function getFinMonth(y,m){
@@ -912,53 +915,90 @@ function finTotals(d,y,m){
 function finRow(y,m,k,jpLabel,enLabel,step,negative){
   var key=y+'-'+(m<9?'0':'')+(m+1);
   var val=finVal(DATA.finance[key]||{},k);
-  var disp=negative&&val?'(¥'+val.toLocaleString()+')':'¥'+val.toLocaleString();
+  var filled=val>0;
   return '<div class="fin-row">'+
-    '<div class="fin-labels"><span class="fin-jp">'+jpLabel+'</span><span class="fin-en">'+enLabel+(negative?' (−)':'')+'</span></div>'+
-    '<input class="fin-inp'+(negative?' fin-neg':'')+'" type="number" step="'+(step||1000)+'" value="'+(val||'')+'" placeholder="0"'+
-      ' onchange="finSet('+y+','+m+',\''+k+'\',this.value);render()"'+
-    '>'+
-    '<span class="fin-disp'+(negative?' fin-neg':'')+'">'+(val?disp:'')+'</span>'+
+    '<div class="fin-row-label">'+jpLabel+'<span class="en">'+enLabel+(negative?' (−)':'')+'</span></div>'+
+    '<div class="fin-inp-wrap'+(filled?' filled':'')+(negative?' negative':'')+'">'+
+      '<span class="yen">¥</span>'+
+      '<input type="number" step="'+(step||1000)+'" value="'+(val||'')+'" placeholder="0"'+
+        ' onchange="finSet('+y+','+m+',\''+k+'\',this.value);render()">'+
+    '</div>'+
   '</div>';
 }
 function finReadRow(jpLabel,enLabel,val){
   return '<div class="fin-row">'+
-    '<div class="fin-labels"><span class="fin-jp">'+jpLabel+'</span><span class="fin-en">'+enLabel+'</span></div>'+
-    '<span class="fin-disp fin-auto">'+(val?'¥'+val.toLocaleString():'—')+'</span>'+
+    '<div class="fin-row-label">'+jpLabel+'<span class="en">'+enLabel+'</span></div>'+
+    '<div class="fin-chip-auto">'+
+      '<span class="fin-chip-auto-badge">auto</span>'+
+      '<span class="fin-chip-auto-val">'+(val?'¥'+val.toLocaleString():'¥0')+'</span>'+
+    '</div>'+
   '</div>';
 }
 
-function finSection(title,jpTitle,sec,rows,total,negative){
+function finSection(title,jpTitle,sec,rows,total,negative,meta){
   var open=_finOpen[sec];
-  return '<div class="fin-section">'+
-    '<div class="fin-sec-hdr" onclick="finToggle(\''+sec+'\')">'+
-      '<span class="fin-sec-arrow">'+(open?'▾':'▸')+'</span>'+
-      '<span class="fin-sec-title">'+title+'</span>'+
-      '<span class="fin-sec-jp">'+jpTitle+'</span>'+
-      '<span class="fin-sec-total'+(negative?' fin-neg':'')+'">'+(negative?'−':'')+'¥'+total.toLocaleString()+'</span>'+
+  return '<div class="fin-acc'+(open?' open':'')+'">'+
+    '<div class="fin-acc-head" onclick="finToggle(\''+sec+'\')">'+
+      '<span class="fin-acc-chev">▸</span>'+
+      '<span class="fin-acc-title">'+title+'<span class="jp">'+jpTitle+'</span></span>'+
+      (meta?'<span class="fin-acc-meta">'+meta+'</span>':'<span></span>')+
+      '<span class="fin-acc-total'+(sec==='income'?' income':'')+'">'+
+        (negative&&total>0?'−':'')+'¥'+total.toLocaleString()+
+      '</span>'+
     '</div>'+
-    (open?'<div class="fin-rows">'+rows+'</div>':'')+
+    (open?'<div class="fin-acc-body">'+rows+'</div>':'')+
   '</div>';
 }
 function finAutoSection(title,jpTitle,sec,rows,total){
   var open=_finOpen[sec];
-  return '<div class="fin-section fin-auto-sec">'+
-    '<div class="fin-sec-hdr" onclick="finToggle(\''+sec+'\')">'+
-      '<span class="fin-sec-arrow">'+(open?'▾':'▸')+'</span>'+
-      '<span class="fin-sec-title">'+title+'</span>'+
-      '<span class="fin-sec-jp">'+jpTitle+'</span>'+
-      '<span class="fin-auto-badge">from daily entries</span>'+
-      '<span class="fin-sec-total">¥'+total.toLocaleString()+'</span>'+
+  return '<div class="fin-acc'+(open?' open':'')+'">'+
+    '<div class="fin-acc-head" onclick="finToggle(\''+sec+'\')">'+
+      '<span class="fin-acc-chev">▸</span>'+
+      '<span class="fin-acc-title">'+title+'<span class="jp">'+jpTitle+'</span></span>'+
+      '<span class="fin-acc-meta auto-pill">auto · from daily</span>'+
+      '<span class="fin-acc-total">¥'+total.toLocaleString()+'</span>'+
     '</div>'+
-    (open?'<div class="fin-rows">'+rows+'</div>':'')+
+    (open?'<div class="fin-acc-body">'+rows+'</div>':'')+
   '</div>';
 }
 
 function renderFinance(panel,y,m){
   var d=getFinMonth(y,m);
   var t=finTotals(d,y,m);
-  var balColor=t.balance>=0?'#2d5a3d':'#8b2c2c';
-
+  var fixed_total=t.commute+t.bills;
+  var balColor=t.balance>=0?'var(--c-income)':'var(--bad)';
+  // prev months helper
+  function pmy(yi,mi){while(mi<0){mi+=12;yi--;}return{y:yi,m:mi};}
+  var p1=pmy(y,m-1),p2=pmy(y,m-2);
+  var t1=finTotals(getFinMonth(p1.y,p1.m),p1.y,p1.m);
+  var t2=finTotals(getFinMonth(p2.y,p2.m),p2.y,p2.m);
+  var delta=t.balance-t1.balance;
+  // sparkline — last 6 months
+  var sp6=[],sp6L=[];
+  for(var si=5;si>=0;si--){var psi=pmy(y,m-si);sp6.push(finTotals(getFinMonth(psi.y,psi.m),psi.y,psi.m).balance);sp6L.push(MS[psi.m]);}
+  var sMin=Math.min.apply(null,sp6),sMax=Math.max.apply(null,sp6),sRange=sMax-sMin||1;
+  var spPts=sp6.map(function(v,i){return(i*40)+','+(58-Math.round(((v-sMin)/sRange)*54));});
+  var spPath='M'+spPts.join(' L'),spFill=spPath+' L200,60 L0,60 Z';
+  var spColor=t.balance>=0?'#2d5a3d':'#8b2c2c',spSoft=t.balance>=0?'#e6f0ea':'#f6e3e3';
+  // proportion bar widths
+  var pInc=Math.max(t.income,1);
+  var pF=Math.min(100,Math.round(fixed_total/pInc*100));
+  var pFo=Math.min(100-pF,Math.round(t.food/pInc*100));
+  var pTr=Math.min(100-pF-pFo,Math.round(t.transport/pInc*100));
+  var pNe=Math.min(100-pF-pFo-pTr,Math.round(t.necessities/pInc*100));
+  var pOp=Math.min(100-pF-pFo-pTr-pNe,Math.round(t.optional/pInc*100));
+  var pSv=Math.max(0,Math.round(t.balance/pInc*100));
+  // filled counts
+  var fkey=y+'-'+(m<9?'0':'')+(m+1),fd2=DATA.finance[fkey]||{};
+  var incFill=['salary','transportReimb','otherIncome','momPays','taxWithheld','insuranceDed'].filter(function(k){return fd2[k]>0;}).length;
+  var fixFill=['commutationPass','rent','gas','water','electricity','phone','internet'].filter(function(k){return fd2[k]>0;}).length;
+  // ytd avg balance
+  var ytdSum=0;
+  for(var mi3=0;mi3<=m;mi3++){ytdSum+=finTotals(getFinMonth(y,mi3),y,mi3).balance;}
+  var ytdAvg=Math.round(ytdSum/(m+1));
+  // compact formatter
+  function fmtK(v){if(!v)return'—';var s=v<0?'-':'';var a=Math.abs(v);return a>=1000?s+Math.round(a/1000)+'K':s+'¥'+a.toLocaleString();}
+  // rows
   var incomeRows=
     finRow(y,m,'salary','給料','Salary',1000,false)+
     finRow(y,m,'transportReimb','交通費補助','Transport reimb.',1000,false)+
@@ -966,7 +1006,6 @@ function renderFinance(panel,y,m){
     finRow(y,m,'momPays','親の援助','Mom pays',1000,false)+
     finRow(y,m,'taxWithheld','税金','Tax withheld',1000,true)+
     finRow(y,m,'insuranceDed','保険料','Insurance ded.',1000,true);
-
   var fixedRows=
     finRow(y,m,'commutationPass','通勤定期券','Commutation pass',1000,false)+
     finRow(y,m,'rent','家賃','Rent',1000,false)+
@@ -975,17 +1014,13 @@ function renderFinance(panel,y,m){
     finRow(y,m,'electricity','電気料金','Electricity',100,false)+
     finRow(y,m,'phone','携帯','Phone',100,false)+
     finRow(y,m,'internet','インターネット','Internet',100,false);
-
   var foodRows=finReadRow('食べ物','Food',monthSpendCat(y,m,'food'));
-
   var transportRows=finReadRow('電車代金','Transport',monthSpendCat(y,m,'transport'));
-
   var necRows=
     finReadRow('書類仕事','Paperwork',monthSpendCat(y,m,'paperwork'))+
     finReadRow('メディカル','Medical',monthSpendCat(y,m,'medical'))+
     finReadRow('日常生活','Necessities',monthSpendCat(y,m,'necessities'))+
     finReadRow('国民保険','NHI',monthSpendCat(y,m,'nhi'));
-
   var optRows=
     finReadRow('ゲーム/P','Game/Project',monthSpendCat(y,m,'project'))+
     finReadRow('エンタメ','Entertainment',monthSpendCat(y,m,'fun'))+
@@ -993,27 +1028,74 @@ function renderFinance(panel,y,m){
 
   panel.innerHTML=
     '<div class="fin-wrap">'+
-      '<div class="fin-summary-bar">'+
-        '<div class="fin-sum-cell"><div class="fin-sum-lab">income</div><div class="fin-sum-val" style="color:#2d5a3d">¥'+t.income.toLocaleString()+'</div></div>'+
-        '<div class="fin-sum-sep">−</div>'+
-        '<div class="fin-sum-cell"><div class="fin-sum-lab">fixed</div><div class="fin-sum-val">¥'+(t.commute+t.bills).toLocaleString()+'</div></div>'+
-        '<div class="fin-sum-sep">−</div>'+
-        '<div class="fin-sum-cell"><div class="fin-sum-lab">food</div><div class="fin-sum-val">¥'+t.food.toLocaleString()+'</div></div>'+
-        '<div class="fin-sum-sep">−</div>'+
-        '<div class="fin-sum-cell"><div class="fin-sum-lab">transport</div><div class="fin-sum-val">¥'+t.transport.toLocaleString()+'</div></div>'+
-        '<div class="fin-sum-sep">−</div>'+
-        '<div class="fin-sum-cell"><div class="fin-sum-lab">necessities</div><div class="fin-sum-val">¥'+t.necessities.toLocaleString()+'</div></div>'+
-        '<div class="fin-sum-sep">−</div>'+
-        '<div class="fin-sum-cell"><div class="fin-sum-lab">optional</div><div class="fin-sum-val">¥'+t.optional.toLocaleString()+'</div></div>'+
-        '<div class="fin-sum-sep">=</div>'+
-        '<div class="fin-sum-cell"><div class="fin-sum-lab">balance</div><div class="fin-sum-val" style="color:'+balColor+';font-size:18px">¥'+t.balance.toLocaleString()+'</div></div>'+
+      '<div class="fin-hero">'+
+        '<div>'+
+          '<div class="fin-hero-lab">Balance · '+MONTHS[m]+' '+y+'</div>'+
+          '<div class="fin-hero-bal" style="color:'+balColor+'">¥'+t.balance.toLocaleString()+'</div>'+
+          '<div class="fin-hero-delta'+(delta>0?' up':delta<0?' dn':'')+'">'+
+            (delta!==0?(delta>0?'+':'')+'¥'+Math.abs(delta).toLocaleString()+' vs '+MS[p1.m]:'no prior data')+
+          '</div>'+
+        '</div>'+
+        '<div>'+
+          '<div class="fin-hero-lab">6-month trend</div>'+
+          '<svg class="fin-spark" viewBox="0 0 200 60" height="46" preserveAspectRatio="none">'+
+            '<path d="'+spPath+'" fill="none" stroke="'+spColor+'" stroke-width="1.5"/>'+
+            '<path d="'+spFill+'" fill="'+spSoft+'" opacity=".6"/>'+
+          '</svg>'+
+          '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">'+
+            sp6L.map(function(l){return'<span>'+l+'</span>';}).join('')+
+          '</div>'+
+        '</div>'+
+        '<div>'+
+          '<div class="fin-hero-lab">Income ¥'+t.income.toLocaleString()+' → distribution</div>'+
+          '<div class="fin-prop">'+
+            (t.income>0?
+              '<i style="width:'+pF+'%;background:var(--c-fixed)" title="Fixed ¥'+fixed_total.toLocaleString()+'"></i>'+
+              '<i style="width:'+pFo+'%;background:var(--c-food)" title="Food ¥'+t.food.toLocaleString()+'"></i>'+
+              '<i style="width:'+pTr+'%;background:var(--c-transport)" title="Transport ¥'+t.transport.toLocaleString()+'"></i>'+
+              '<i style="width:'+pNe+'%;background:var(--c-necessities)" title="Necessities ¥'+t.necessities.toLocaleString()+'"></i>'+
+              '<i style="width:'+pOp+'%;background:var(--c-optional)" title="Optional ¥'+t.optional.toLocaleString()+'"></i>':'')+
+          '</div>'+
+          '<div class="fin-prop-leg">'+
+            '<span><i style="background:var(--c-fixed)"></i>Fixed <b>'+pF+'%</b></span>'+
+            '<span><i style="background:var(--c-food)"></i>Food <b>'+pFo+'%</b></span>'+
+            '<span><i style="background:var(--c-transport)"></i>Transport <b>'+pTr+'%</b></span>'+
+            '<span><i style="background:var(--c-necessities)"></i>Nec <b>'+pNe+'%</b></span>'+
+            '<span><i style="background:var(--border2);border:1px solid var(--border2)"></i>Saved <b>'+pSv+'%</b></span>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
-      finSection('Income','収入','income',incomeRows,t.income,false)+
-      finSection('Fixed Monthly','固定費','fixed',fixedRows,t.commute+t.bills,false)+
-      finAutoSection('Food','食べ物','food',foodRows,t.food)+
-      finAutoSection('Transport','電車代金','transport',transportRows,t.transport)+
-      finAutoSection('Necessities','生活費','necessities',necRows,t.necessities)+
-      finAutoSection('Optional','任意支出','optional',optRows,t.optional)+
+      '<div class="fin-2col">'+
+        '<div class="fin-left">'+
+          finSection('Income','収入','income',incomeRows,t.income,false,incFill+' of 6 filled')+
+          finSection('Fixed Monthly','固定費','fixed',fixedRows,fixed_total,false,fixFill+' of 7 filled')+
+          finAutoSection('Food','食べ物','food',foodRows,t.food)+
+          finAutoSection('Transport','電車代金','transport',transportRows,t.transport)+
+          finAutoSection('Necessities','生活費','necessities',necRows,t.necessities)+
+          finAutoSection('Optional','任意支出','optional',optRows,t.optional)+
+        '</div>'+
+        '<div>'+
+          '<div class="fin-compare">'+
+            '<div class="fin-compare-h">3-month compare</div>'+
+            '<div class="fin-cg">'+
+              '<div class="fin-cg-hdr l">Category</div><div class="fin-cg-hdr">'+MS[p2.m]+'</div><div class="fin-cg-hdr">'+MS[p1.m]+'</div><div class="fin-cg-hdr">'+MS[m]+'</div>'+
+              '<div class="fin-cg-lab">Income 収入</div><div class="fin-cg-v">'+fmtK(t2.income)+'</div><div class="fin-cg-v">'+fmtK(t1.income)+'</div><div class="fin-cg-v cur">'+fmtK(t.income)+'</div>'+
+              '<div class="fin-cg-lab">Fixed 固定費</div><div class="fin-cg-v">'+fmtK(t2.commute+t2.bills)+'</div><div class="fin-cg-v">'+fmtK(t1.commute+t1.bills)+'</div><div class="fin-cg-v cur">'+fmtK(fixed_total)+'</div>'+
+              '<div class="fin-cg-lab">Food 食べ物</div><div class="fin-cg-v">'+fmtK(t2.food)+'</div><div class="fin-cg-v">'+fmtK(t1.food)+'</div><div class="fin-cg-v cur">'+fmtK(t.food)+'</div>'+
+              '<div class="fin-cg-lab">Transport</div><div class="fin-cg-v">'+fmtK(t2.transport)+'</div><div class="fin-cg-v">'+fmtK(t1.transport)+'</div><div class="fin-cg-v cur">'+fmtK(t.transport)+'</div>'+
+              '<div class="fin-cg-lab">Necessities</div><div class="fin-cg-v">'+fmtK(t2.necessities)+'</div><div class="fin-cg-v">'+fmtK(t1.necessities)+'</div><div class="fin-cg-v cur">'+fmtK(t.necessities)+'</div>'+
+              '<div class="fin-cg-lab">Optional</div><div class="fin-cg-v">'+fmtK(t2.optional)+'</div><div class="fin-cg-v">'+fmtK(t1.optional)+'</div><div class="fin-cg-v cur">'+fmtK(t.optional)+'</div>'+
+              '<div class="fin-cg-lab fin-cg-total">Balance</div><div class="fin-cg-v fin-cg-total">'+fmtK(t2.balance)+'</div><div class="fin-cg-v fin-cg-total">'+fmtK(t1.balance)+'</div><div class="fin-cg-v cur fin-cg-total" style="color:'+balColor+'">'+fmtK(t.balance)+'</div>'+
+            '</div>'+
+            '<div class="fin-ytd">'+
+              '<div class="fin-ytd-lab">Avg balance YTD</div>'+
+              '<div class="fin-ytd-val">¥'+ytdAvg.toLocaleString()+'/mo</div>'+
+              '<div class="fin-ytd-lab" style="margin-top:8px">Annual saved at this pace</div>'+
+              '<div class="fin-ytd-val">¥'+(ytdAvg*12).toLocaleString()+'</div>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
     '</div>';
 }
 

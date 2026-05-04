@@ -78,7 +78,7 @@ Nav order: **week → month → year → finance → savings**
 
 A 7-column grid (Mon–Sun). Each column shows events, tasks, and a daily spend total. Click any column header to jump to that date's week.
 
-**Spend panel** — click **▾ log spending** below the grid to open a spreadsheet-style panel: 9 category rows × 7 day columns. Type any amount and it saves immediately. Totals per day update live. The Finance tab reads these entries automatically.
+**Spend panel** — always visible below the event grid: 9 category rows × 7 day columns. Type any amount and it saves immediately. Totals per day update live. The Finance tab reads these entries automatically.
 
 ---
 
@@ -117,7 +117,16 @@ Years with no events collapse to a single line. Click to expand.
 
 A monthly income and spending tracker. Navigate months with the **← →** arrows.
 
-Sections:
+**Hero strip (3-column):**
+- Large balance + MoM delta (green if up, red if down)
+- 6-month sparkline of income and balance
+- Income proportion bar: colored segments showing what share goes to each category
+
+**Two-column body:**
+- Left: accordion sections (Income open by default, others collapsed)
+- Right: sticky 3-month comparison panel — category totals for current + 2 prior months, balance row, YTD average and annual pace
+
+**Sections:**
 
 | Section | Input type | Fields |
 |---|---|---|
@@ -128,11 +137,9 @@ Sections:
 | **Necessities** | Auto from daily spend | Paperwork, medical, necessities, NHI |
 | **Optional** | Auto from daily spend | Game/project, entertainment, clothes/hair |
 
-The four auto sections pull directly from daily entries logged in the week view's spend panel. You never type these totals manually — they aggregate automatically.
+The four auto sections pull directly from daily entries logged in the week view's spend panel — aggregated automatically, displayed as read-only chips. Manual sections show a fill count (e.g. "3 of 6 filled") and highlight entered fields with an accent border.
 
 **Balance formula:** Income − Fixed − Food − Transport − Necessities − Optional
-
-All sections are collapsible. Auto sections are marked with a "from daily entries" badge.
 
 ---
 

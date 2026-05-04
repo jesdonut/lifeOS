@@ -492,6 +492,50 @@ Refactor the year view to match the Claude-designed mockup. Keep existing data m
 
 ---
 
+## ~~33. Spend Panel — Always Visible, Week Grid Compact~~ ✅ Complete
+
+The spend panel was hidden by default (collapsed behind a toggle button) and, once opened, had internal scrolling because all 9 category rows didn't fit.
+
+**Changes:**
+- `_spendOpen` initialised to `true` so the panel is open on every load — no toggle needed
+- `.week-grid` changed from `flex:1` (fills all space) to `flex:0 0 220px` (fixed compact height), giving spend the remaining room
+- `.wk-spend-panel` max-height and overflow-y removed — all 9 rows are visible at once, no internal scroll
+
+---
+
+## ~~34. Finance View Redesign — Hero Strip, Accordions, Sticky Compare~~ ✅ Complete
+
+Replaced the flat single-column finance layout with a more information-dense design.
+
+**Hero strip (3-column grid):**
+- Left: large balance + MoM delta (green if up, red if down)
+- Center: 6-month sparkline (income line in green, balance fill in soft green/red)
+- Right: income proportion bar — colored segments showing what share of income goes to each category
+
+**Two-column body:**
+- Left (1.4fr): accordion stack — Income, Fixed Monthly, Food, Transport, Necessities, Optional
+- Right (1fr): sticky 3-month compare panel (current + 2 prior months), balance row, YTD avg and annual pace
+
+**Accordion details:**
+- Chevron rotates on open; Income opens by default, others collapsed
+- Header: chevron · JP/EN title · meta ("N of M filled" for manual sections, "auto · from daily" pill for auto sections) · section total
+- Filled fields get accent border + pink background
+- Auto rows render as dashed chips with an "auto" badge — not editable inputs
+
+**New CSS tokens:** `--good`, `--good-soft`, `--bad`, `--bad-soft`, `--c-income`, `--c-fixed`, `--c-food`, `--c-transport`, `--c-necessities`, `--c-optional`
+
+---
+
+## ~~35. Bug Fix — Daily Spend Always Shown in ¥~~ ✅ Complete
+
+`fmtSpend()` was converting yen spend values to IDR when `DATA.baseCurrency === 'IDR'`, so the week/month/year spend display showed "Rp" amounts even though all daily expenses are entered in JPY.
+
+**Fix:** split into two functions:
+- `fmtSpend(jpyVal)` — always returns `¥` format; used everywhere daily spend is displayed
+- `fmtBase(jpyVal)` — respects base currency toggle; used only in Savings view (currency card equivalents, bank account totals, currency total held)
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -528,3 +572,6 @@ Refactor the year view to match the Claude-designed mockup. Keep existing data m
 | 30 | Bug Fix — Years View: Day Badges + Equal Column Widths | ✅ |
 | 31 | NISA Tracker UI Redesign | ✅ |
 | 32 | Year View Redesign — Timeline, Decade Strip, Category Colors | ✅ |
+| 33 | Spend Panel Auto-Expand + Week Grid Compact | ✅ |
+| 34 | Finance View Redesign — Hero, Accordions, Compare | ✅ |
+| 35 | Bug Fix — Daily Spend Always in ¥ | ✅ |
