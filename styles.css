@@ -150,6 +150,35 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .nisa-proj-age{font-size:9px;color:var(--text3);margin-bottom:4px}
 .nisa-proj-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent)}
 .nisa-proj-contrib{font-size:9px;color:var(--text3);font-family:var(--mono)}
+.nisa-hero{display:flex;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.nisa-hero-stat{flex:1;min-width:0}
+.nisa-hero-lab{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.nisa-hero-big{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text)}
+.nisa-hero-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.nisa-prog{display:flex;height:5px;border-radius:3px;overflow:hidden;background:var(--border);margin-top:5px}
+.nisa-prog-t{background:var(--accent);height:100%}
+.nisa-prog-g{background:#2c4a6e;height:100%}
+.nisa-leg{display:flex;gap:8px;margin-top:4px}
+.nisa-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.nisa-panel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px}
+.nisa-phdr{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.nisa-panel.ts .nisa-phdr{color:var(--accent)}
+.nisa-panel.gr .nisa-phdr{color:#2c4a6e}
+.nisa-tl-row{display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.nisa-tl-yr{font-family:var(--mono);font-size:11px;color:var(--text2);width:36px;flex-shrink:0}
+.nisa-tl-inp{flex:1;min-width:0;border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--text);outline:none}
+.nisa-tl-annot{font-size:9px;color:var(--text3);white-space:nowrap}
+.nisa-tl-x{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0 2px;flex-shrink:0}
+.nisa-tl-skip{font-size:10px;color:var(--text3);padding:3px 0;cursor:pointer;user-select:none}
+.nisa-tl-add{width:100%;padding:4px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px}
+.nisa-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.nisa-meta-cell{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px}
+.nisa-meta-lab{font-size:9px;color:var(--text3);margin-bottom:3px}
+.nisa-snaps{width:100%;border-collapse:collapse;font-size:11px}
+.nisa-snaps th{font-size:9px;color:var(--text3);font-weight:500;text-align:left;padding:3px 5px;border-bottom:1px solid var(--border)}
+.nisa-snap-row td{padding:4px 5px;border-bottom:1px solid var(--border);vertical-align:middle}
+.nisa-snap-yr{font-family:var(--mono);font-weight:500;color:var(--text)}
+.nisa-snap-bar{display:inline-flex;height:4px;border-radius:2px;overflow:hidden;background:var(--border);width:56px;vertical-align:middle}
 .nisa-settings{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
 .nisa-setting{display:flex;flex-direction:column;gap:3px}
 .nisa-setting label{font-size:10px;color:var(--text2)}

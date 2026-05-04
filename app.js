@@ -42,6 +42,7 @@ const CURRENCIES=[
 const today=new Date();
 const MIN_YEAR=1995,MAX_YEAR=2095;
 let view='week',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
+let _nisaLsExpanded=false;
 
 // DATA MODEL
 // events: "YYYY-MM-DD": [{id, text, color}]
@@ -416,6 +417,7 @@ function getTsumitateForYear(n,y){
   var keys=Object.keys(n.tsumitateByYear||{}).map(Number).filter(function(k){return k<=y;}).sort(function(a,b){return b-a;});
   return keys.length?n.tsumitateByYear[keys[0]]:0;
 }
+function nisaToggleLs(){_nisaLsExpanded=!_nisaLsExpanded;render();}
 function nisaCalc(){
   var n=DATA.nisa,birthYear=1995;
   var cumulative=0,rows=[];
@@ -487,35 +489,75 @@ function deleteBankAccount(id){
 }
 function renderSavings(panel){
   var n=DATA.nisa,birthYear=1995;
-  var curYearMonthly=getTsumitateForYear(n,new Date().getFullYear());
-  var annualTs=Math.min(curYearMonthly*12,1200000);
-  var rawAnnualTs=curYearMonthly*12;
+  var thisYear=new Date().getFullYear();
   var allRows=nisaCalc();
   var capRow=allRows.find(function(r){return r.capReached;});
+  var thisYearRow=allRows.find(function(r){return r.year===thisYear;});
+  var lastRow=allRows.length?allRows[allRows.length-1]:null;
+  var totalPlannedTs=allRows.reduce(function(s,r){return s+r.tsumitate;},0);
+  var totalPlannedLs=allRows.reduce(function(s,r){return s+r.lumpsum;},0);
+  var tsPct=Math.round(totalPlannedTs/180000);
+  var lsPct=Math.round(totalPlannedLs/180000);
+  var yearsCount=allRows.length||1;
+  var avgPace=lastRow?Math.round(lastRow.cumulative/yearsCount):0;
+  var thisYearTotal=thisYearRow?thisYearRow.total:0;
+  var curYearMonthly=getTsumitateForYear(n,thisYear);
+  var lsKeys=Object.keys(n.lumpSumByYear||{}).sort();
+  var lsNonEmpty=lsKeys.filter(function(yr){return (n.lumpSumByYear[yr]||0)>0;});
+  var lsEmpty=lsKeys.filter(function(yr){return (n.lumpSumByYear[yr]||0)===0;});
+  var lsShow=_nisaLsExpanded?lsKeys:lsNonEmpty;
   var projRows=allRows.filter(function(r){return n.projectionYears.indexOf(r.year)>=0;});
   var notStarted=n.projectionYears.filter(function(y){return y<n.startYear;});
 
-  var projCards=notStarted.map(function(y){
-    return '<div class="nisa-proj-card" style="position:relative">'+
-      '<button class="icon-btn" onclick="removeProjectionYear('+y+')" style="position:absolute;top:4px;right:4px">×</button>'+
-      '<div class="nisa-proj-year">'+y+'</div>'+
-      '<div class="nisa-proj-age">age '+(y-birthYear)+'</div>'+
-      '<div style="font-size:11px;color:var(--text3);margin-top:4px">before start year</div>'+
+  var tsRows=Object.keys(n.tsumitateByYear||{}).sort().map(function(yr){
+    var monthly=(n.tsumitateByYear[yr])||0;
+    var yearly=monthly*12;
+    var overCap=yearly>1200000;
+    return '<div class="nisa-tl-row">'+
+      '<span class="nisa-tl-yr">'+yr+'</span>'+
+      '<input class="nisa-tl-inp" type="number" step="1000" value="'+monthly+'" onchange="DATA.nisa.tsumitateByYear[\''+yr+'\']=parseInt(this.value)||0;render()">'+
+      '<span class="nisa-tl-annot">¥'+Math.round(Math.min(yearly,1200000)/10000)+'万</span>'+
+      (overCap?'<span style="font-size:9px;color:#8b2c2c">!</span>':'')+
+      '<button class="nisa-tl-x" onclick="removeTsumitateYear(\''+yr+'\')">×</button>'+
     '</div>';
   }).join('');
-  projCards+=projRows.map(function(r){
-    return '<div class="nisa-proj-card" style="position:relative">'+
-      '<button class="icon-btn" onclick="removeProjectionYear('+r.year+')" style="position:absolute;top:4px;right:4px">×</button>'+
-      '<div class="nisa-proj-year">'+r.year+'</div>'+
-      '<div class="nisa-proj-age">age '+r.age+'</div>'+
-      '<div style="margin-top:6px">'+
-        '<div style="font-size:10px;color:var(--text3);margin-bottom:2px">cumulative</div>'+
-        '<div class="nisa-proj-val">¥'+r.cumulative.toLocaleString()+'</div>'+
-        '<div class="nisa-proj-contrib">つみたて ¥'+Math.round(r.tsumitate/10000)+'万</div>'+
-        (r.lumpsum?'<div class="nisa-proj-contrib">成長 ¥'+Math.round(r.lumpsum/10000)+'万</div>':'')+
-        (r.capReached?'<div style="font-size:10px;color:var(--accent);font-weight:500;margin-top:4px">🎉 cap reached!</div>':'')+
-      '</div>'+
+
+  var lsRowsHtml=lsShow.map(function(yr){
+    var val=(n.lumpSumByYear[yr])||0;
+    var overCap=val>2400000;
+    return '<div class="nisa-tl-row">'+
+      '<span class="nisa-tl-yr">'+yr+'</span>'+
+      '<input class="nisa-tl-inp" type="number" step="10000" value="'+val+'" onchange="DATA.nisa.lumpSumByYear[\''+yr+'\']=parseInt(this.value)||0;render()">'+
+      (overCap?'<span style="font-size:9px;color:#8b2c2c">!</span>':'')+
+      '<button class="nisa-tl-x" onclick="removeNisaYear(\''+yr+'\')">×</button>'+
     '</div>';
+  }).join('');
+  var lsToggle=lsEmpty.length?
+    '<div class="nisa-tl-skip" onclick="nisaToggleLs()">'+
+      (_nisaLsExpanded?'▾ hide '+lsEmpty.length+' empty':('▸ '+lsEmpty.length+' empty ¥0 year'+(lsEmpty.length!==1?'s':'')))+
+    '</div>':'';
+
+  var snapRows=notStarted.map(function(y){
+    return '<tr class="nisa-snap-row">'+
+      '<td class="nisa-snap-yr">'+y+'</td>'+
+      '<td style="color:var(--text3)">'+( y-birthYear)+'</td>'+
+      '<td colspan="3" style="font-size:10px;color:var(--text3)">before start</td>'+
+      '<td></td>'+
+      '<td><button class="icon-btn" onclick="removeProjectionYear('+y+')">×</button></td>'+
+    '</tr>';
+  }).join('');
+  snapRows+=projRows.map(function(r){
+    var tPct=Math.round(r.tsumitate/180000);
+    var lPct=Math.round(r.lumpsum/180000);
+    return '<tr class="nisa-snap-row">'+
+      '<td class="nisa-snap-yr">'+r.year+'</td>'+
+      '<td style="color:var(--text3)">'+r.age+'</td>'+
+      '<td style="font-family:var(--mono);font-size:10px">¥'+Math.round(r.tsumitate/10000)+'万</td>'+
+      '<td style="font-family:var(--mono);font-size:10px">'+(r.lumpsum?'¥'+Math.round(r.lumpsum/10000)+'万':'—')+'</td>'+
+      '<td style="font-family:var(--mono);font-weight:500;color:var(--accent)">¥'+Math.round(r.cumulative/10000)+'万</td>'+
+      '<td><div class="nisa-snap-bar"><div style="width:'+tPct+'%;background:var(--accent)"></div><div style="width:'+lPct+'%;background:#2c4a6e"></div></div></td>'+
+      '<td><button class="icon-btn" onclick="removeProjectionYear('+r.year+')">×</button></td>'+
+    '</tr>';
   }).join('');
 
   var allJpy=CURRENCIES.filter(function(c){return c.code!=='JPY';}).reduce(function(s,c){var a=parseFloat(DATA.currencies[c.code]||0);return s+(a?Math.round(a*getRate(c.code)):0);},0);
@@ -652,65 +694,68 @@ function renderSavings(panel){
     '<div class="savings-card">'+
       '<div class="savings-title">新NISA — contribution tracker</div>'+
 
-      '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px">'+
-        '<div style="font-size:11px;font-weight:500;color:var(--accent);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">つみたて投資枠 — monthly by year</div>'+
-        '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">yearly cap ¥1,200,000 · add a row each time your monthly amount changes</div>'+
-        Object.keys(n.tsumitateByYear||{}).sort().map(function(yr){
-          var monthly=(n.tsumitateByYear[yr])||0;
-          var yearly=monthly*12;
-          var overCap=yearly>1200000;
-          return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
-            '<span style="font-family:var(--mono);font-size:12px;color:var(--text2);width:40px;flex-shrink:0">'+yr+'</span>'+
-            '<span style="font-size:10px;color:var(--text3)">¥</span>'+
-            '<input type="number" step="1000" value="'+monthly+'" onchange="DATA.nisa.tsumitateByYear[\''+yr+'\']=parseInt(this.value)||0;render()" style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none">'+
-            '<span style="font-size:10px;color:var(--text3);white-space:nowrap">→ ¥'+Math.min(yearly,1200000).toLocaleString()+'/yr</span>'+
-            (overCap?'<span style="font-size:9px;color:#8b2c2c">⚠ over cap</span>':'')+
-            '<button onclick="removeTsumitateYear(\''+yr+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0">×</button>'+
-          '</div>';
-        }).join('')+
-        '<button onclick="addTsumitateYear()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add year</button>'+
+      '<div class="nisa-hero">'+
+        '<div class="nisa-hero-stat" style="flex:2;min-width:0">'+
+          '<div class="nisa-hero-lab">lifetime plan</div>'+
+          '<div class="nisa-hero-big">¥'+Math.round((totalPlannedTs+totalPlannedLs)/10000)+'万<span style="font-size:11px;color:var(--text3);font-weight:400"> / ¥1800万</span></div>'+
+          '<div class="nisa-prog"><div class="nisa-prog-t" style="width:'+tsPct+'%"></div><div class="nisa-prog-g" style="width:'+lsPct+'%"></div></div>'+
+          '<div class="nisa-leg"><span style="font-size:9px;color:var(--accent)">▪ つみたて ¥'+Math.round(totalPlannedTs/10000)+'万</span>&nbsp;<span style="font-size:9px;color:#2c4a6e">▪ 成長 ¥'+Math.round(totalPlannedLs/10000)+'万</span></div>'+
+        '</div>'+
+        '<div class="nisa-hero-stat">'+
+          '<div class="nisa-hero-lab">cap year</div>'+
+          '<div class="nisa-hero-big">'+(capRow?capRow.year:'—')+'</div>'+
+          (capRow?'<div class="nisa-hero-sub">age '+capRow.age+'</div>':'')+
+        '</div>'+
+        '<div class="nisa-hero-stat">'+
+          '<div class="nisa-hero-lab">'+thisYear+' total</div>'+
+          '<div class="nisa-hero-big">¥'+Math.round(thisYearTotal/10000)+'万</div>'+
+        '</div>'+
+        '<div class="nisa-hero-stat">'+
+          '<div class="nisa-hero-lab">avg / yr</div>'+
+          '<div class="nisa-hero-big">¥'+Math.round(avgPace/10000)+'万</div>'+
+          '<div class="nisa-hero-sub">over '+yearsCount+' yr'+(yearsCount!==1?'s':'')+'</div>'+
+        '</div>'+
       '</div>'+
 
-      '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px">'+
-        '<div style="font-size:11px;font-weight:500;color:#2c4a6e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">成長投資枠 — lump sum by year</div>'+
-        '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">yearly cap ¥2,400,000 · add a row for each year you plan a lump sum</div>'+
-        Object.keys(n.lumpSumByYear||{}).sort().map(function(yr){
-          var val=(n.lumpSumByYear[yr])||0;
-          return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
-            '<span style="font-family:var(--mono);font-size:12px;color:var(--text2);width:40px;flex-shrink:0">'+yr+'</span>'+
-            '<span style="font-size:10px;color:var(--text3)">¥</span>'+
-            '<input type="number" step="10000" value="'+val+'" onchange="DATA.nisa.lumpSumByYear[\''+yr+'\']=parseInt(this.value)||0;render()" style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--text);outline:none">'+
-            (val>2400000?'<span style="font-size:9px;color:#8b2c2c">⚠ over cap</span>':'')+
-            '<button onclick="removeNisaYear(\''+yr+'\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0 2px;flex-shrink:0">×</button>'+
-          '</div>';
-        }).join('')+
-        '<button onclick="addNisaYear()" style="width:100%;padding:5px;background:none;border:1px dashed var(--border2);border-radius:4px;font-family:var(--sans);font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px">+ add year</button>'+
+      '<div class="nisa-2col">'+
+        '<div class="nisa-panel ts">'+
+          '<div class="nisa-phdr">つみたて — monthly/yr</div>'+
+          '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">cap ¥1.2M/yr</div>'+
+          tsRows+
+          '<button class="nisa-tl-add" onclick="addTsumitateYear()">+ add year</button>'+
+        '</div>'+
+        '<div class="nisa-panel gr">'+
+          '<div class="nisa-phdr">成長 — lump sum/yr</div>'+
+          '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">cap ¥2.4M/yr</div>'+
+          lsRowsHtml+
+          lsToggle+
+          '<button class="nisa-tl-add" onclick="addNisaYear()">+ add year</button>'+
+        '</div>'+
       '</div>'+
 
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'+
-        '<div style="background:var(--accent-light);border:1px solid #f0c8d4;border-radius:var(--radius);padding:10px">'+
-          '<div style="font-size:10px;color:var(--accent);margin-bottom:3px">tsumitate this yr</div>'+
-          '<div style="font-family:var(--mono);font-size:16px;font-weight:500;color:var(--accent)">¥'+annualTs.toLocaleString()+'</div>'+
-          '<div style="font-size:9px;color:var(--text3);margin-top:2px">max ¥1,200,000/yr</div>'+
+      '<div class="nisa-meta">'+
+        '<div class="nisa-meta-cell">'+
+          '<div class="nisa-meta-lab">start year</div>'+
+          '<input type="number" value="'+n.startYear+'" onchange="DATA.nisa.startYear=parseInt(this.value)||2026;render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)">'+
         '</div>'+
-        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px">'+
-          '<div style="font-size:10px;color:var(--text2);margin-bottom:3px">start year</div>'+
-          '<input type="number" value="'+n.startYear+'" onchange="DATA.nisa.startYear=parseInt(this.value)||2026;render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:16px;font-weight:500;color:var(--text)">'+
-        '</div>'+
-        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px">'+
-          '<div style="font-size:10px;color:var(--text2);margin-bottom:3px">start month</div>'+
-          '<select onchange="DATA.nisa.startMonth=parseInt(this.value);render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text);cursor:pointer">'+
-            ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m,i){
-              return '<option value="'+(i+1)+'"'+(n.startMonth===i+1?' selected':'')+'>'+m+'</option>';
-            }).join('')+
+        '<div class="nisa-meta-cell">'+
+          '<div class="nisa-meta-lab">start month</div>'+
+          '<select onchange="DATA.nisa.startMonth=parseInt(this.value);render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);cursor:pointer">'+
+            ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m,i){return '<option value="'+(i+1)+'"'+(n.startMonth===i+1?' selected':'')+'>'+m+'</option>';}).join('')+
           '</select>'+
+        '</div>'+
+        '<div class="nisa-meta-cell">'+
+          '<div class="nisa-meta-lab">this yr monthly</div>'+
+          '<div style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)">¥'+curYearMonthly.toLocaleString()+'</div>'+
         '</div>'+
       '</div>'+
 
       '<div style="font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">year snapshots</div>'+
-      '<div class="nisa-projections">'+projCards+'</div>'+
-      '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">+ add year</button>'+
-      '<div style="margin-top:10px;font-size:10px;color:var(--text3);line-height:1.6">Lifetime cap ¥18M shared — つみたて ¥1.2M/yr max · 成長 ¥2.4M/yr max · up to ¥3.6M/yr combined. Contributions only — no return rate estimates.</div>'+
+      '<table class="nisa-snaps"><thead><tr>'+
+        '<th>year</th><th>age</th><th>つみたて</th><th>成長</th><th>cumulative</th><th>progress</th><th></th>'+
+      '</tr></thead><tbody>'+snapRows+'</tbody></table>'+
+      '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">+ add snapshot year</button>'+
+      '<div style="margin-top:10px;font-size:10px;color:var(--text3);line-height:1.6">Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined.</div>'+
     '</div>'+
     '<div class="savings-card">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
