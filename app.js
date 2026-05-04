@@ -272,18 +272,17 @@ function renderWeek(panel,mon){
         var tot=daySpendTotal(di.key);
         return '<div class="wk-sp-tot">'+(tot?fmtSpend(tot):'—')+'</div>';
       }).join('');
-    spendPanel='<div class="wk-spend-panel"><div class="wk-sp-grid">'+spHdr+spRows+spTots+'</div></div>';
+    spendPanel=spHdr+spRows+spTots;
   }
 
   panel.style.display='flex';
   panel.style.flexDirection='column';
   panel.innerHTML=
-    '<div class="week-grid">'+cols+'</div>'+
+    '<div class="week-shell"><div class="wk-shell-spacer"></div>'+cols+spendPanel+'</div>'+
     '<div class="wk-spend-toggle">'+
       '<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">week '+fmtSpend(weekTotal)+'</span>'+
       '<button onclick="toggleSpend()" class="wk-spend-btn">'+(_spendOpen?'▴ hide spending':'▾ log spending')+'</button>'+
-    '</div>'+
-    spendPanel;
+    '</div>';
 }
 
 // ── MONTH VIEW ────────────────────────────────────────────────────────
