@@ -51,10 +51,9 @@ const SPEND_CATS=[
 ];
 
 const CURRENCIES=[
-  {code:'JPY',flag:'🇯🇵',rate:1},{code:'IDR',flag:'🇮🇩',rate:0.0093},
+  {code:'JPY',flag:'🇯🇵',rate:1},{code:'IDR',flag:'🇮🇩',rate:0.0093,hidden:true},
   {code:'USD',flag:'🇺🇸',rate:149.5},{code:'GBP',flag:'🇬🇧',rate:189.2},
-  {code:'CNY',flag:'🇨🇳',rate:20.7},{code:'KRW',flag:'🇰🇷',rate:0.109},
-  {code:'MYR',flag:'🇲🇾',rate:32.1},{code:'EUR',flag:'🇪🇺',rate:161.3},
+  {code:'CNY',flag:'🇨🇳',rate:20.7},{code:'MYR',flag:'🇲🇾',rate:32.1},
 ];
 
 const today=new Date();
@@ -880,9 +879,10 @@ function renderSavings(panel){
     '</tr>';
   }).join('');
 
-  var allJpy=CURRENCIES.filter(function(c){return c.code!=='JPY';}).reduce(function(s,c){var a=parseFloat(DATA.currencies[c.code]||0);return s+(a?Math.round(a*getRate(c.code)):0);},0);
-  var allIdr=CURRENCIES.filter(function(c){return c.code!=='JPY'&&c.code!=='IDR';}).reduce(function(s,c){var a=parseFloat(DATA.currencies[c.code]||0);return s+(a?Math.round(a*getRateIDR(c.code)):0);},0);
-  var currCards=CURRENCIES.filter(function(c){return c.code!=='JPY';}).map(function(c){
+  var displayCurrencies=CURRENCIES.filter(function(c){return !c.hidden&&c.code!=='JPY';});
+  var allJpy=displayCurrencies.reduce(function(s,c){var a=parseFloat(DATA.currencies[c.code]||0);return s+(a?Math.round(a*getRate(c.code)):0);},0);
+  var allIdr=displayCurrencies.reduce(function(s,c){var a=parseFloat(DATA.currencies[c.code]||0);return s+(a?Math.round(a*getRateIDR(c.code)):0);},0);
+  var currCards=displayCurrencies.map(function(c){
     var amt=DATA.currencies[c.code]||'';
     var jpyRate=getRate(c.code);
     var idrRate=getRateIDR(c.code);

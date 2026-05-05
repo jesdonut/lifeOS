@@ -21,7 +21,7 @@ Codex checklist after checking `app.js` and `mobile-app.js`:
 | # | Item | Codex status | Evidence |
 |---|---|---|---|
 | 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets on Start Fresh | Complete | Desktop and mobile now keep all save-file fields but use neutral defaults: `tsumitateMonthly:0`, empty `projectionYears`, and empty `bankAccounts`. Loading older saves still preserves existing NISA years and bank account data. |
-| 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | Unfinished on desktop; not applicable to mobile | `app.js` still includes IDR, KRW, and EUR in `CURRENCIES`, and the card render still filters only `c.code !== 'JPY'`, so those cards can still display. `mobile-app.js` has no currency display card grid. |
+| 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | Complete | Desktop now renders only CNY, GBP, USD, and MYR cards. IDR remains in `CURRENCIES` with `hidden:true` so IDR rate lookups for lots/bonds keep working. KRW/EUR saved data is preserved in `DATA` but no longer has display cards. Mobile has no currency display card grid. |
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | Unfinished on desktop; not applicable to mobile | `app.js` still renders `.nisa-meta` separately above a plain `<table class="nisa-snaps">`, with no `nisa-config-row`, no `nisa-config-left/right`, and no `nisa-snaps-scroll`. Mobile does not render this desktop NISA config/snapshot UI. |
 
 Everything below this audit is the historical tracker/spec text (this is written by claude code).
@@ -756,7 +756,7 @@ Implemented (codex wrote this):
 
 ---
 
-## 54. Currencies — Remove IDR, KRW, EUR from Display Cards
+## ~~54. Currencies — Remove IDR, KRW, EUR from Display Cards~~ ✅ Complete
 
 The currency card grid should only show: **CNY · GBP · USD · MYR** (4 cards = 1 row).
 
@@ -770,6 +770,12 @@ IDR is used internally for bond/lot rate lookups via `getRate('IDR')`, so it can
 **Result:** 4-card grid in one row. IDR rate still available for bond calculations.
 
 **Scope** — small. Array edit + one filter change.
+
+Implemented (codex wrote this):
+- Kept IDR in `CURRENCIES` with `hidden:true` so `getRate('IDR')` and IDR conversion helpers still work.
+- Removed KRW and EUR from the display currency source list without deleting any saved `DATA.currencies` values from uploaded files.
+- Currency cards and total-held calculations now use the visible currency list: CNY, GBP, USD, and MYR.
+- Mobile was left unchanged because it has no currency card grid.
 
 ---
 
@@ -860,5 +866,5 @@ Three improvements to the NISA card layout:
 | 51 | Settings Panel — Font Size Slider + Sidebar Default | ✅ |
 | 52 | Code Cleanup — Remove Dead CSS and Unused JS | ✅ |
 | 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets | ✅ |
-| 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ⬜ |
+| 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ✅ |
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | ⬜ |
