@@ -30,7 +30,7 @@
 - `overscroll-behavior: none` on body prevents iOS pull-to-refresh; only `#m-content` scrolls
 
 ## Navigation
-5 bottom tabs: **Day · Week · Year · Finance · Export**
+6 bottom tabs: **Day · Week · Year · Finance · Search · Export**
 
 ---
 
@@ -125,6 +125,17 @@ Year goal edits save to `DATA.goals` immediately.
 - Net row at bottom
 
 **Balance formula:** Income − Commute − Food − Fixed − Necessities − Optional
+
+---
+
+## Search Tab
+
+**Header:** Search (no nav arrows)
+
+- Full-width text input, auto-focused on tab open
+- Results appear below as a scrollable list: colour dot + event text + date (day letter · date · month · year)
+- Tap any result → jumps to that day in the Day tab
+- Searches all events in `DATA.events` by text (case-insensitive substring match), sorted newest first
 
 ---
 

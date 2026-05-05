@@ -234,6 +234,45 @@ function openModal(html){
 }
 function closeModal(){document.getElementById('modal-overlay').style.display='none';}
 
+// ── SEARCH ────────────────────────────────────────────────────────────
+function openSearchModal(){
+  openModal(
+    '<div class="modal-title">search events</div>'+
+    '<input id="search-inp" type="text" placeholder="type to search..." class="sl-inp" style="width:100%;box-sizing:border-box;font-size:13px;padding:7px 10px;margin-bottom:8px" oninput="renderSearchResults(this.value)" onkeydown="if(event.key===\'Escape\')closeModal()">'+
+    '<div id="search-results" style="max-height:320px;overflow-y:auto"></div>'+
+    '<div style="margin-top:10px"><button class="modal-btn ghost" onclick="closeModal()">close</button></div>'
+  );
+  document.getElementById('search-inp').focus();
+}
+function renderSearchResults(q){
+  var res=document.getElementById('search-results');
+  var query=q.toLowerCase().trim();
+  if(!query){res.innerHTML='';return;}
+  var results=[];
+  Object.keys(DATA.events).forEach(function(dk){
+    (DATA.events[dk]||[]).forEach(function(e){
+      if(e.text.toLowerCase().includes(query)) results.push({dk:dk,e:e});
+    });
+  });
+  results.sort(function(a,b){return b.dk.localeCompare(a.dk);});
+  if(!results.length){res.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">no results</div>';return;}
+  res.innerHTML=results.map(function(r){
+    var d=new Date(r.dk+'T12:00:00');
+    var dl=DAYS[d.getDay()===0?6:d.getDay()-1]+' '+d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)+' '+d.getFullYear();
+    return '<div class="search-result" onclick="closeModal();cursor=new Date(\''+r.dk+'T12:00:00\');setView(\'week\')">'+
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+r.e.color+';flex-shrink:0;display:inline-block"></span>'+
+      '<span style="flex:1;font-size:13px;color:var(--text)">'+r.e.text+'</span>'+
+      '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+dl+'</span>'+
+    '</div>';
+  }).join('');
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'&&!document.activeElement.isContentEditable){
+    e.preventDefault();openSearchModal();
+  }
+});
+
+
 function openAddEventModal(key){
   const d=key||fd(cursor);
   openModal(

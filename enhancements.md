@@ -673,3 +673,4 @@ Swatches now render as labelled pills (dot + name) instead of plain circles. All
 | 45 | Notes — Bold, Underline, Strikethrough Formatting | ✅ |
 | 46 | Desktop — Line-Item Spend Log for Food, Commute, Transport | ✅ |
 | 47 | Fix — ゲーム/P label → ゲーム/Project across finance view | ✅ |
+| 48 | Search — Event search on desktop (topbar button + / shortcut) and mobile (Search tab) | ✅ |

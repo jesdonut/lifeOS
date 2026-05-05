@@ -231,8 +231,8 @@ function setTab(t){
   renderContent();
 }
 
-function renderHeader(){ ({day:renderDayHeader,week:renderWeekHeader,year:renderYearHeader,finance:renderFinHeader})[tab](); }
-function renderContent(){ ({day:renderDayContent,week:renderWeekContent,year:renderYearContent,finance:renderFinContent})[tab](); }
+function renderHeader(){ ({day:renderDayHeader,week:renderWeekHeader,year:renderYearHeader,finance:renderFinHeader,search:renderSearchHeader})[tab](); }
+function renderContent(){ ({day:renderDayContent,week:renderWeekContent,year:renderYearContent,finance:renderFinContent,search:renderSearchContent})[tab](); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Day — header
@@ -846,6 +846,52 @@ function prevMonth(moKey){
   let [yr,mo]=[parseInt(moKey),parseInt(moKey.split('-')[1])];
   mo--; if(mo<1){mo=12;yr--;}
   return yr+'-'+p2(mo);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Search
+// ─────────────────────────────────────────────────────────────────────────────
+function renderSearchHeader(){
+  document.getElementById('m-header').innerHTML=
+    '<div class="m-header-nav"><div class="m-header-range">Search</div></div>';
+}
+
+function renderSearchContent(){
+  document.getElementById('m-content').innerHTML=
+    '<div style="margin-bottom:10px">'+
+      '<input id="m-search-inp" type="search" placeholder="search events..." '+
+        'style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-size:14px;font-family:var(--sans);background:var(--surface);color:var(--text);outline:none" '+
+        'oninput="mobileSearchResults(this.value)">'+
+    '</div>'+
+    '<div id="m-search-results"></div>';
+  document.getElementById('m-search-inp').focus();
+}
+
+function mobileSearchResults(q){
+  const res=document.getElementById('m-search-results');
+  const query=q.toLowerCase().trim();
+  if(!query){res.innerHTML='';return;}
+  const results=[];
+  Object.keys(DATA.events).forEach(dk=>{
+    (DATA.events[dk]||[]).forEach(e=>{
+      if(e.text.toLowerCase().includes(query)) results.push({dk,e});
+    });
+  });
+  results.sort((a,b)=>b.dk.localeCompare(a.dk));
+  if(!results.length){
+    res.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">no results</div>';
+    return;
+  }
+  res.innerHTML=results.map(r=>{
+    const d=new Date(r.dk+'T12:00:00');
+    const dl=DAY_LETTER[dayIdx(d)]+' '+d.getDate()+' '+MONTH_SHORT[d.getMonth()]+' '+d.getFullYear();
+    return '<div onclick="curDay=new Date(\''+r.dk+'T12:00:00\');setTab(\'day\')" '+
+      'style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);cursor:pointer">'+
+      '<span style="width:10px;height:10px;border-radius:50%;background:'+r.e.color+';flex-shrink:0"></span>'+
+      '<span style="flex:1;font-size:14px;color:var(--text)">'+r.e.text+'</span>'+
+      '<span style="font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap">'+dl+'</span>'+
+    '</div>';
+  }).join('');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
