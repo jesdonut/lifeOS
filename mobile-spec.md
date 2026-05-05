@@ -1,23 +1,33 @@
 # lifeOS Mobile — Spec
 
 ## Files
-- `mobile.html` — separate entry point
-- `mobile-app.js` — separate logic
+- `mobile.html` — separate entry point, all CSS inline in `<style>`
+- `mobile-app.js` — separate logic, no shared code with `app.js`
+
+## Routing
+- Desktop (`index.html`) detects mobile via user-agent and auto-redirects to `mobile.html`
+- `mobile.html` has a small "desktop →" link for reverting on tablets
 
 ## Data
-- Shares the **same save file** as the desktop app (same DATA format)
+- Shares the **same save file format** as the desktop app (same `DATA` object structure)
 - All DATA fields preserved as-is (NISA, bonds, currencies, etc.) — mobile reads and writes the same object, just doesn't display everything
 - New field added: `spendLog` — line-item entries for food, commute, transport
   ```
   spendLog: {
     "YYYY-MM-DD": {
-      food:    [{ id, amount, label }],
-      commute: [{ id, amount, label }],
+      food:      [{ id, amount, label }],
+      commute:   [{ id, amount, label }],
       transport: [{ id, amount, label }]
     }
   }
   ```
 - When mobile saves a line-item entry, it also updates `spend["YYYY-MM-DD"][category]` to the summed total — so the desktop finance view stays correct
+
+## Persistence
+- All saves go to **`localStorage`** silently (key: `lifeos-mobile-data`) — no download dialogs during use
+- On next visit, splash shows **"continue last session"** to resume from localStorage
+- **"export ↑"** button (top-right, always visible) triggers a JSON download when the user is ready to transfer the file (e.g. AirDrop to Mac)
+- Loading a save file via the splash also writes immediately to localStorage
 
 ## Navigation
 4 bottom tabs: **Day · Week · Year · Finance**
@@ -26,89 +36,103 @@
 
 ## Day Tab
 
-**Header:** ← [Day name · Date · Year · age] →
-**Mini week strip:** M T W T F S S (dot under today, tap to jump to that day)
+**Header:** ← [Day letter · Month Day] →
+**Sub:** Year · age N
+**Mini week strip:** M T W T F S S — dot below days with events, today highlighted in accent circle, tap any day to jump
 
 **Events section**
-- List events for the day (colour dot + label + time if set)
-- Read-only on mobile (no add/edit for now)
+- List events for the day (colour dot + label)
+- Read-only (no add/edit on mobile)
 
 **Spend section — SPEND · ¥TOTAL TODAY**
+
 Three line-item categories (food, commute, transport):
-- Show existing entries as rows: label + amount + × to delete
-- "+ add" button opens a small inline form: amount field + optional label → saves entry, recalculates total
-- Total shown per category
+- Collapsed by default, showing category name + running total
+- Tap to expand → shows individual entries (label + amount + × delete)
+- Inline add form: amount input + optional label + "+" button
+- Entries save to `spendLog` and sync total to `DATA.spend`
 
 Seven simple-input categories (paperwork, medical, necessities, nhi, project, fun, clothes):
-- Single number input per day, same as desktop
+- Single number input per day, same as desktop spend panel
 
 ---
 
 ## Week Tab
 
-**Header:** ← [May 4–10 · Week N · Year] →
+**Header:** ← [Month D–D] → / Week N · Year
 
 **Hero strip:**
 - WEEK SPEND ¥total
-- vs last week delta (green/red)
+- Delta vs previous week (green if down, red if up)
 
 **Day rows** (Mon–Sun):
-- Day abbreviation + date number
-- Event dots (coloured, one per event, max ~4)
-- "quiet" label if no events
-- Daily spend total (¥)
+- Day abbreviation + date number (accent colour if today)
+- Coloured event dots (up to 5) or "quiet" if no events
+- Daily spend total (¥), greyed if zero
 
-Tap a day row → jumps to that day in Day tab
+Tap any day row → jumps to that day in Day tab
 
 ---
 
 ## Year Tab
 
-**Decade strip** — horizontally scrollable row of year cards (year + age + coloured event dots). Tap to focus that year.
+**Header:** ← [Year] → / age N
 
-**Year cards** (stacked vertically):
-- **Collapsed:** single line — year · age · event count · NISA total
+**Decade strip** — horizontally scrollable row of year mini-cards:
+- Year, age, coloured event dots
+- Tap to focus that year (updates header + scrolls year cards)
+- Shows curYear−3 to curYear+7 (11 cards)
+
+**Year cards** (stacked vertically, curYear−2 to curYear+5):
+- **Collapsed:** year · age · one-line summary · event count
 - **Expanded:**
-  - Header: year + age + summary line (editable)
-  - NISA progress bar + cumulative total + % of ¥18M
-  - Events by month (month label + event chips)
-  - Footer: aim / checkpoint / note (editable inline)
+  - Editable one-line summary
+  - NISA cumulative progress bar (つみたて pink / 成長 navy) + total + % of ¥18M
+  - Events grouped by month as coloured chips
+  - Footer: ★ aim / ▶ checkpoint / — note (inline editable textareas, auto-resize)
+
+Year goal edits save to `DATA.goals` immediately.
 
 ---
 
 ## Finance Tab
 
-**Header:** ← [Finance · Month Year] →
+**Header:** ← [Finance · Month] → / Year
 
 **Balance hero:**
-- Large balance number
-- ± vs last month (colour coded)
+- Large balance (¥)
+- ± vs previous month (green/red)
 - No sparkline graph
 
-**Distribution bar** — same proportion bar as desktop (income → saved / fixed / food / transport / commute / necessities / optional)
+**Distribution bar** — proportion bar showing income breakdown:
+- Saved (green) · Fixed (blue) · Food (rose) · Commute (sage) · Necessities (gold) · Optional (mauve)
+- Legend below with percentages
 
-**Accordion sections** (same as desktop, vertical stack):
-- Income (manual fields: salary, transport reimb, other, mom pays, deductions)
-- Fixed (manual: rent, gas, water, electricity, phone, internet)
-- Commute (manual pass + auto from spendLog commute total)
-- Food (auto from spendLog food total + spend food)
-- Transport (auto from spendLog transport total + spend transport)
-- Necessities (auto from spend)
-- Optional (auto from spend)
+**Accordion sections** (tap header to expand/collapse):
 
-No sparkline, no side-by-side layout.
+| Section | Type | Fields |
+|---|---|---|
+| Income | Manual | Salary, transport reimb, other income, mom pays; pre-May 2025: tax withheld + insurance; May 2025+: 7 split deductions |
+| Fixed | Manual | Rent, gas, water, electricity, phone, internet |
+| Commute | Manual + Auto | Commutation pass (manual) + daily commute spend (auto) |
+| Food | Auto | From daily spend |
+| Necessities | Auto | Transport + paperwork + medical + daily + NHI |
+| Optional | Auto | Project + entertainment + clothes |
+
+- Income open by default, others collapsed
+- Manual fields accept arithmetic expressions (e.g. `50000*2`)
+- Filled fields highlighted with accent border
+- Net row at bottom
+
+**Balance formula:** Income − Commute − Food − Fixed − Necessities − Optional
 
 ---
 
 ## Out of scope for mobile
 - Tasks (view or edit)
 - NISA editor
-- Currencies / bonds / bank accounts
+- Currencies / bonds
 - Countdowns / notes / upcoming sidebar
-- Event editing (read-only)
-- Year planner grid
-
----
-
-## Open questions / ideas TBD
-*(waiting for user's additional idea before finalising)*
+- Event add / edit (read-only)
+- Year planner grid (month mini-calendar)
+- Month view

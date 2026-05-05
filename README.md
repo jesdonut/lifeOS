@@ -2,36 +2,46 @@
 
 A personal life planner that lives entirely in your browser. No accounts, no cloud, no installs — just open `index.html` and go.
 
+A mobile companion (`mobile.html`) is also live — optimised for on-the-go daily expense tracking. Opening the site on a phone auto-redirects to the mobile version.
+
 ---
 
 ## Tech Stack
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Structure | HTML5 | Single `index.html` entry point |
-| Styles | Plain CSS (`styles.css`) | CSS custom properties for theming; no framework |
-| Logic | Vanilla JavaScript (`app.js`) | No dependencies, no build step |
+| Structure | HTML5 | `index.html` (desktop) + `mobile.html` (mobile) |
+| Styles | Plain CSS (`styles.css`, inline in `mobile.html`) | CSS custom properties for theming; no framework |
+| Logic | Vanilla JavaScript (`app.js`, `mobile-app.js`) | No dependencies, no build step |
 | Fonts | Google Fonts | DM Mono (monospaced) + DM Sans (UI text), loaded via `@import` |
-| Persistence | File System Access API (Chrome) + fallback download | Auto-saves to a local JSON file; falls back to manual download on unsupported browsers |
+| Persistence (desktop) | File System Access API (Chrome) + fallback download | Auto-saves to a local JSON file |
+| Persistence (mobile) | `localStorage` + manual export | Saves silently on every change; export button for JSON download |
 
-There is no backend, no database, no bundler, and no package manager. The entire app ships as three files.
+There is no backend, no database, no bundler, and no package manager.
 
 ---
 
 ## Getting Started
 
+### Desktop
 1. Open `index.html` in Chrome (recommended) or another modern browser.
 2. On the splash screen, choose **start fresh** to begin with a blank slate, or **load save file** to restore a previous session.
 3. On first start you'll be asked once where to save your file (`lifeOS-save.json`). After that the app auto-saves silently after every change. A faint "✓ saved" indicator appears in the top bar.
 4. Next time, click **load** in the top bar (or use the splash screen) to reopen your save file.
 
-> **Safari / Firefox:** The File System Access API is not supported. A **💾 save** button appears instead — click it to download your save file. Safari will also show a warning suggesting Chrome for auto-save.
+> **Safari / Firefox:** The File System Access API is not supported. A **💾 save** button appears instead — click it to download your save file.
 
-> **Local file:// note:** Opening directly via `file://` works in most browsers. If you get a blank page, serve with:
-> ```
-> python -m http.server 8000
-> ```
-> Then visit `http://localhost:8000`.
+> **Local file:// note:** Opening directly via `file://` works in most browsers. If you get a blank page, serve with `python -m http.server 8000` and visit `http://localhost:8000`.
+
+### Mobile
+Opening the site on a phone auto-redirects to `mobile.html`. The mobile app is optimised for daily expense tracking on the go.
+
+1. On the splash screen, tap **load save file** to import your existing data, or **start fresh**.
+2. Every change saves automatically to `localStorage` — no dialogs.
+3. Next visit shows **continue last session** to resume instantly.
+4. When done for the day, tap **export ↑** (top-right) to download the JSON, then AirDrop it to your Mac and load it in the desktop app.
+
+A small **desktop →** link is available if you need to switch to the full version.
 
 ---
 
@@ -56,7 +66,8 @@ DATA = {
   currencyLots: [{ id, code, amount, rateIDR, date }]
   bonds:        [{ id, series, faceValue, couponRate, taxRate,
                    settlementDate, firstCouponDate, maturityDate, matured }]
-  bankAccounts: [{ id, name, currency, balance }]
+  spendLog:     { "YYYY-MM-DD": { food: [{ id, amount, label }],
+                                  commute: [...], transport: [...] } }
   finance:      { "YYYY-MM": { salary, transportReimb, otherIncome, momPays,
                                // pre-May 2025 deductions:
                                taxWithheld, insuranceDed,
@@ -159,7 +170,7 @@ Auto sections pull directly from daily entries in the week view spend panel. Man
 
 ### Savings
 
-A financial planning screen with four sections.
+A financial planning screen with three sections.
 
 **NISA tracker**
 - Hero strip: lifetime plan total + stacked progress bar (つみたて pink / 成長 navy), projected cap year, this year's total, average per year
@@ -167,11 +178,6 @@ A financial planning screen with four sections.
 - Meta strip: start year, start month, this year's monthly contribution
 - Snapshot table: chosen checkpoint years with cumulative totals and mini progress bars
 - Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined
-
-**Bank accounts**
-- Track cash balances across accounts (BCA in IDR, MUFG in JPY, etc.)
-- Editable balances with live conversion shown in both ¥ and Rp
-- Total row in both ¥ and Rp
 
 **Currencies**
 - Enter amounts held in 8 currencies: JPY, IDR, USD, GBP, CNY, KRW, MYR, EUR
