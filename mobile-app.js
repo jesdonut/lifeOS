@@ -136,50 +136,43 @@ function monthSpend(yr,mo,cats){
 // ─────────────────────────────────────────────────────────────────────────────
 // Save / Load
 // ─────────────────────────────────────────────────────────────────────────────
-async function saveData(){
+// All saves go to localStorage only — no download prompt during use.
+// Call exportData() explicitly when ready to export.
+const LS_KEY='lifeos-mobile-data';
+
+function saveData(){
   if(!DATA.spendLog) DATA.spendLog={};
-  const json=JSON.stringify(DATA);
-  if(fileHandle){
-    try{
-      const w=await fileHandle.createWritable();
-      await w.write(json); await w.close();
-      showToast('✓ saved');
-    }catch(e){ downloadSave(json); }
-  } else {
-    downloadSave(json);
-  }
+  try{ localStorage.setItem(LS_KEY,JSON.stringify(DATA)); }catch(e){}
+  showToast('✓ saved');
 }
 
-function downloadSave(json){
+function exportData(){
+  const json=JSON.stringify(DATA);
   const a=document.createElement('a');
   a.href='data:application/json,'+encodeURIComponent(json);
   a.download='lifeOS-save.json'; a.click();
-  showToast('✓ downloaded');
+  showToast('✓ exported');
 }
 
 async function pickAndLoad(){
-  if(window.showOpenFilePicker){
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='.json';
+  inp.onchange=async()=>{
     try{
-      const [h]=await window.showOpenFilePicker({types:[{description:'JSON',accept:{'application/json':['.json']}}]});
-      const file=await h.getFile();
-      const text=await file.text();
-      applyData(JSON.parse(text));
-      // Keep handle if writable
-      if(window.showSaveFilePicker){
-        try{ fileHandle=await window.showSaveFilePicker({suggestedName:file.name,types:[{description:'JSON',accept:{'application/json':['.json']}}]}); }catch(e){}
-      }
-      startApp();
-    }catch(e){ if(e.name!=='AbortError') alert('Could not load file.'); }
-  } else {
-    // Fallback: file input
-    const inp=document.createElement('input');
-    inp.type='file'; inp.accept='.json';
-    inp.onchange=async()=>{
       const text=await inp.files[0].text();
-      try{ applyData(JSON.parse(text)); startApp(); }catch(e){ alert('Invalid save file.'); }
-    };
-    inp.click();
-  }
+      applyData(JSON.parse(text));
+      saveData();  // persist to localStorage immediately
+      startApp();
+    }catch(e){ alert('Invalid save file.'); }
+  };
+  inp.click();
+}
+
+function loadFromLocal(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){ applyData(JSON.parse(raw)); startApp(); }
+  }catch(e){ showSplash(); }
 }
 
 function applyData(d){
@@ -205,24 +198,28 @@ function showToast(msg){
 // Splash
 // ─────────────────────────────────────────────────────────────────────────────
 function showSplash(){
+  const hasLocal=!!localStorage.getItem(LS_KEY);
   document.getElementById('m-header').innerHTML='<div class="m-header-nav"><div class="m-header-title">lifeOS</div></div><div class="m-header-sub">mobile</div>';
   document.getElementById('m-content').innerHTML=
-    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:14px">'+
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:12px">'+
     '<div style="font-size:28px;font-weight:700;color:var(--accent);font-family:var(--mono)">lifeOS</div>'+
-    '<div style="font-size:12px;color:var(--text3);margin-bottom:8px">mobile</div>'+
-    '<button onclick="pickAndLoad()" style="width:200px;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:var(--sans);font-size:14px;font-weight:500">load save file</button>'+
-    '<button onclick="startFresh()" style="width:200px;padding:12px;background:none;color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--sans);font-size:14px">start fresh</button>'+
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:4px">mobile</div>'+
+    (hasLocal?'<button onclick="loadFromLocal()" style="width:220px;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:var(--sans);font-size:14px;font-weight:500">continue last session</button>':'')+
+    '<button onclick="pickAndLoad()" style="width:220px;padding:12px;background:'+(hasLocal?'none':'var(--accent)')+';color:'+(hasLocal?'var(--text2)':'#fff')+';border:1px solid '+(hasLocal?'var(--border)':'transparent')+';border-radius:var(--radius);font-family:var(--sans);font-size:14px;'+(hasLocal?'':'font-weight:500')+'">load save file</button>'+
+    '<button onclick="startFresh()" style="width:220px;padding:12px;background:none;color:var(--text3);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--sans);font-size:13px">start fresh</button>'+
     '</div>';
   document.getElementById('m-nav').style.display='none';
+  document.getElementById('export-btn').style.display='none';
 }
 
 function startFresh(){
-  document.getElementById('m-nav').style.display='';
+  localStorage.removeItem(LS_KEY);
   startApp();
 }
 
 function startApp(){
   document.getElementById('m-nav').style.display='';
+  document.getElementById('export-btn').style.display='';
   setTab('day');
 }
 
