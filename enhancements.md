@@ -711,6 +711,66 @@ Audit all five files for code that is no longer referenced after previous enhanc
 
 ---
 
+## 53. Clean Defaults — Zero NISA Values + No Bank Account Presets on Start Fresh
+
+When a user starts fresh, the DATA object should have neutral/zero values with no pre-filled entries.
+
+**Changes to `DATA` initial declaration (line 76) and `startFresh()` (line 1680):**
+- `nisa.tsumitateMonthly`: `60000` → `0`
+- `nisa.projectionYears`: long array of 11 years → `[]` (empty; user adds as needed)
+- `bankAccounts`: `[{BCA...},{MUFG...}]` → `[]` (empty array; #44 removed the UI, now remove the presets)
+
+**Scope** — tiny. Two identical DATA literals in app.js, change 3 values each.
+
+---
+
+## 54. Currencies — Remove IDR, KRW, EUR from Display Cards
+
+The currency card grid should only show: **CNY · GBP · USD · MYR** (4 cards = 1 row).
+
+IDR is used internally for bond/lot rate lookups via `getRate('IDR')`, so it cannot be fully removed from the `CURRENCIES` array — add `hidden:true` to its entry instead.
+
+**Changes in `app.js`:**
+1. In the `CURRENCIES` array (line 54–57): remove KRW and EUR entries entirely; add `hidden:true` to the IDR entry
+2. In the currency cards render (`.filter(...)` before `.map(...)`): change filter from `c.code !== 'JPY'` to `!c.hidden && c.code !== 'JPY'`
+3. Remove `allIdr` from the total-held display line (since IDR is no longer a display currency) — or keep it if bonds are still tracked in IDR (leave as-is if bonds exist)
+
+**Result:** 4-card grid in one row. IDR rate still available for bond calculations.
+
+**Scope** — small. Array edit + one filter change.
+
+---
+
+## 55. NISA — Compact Config + Scrollable Snapshot Table
+
+Three improvements to the NISA card layout:
+
+**1. Default snapshots reduced to 3**
+- In the `DATA` literal (line 76) and `startFresh()` (line 1680): `projectionYears` default → `[currentYear, currentYear+2, currentYear+5]` (3 entries instead of 11)
+- Note: this overlaps with #53 which sets it to `[]` — if #53 is done first, this change applies only to the constant DATA declaration (not startFresh which uses `[]`)
+
+**2. Snapshot table scrolls in place**
+- Wrap the `<table class="nisa-snaps">` in a `<div>` with `max-height: 180px; overflow-y: auto;`
+- Keeps the table compact when entries grow; user can still add more via "+ add snapshot year"
+
+**3. Two-column NISA config layout**
+- The `.nisa-meta` block (start year / start month / this year monthly) moves to the **left column**
+- The snapshot table + add button moves to the **right column**
+- Use a flex row wrapper `nisa-config-row` with two children: `nisa-config-left` (meta fields) and `nisa-config-right` (snapshots)
+- Left: ~200px fixed or `flex:0 0 180px`; Right: `flex:1; min-width:0`
+
+**CSS to add (in `styles.css`):**
+```css
+.nisa-config-row{display:flex;gap:16px;align-items:flex-start;margin-top:12px}
+.nisa-config-left{flex:0 0 180px}
+.nisa-config-right{flex:1;min-width:0}
+.nisa-snaps-scroll{max-height:180px;overflow-y:auto}
+```
+
+**Scope** — small. JS template restructure + 4 CSS rules.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -763,7 +823,10 @@ Audit all five files for code that is no longer referenced after previous enhanc
 | 46 | Desktop — Line-Item Spend Log for Food, Commute, Transport | ✅ |
 | 47 | Fix — ゲーム/P label → ゲーム/Project across finance view | ✅ |
 | 48 | Search — Event search on desktop (topbar button + / shortcut) and mobile (Search tab) | ✅ |
-| 49 | Font Scale — CSS Custom Properties + Larger Base Size | ⬜ |
+| 49 | Font Scale — CSS Custom Properties + Larger Base Size | ✅ |
 | 50 | Sidebar — Collapsible Toggle | ✅ |
 | 51 | Settings Panel — Font Size Slider + Sidebar Default | ✅ |
 | 52 | Code Cleanup — Remove Dead CSS and Unused JS | ✅ |
+| 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets | ⬜ |
+| 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ⬜ |
+| 55 | NISA — Compact Config + Scrollable Snapshot Table | ⬜ |
