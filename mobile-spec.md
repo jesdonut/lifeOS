@@ -112,7 +112,7 @@ Year goal edits save to `DATA.goals` immediately.
 
 | Section | Type | Fields |
 |---|---|---|
-| Income | Manual | Salary, transport reimb, other income, mom pays; pre-May 2025: tax withheld + insurance; May 2025+: 7 split deductions |
+| Income | Manual | Salary, transport reimb, other income, mom pays; pre-May 2025: tax withheld (−) + insurance (−); May 2025+: Health insurance (−), Care insurance (−), Child-rearing insurance (−), Pension insurance (−), Employment insurance (−), Income tax (−), Resident tax (−) |
 | Fixed | Manual | Rent, gas, water, electricity, phone, internet |
 | Commute | Manual + Auto | Commutation pass (manual) + daily commute spend (auto) |
 | Food | Auto | From daily spend |

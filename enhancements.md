@@ -671,3 +671,5 @@ Swatches now render as labelled pills (dot + name) instead of plain circles. All
 | 43 | Events — Labelled Colour Palette + Consistent Colours Across Views | ✅ |
 | 44 | Remove Bank Accounts Section | ✅ |
 | 45 | Notes — Bold, Underline, Strikethrough Formatting | ✅ |
+| 46 | Desktop — Line-Item Spend Log for Food, Commute, Transport | ✅ |
+| 47 | Fix — ゲーム/P label → ゲーム/Project across finance view | ✅ |
