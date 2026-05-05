@@ -112,12 +112,12 @@ Year goal edits save to `DATA.goals` immediately.
 
 | Section | Type | Fields |
 |---|---|---|
-| Income | Manual | Salary, transport reimb, other income, mom pays; pre-May 2025: tax withheld (−) + insurance (−); May 2025+: Health insurance (−), Care insurance (−), Child-rearing insurance (−), Pension insurance (−), Employment insurance (−), Income tax (−), Resident tax (−) |
-| Fixed | Manual | Rent, gas, water, electricity, phone, internet |
-| Commute | Manual + Auto | Commutation pass (manual) + daily commute spend (auto) |
-| Food | Auto | From daily spend |
-| Necessities | Auto | Transport + paperwork + medical + daily + NHI |
-| Optional | Auto | Project + entertainment + clothes |
+| Income | Manual | Salary, Transport reimbursement, Other income, Mom pays; pre-May 2025: Tax withheld (−) + Insurance (−); May 2025+: Health insurance (−), Care insurance (−), Child-rearing insurance (−), Pension insurance (−), Employment insurance (−), Income tax (−), Resident tax (−) |
+| Fixed | Manual | Rent, Gas, Water, Electricity, Phone, Internet |
+| Commute | Manual + Auto | Commutation pass (manual) + Daily commute (auto) |
+| Food 食べ物 | Auto | From Daily Spend — single row with JP label |
+| Necessities 生活費 | Auto | Transport 電車代金 · Medical メディカル · Daily 日常生活 · NHI 国民保険 — each row shows JP + EN label and amount |
+| Optional 任意支出 | Auto | Project ゲーム/Project · Entertainment エンターテインメント · Clothes 服・髪 — each row shows JP + EN label and amount |
 
 - Income open by default, others collapsed
 - Manual fields accept arithmetic expressions (e.g. `50000*2`)

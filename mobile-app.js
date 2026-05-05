@@ -724,7 +724,7 @@ function renderFinContent(){
         '<span><i style="background:'+FIN_C.fixed+'"></i>Fixed <b>'+pFixed+'%</b></span>'+
         '<span><i style="background:'+FIN_C.food+'"></i>Food <b>'+pFood+'%</b></span>'+
         '<span><i style="background:'+FIN_C.commute+'"></i>Commute <b>'+pComm+'%</b></span>'+
-        '<span><i style="background:'+FIN_C.necessities+'"></i>Nec <b>'+pNec+'%</b></span>'+
+        '<span><i style="background:'+FIN_C.necessities+'"></i>Necessities <b>'+pNec+'%</b></span>'+
         '<span><i style="background:'+FIN_C.optional+'"></i>Optional <b>'+pOp+'%</b></span>'+
       '</div>'+
     '</div>';
@@ -734,9 +734,16 @@ function renderFinContent(){
     buildIncomeSection(c,moKey),
     buildFixedSection(c,moKey),
     buildAutoSection('commute','Commute 通勤',fmtY(c.commute),commuteBody(c,moKey)),
-    buildAutoSection('food','Food 食',fmtY(c.food),autoBody(fmtY(c.food),'from daily spend')),
-    buildAutoSection('necessities','Necessities',fmtY(c.necessities),autoBody(fmtY(c.necessities),'transport + medical + daily + NHI')),
-    buildAutoSection('optional','Optional',fmtY(c.optional),autoBody(fmtY(c.optional),'project + entertainment + clothes')),
+    buildAutoSection('food','Food 食べ物',fmtY(c.food),autoCatRow('食べ物','Food',c.food)),
+    buildAutoSection('necessities','Necessities 生活費',fmtY(c.necessities),
+      autoCatRow('電車代金','Transport',monthSpend(c.yr,c.mo,'transport'))+
+      autoCatRow('メディカル','Medical',monthSpend(c.yr,c.mo,'medical'))+
+      autoCatRow('日常生活','Daily',monthSpend(c.yr,c.mo,'necessities'))+
+      autoCatRow('国民保険','NHI',monthSpend(c.yr,c.mo,'nhi'))),
+    buildAutoSection('optional','Optional 任意支出',fmtY(c.optional),
+      autoCatRow('ゲーム/Project','Project',monthSpend(c.yr,c.mo,'project'))+
+      autoCatRow('エンターテインメント','Entertainment',monthSpend(c.yr,c.mo,'fun'))+
+      autoCatRow('服・髪','Clothes',monthSpend(c.yr,c.mo,'clothes'))),
   ].join('');
 
   // Net
@@ -759,7 +766,7 @@ function buildIncomeSection(c,moKey){
 
   const rows=[
     finRow('Salary','給料','salary',f,moKey),
-    finRow('Transport reimb.','交通費補助','transportReimb',f,moKey),
+    finRow('Transport reimbursement','交通費補助','transportReimb',f,moKey),
     finRow('Other income','所得','otherIncome',f,moKey),
     finRow('Mom pays','親の援助','momPays',f,moKey),
     ...dedFields.map(([k,lbl])=>finRow(lbl,'',k,f,moKey)),
@@ -787,8 +794,11 @@ function commuteBody(c,moKey){
     '<div class="fin-field-row"><div class="fin-field-label"><div>Daily commute</div><div class="fin-field-sub">通勤費 AUTO</div></div><div class="fin-field-auto">'+fmtY(c.commuteAuto)+'</div></div>';
 }
 
-function autoBody(total,sub){
-  return '<div class="fin-field-row"><div class="fin-field-label"><div style="font-size:12px;color:var(--text3)">'+sub+'</div></div><div class="fin-field-auto">'+total+'</div></div>';
+function autoCatRow(jp,en,amount){
+  return '<div class="fin-field-row">'+
+    '<div class="fin-field-label"><div>'+en+'</div><div class="fin-field-sub">'+jp+'</div></div>'+
+    '<div class="fin-field-auto">'+fmtY(amount)+'</div>'+
+  '</div>';
 }
 
 function finRow(label,sub,fieldKey,f,moKey){
