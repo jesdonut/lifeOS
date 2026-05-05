@@ -565,7 +565,7 @@ function renderYear(panel,year){
   var decStart=Math.max(MIN_YEAR,year-5);
   var decEnd=Math.min(MAX_YEAR,decStart+10);
   decStart=Math.max(MIN_YEAR,decEnd-10);
-  var decStrip='<div class="yr-strip">';
+  var decStrip='<div class="year-strip">';
   for(var dy=decStart;dy<=decEnd;dy++){
     var dage=dy-birthYear;
     var dcounts=yearEvtCounts(dy);
@@ -575,10 +575,10 @@ function renderYear(panel,year){
       return '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+catClrs[c]+';margin:1px"></span>';
     }).join('');
     decStrip+=
-      '<div class="yr-strip-card'+(dy===year?' yr-strip-cur':'')+'" onclick="cursor=new Date('+dy+',0,1);render()" title="'+dy+'">'+
-        '<div class="yr-strip-yr">'+dy+'</div>'+
-        '<div class="yr-strip-age">age '+dage+'</div>'+
-        '<div class="yr-strip-dots">'+ddots+'</div>'+
+      '<div class="year-strip-card'+(dy===year?' year-strip-cur':'')+'" onclick="cursor=new Date('+dy+',0,1);render()" title="'+dy+'">'+
+        '<div class="year-strip-year">'+dy+'</div>'+
+        '<div class="year-strip-age">age '+dage+'</div>'+
+        '<div class="year-strip-dots">'+ddots+'</div>'+
       '</div>';
   }
   decStrip+='</div>';
@@ -601,18 +601,18 @@ function renderYear(panel,year){
     }
     let tlTracks=0;
     for(let tmi=1;tmi<=12;tmi++) tlTracks=Math.max(tlTracks,(tlByMonth[tmi]||[]).length);
-    const tlMLabels=Array.from({length:12},function(_,i){return '<div class="yr-tl-mlabel" style="grid-column:'+(i+1)+'">'+MS[i]+'</div>';}).join('');
+    const tlMLabels=Array.from({length:12},function(_,i){return '<div class="year-tl-mlabel" style="grid-column:'+(i+1)+'">'+MS[i]+'</div>';}).join('');
     const tlChips=Array.from({length:Math.max(tlTracks,0)},function(){return '';});
     for(let tmi=1;tmi<=12;tmi++){
       (tlByMonth[tmi]||[]).forEach(function(e,ti){
-        tlChips[ti]+='<div class="yr-tl-chip" style="grid-column:'+tmi+';background:'+e.color+'18" title="'+e.text.replace(/"/g,'&quot;')+'">'+
-          '<span class="yr-tl-dot" style="background:'+e.color+'"></span><span class="yr-tl-txt" style="color:'+e.color+'">'+e.text+'</span></div>';
+        tlChips[ti]+='<div class="year-tl-chip" style="grid-column:'+tmi+';background:'+e.color+'18" title="'+e.text.replace(/"/g,'&quot;')+'">'+
+          '<span class="year-tl-dot" style="background:'+e.color+'"></span><span class="year-tl-txt" style="color:'+e.color+'">'+e.text+'</span></div>';
       });
     }
     const tlHtml=
-      '<div class="yr-timeline">'+
-        '<div class="yr-tl-header">'+tlMLabels+'</div>'+
-        tlChips.map(function(c){return '<div class="yr-tl-track">'+c+'</div>';}).join('')+
+      '<div class="year-timeline">'+
+        '<div class="year-tl-header">'+tlMLabels+'</div>'+
+        tlChips.map(function(c){return '<div class="year-tl-track">'+c+'</div>';}).join('')+
       '</div>';
     const nisaRow=allNisaRows.find(function(r){return r.year===y;});
     const contrib=nisaRow?nisaRow.cumulative:0;
@@ -621,15 +621,15 @@ function renderYear(panel,year){
     const yCounts=yearEvtCounts(y);
     const summaryKey=y+'-sum';
     const catBadges=['work','life','learn','travel'].filter(function(c){return yCounts[c]>0;}).map(function(c){
-      return '<span class="yr-cat-badge yr-cat-'+c+'">'+yCounts[c]+' '+c+'</span>';
+      return '<span class="year-cat-badge year-cat-'+c+'">'+yCounts[c]+' '+c+'</span>';
     }).join('');
     const nisaRight=
-      '<div class="yr-hdr-nisa">'+
-        '<div class="yr-hdr-nisa-bar"><div class="yr-hdr-nisa-fill" style="width:'+nisPct+'%"></div></div>'+
-        '<div class="yr-hdr-nisa-vals">'+
-          '<span class="yr-hdr-nisa-v">¥'+contrib.toLocaleString()+'</span>'+
-          '<span class="yr-hdr-nisa-p">'+nisPct+'%</span>'+
-          (thisYrDelta>0?'<span class="yr-hdr-nisa-d">+¥'+thisYrDelta.toLocaleString()+'</span>':'')+
+      '<div class="year-hdr-nisa">'+
+        '<div class="year-hdr-nisa-bar"><div class="year-hdr-nisa-fill" style="width:'+nisPct+'%"></div></div>'+
+        '<div class="year-hdr-nisa-vals">'+
+          '<span class="year-hdr-nisa-v">¥'+contrib.toLocaleString()+'</span>'+
+          '<span class="year-hdr-nisa-p">'+nisPct+'%</span>'+
+          (thisYrDelta>0?'<span class="year-hdr-nisa-d">+¥'+thisYrDelta.toLocaleString()+'</span>':'')+
         '</div>'+
       '</div>';
     // ── aims footer ──
@@ -639,11 +639,11 @@ function renderYear(panel,year){
       {icon:'—',placeholder:'note...',key:y+'-0-2'},
     ];
     const footerHtml=
-      '<div class="yr-footer">'+
+      '<div class="year-footer">'+
         footerCols.map(function(fc){
-          return '<div class="yr-footer-col">'+
-            '<span class="yr-footer-icon">'+fc.icon+'</span>'+
-            '<input class="yr-footer-inp" placeholder="'+fc.placeholder+'" value="'+(DATA.goals[fc.key]||'')+'" onchange="DATA.goals[\''+fc.key+'\']=this.value;autoSave()">'+
+          return '<div class="year-footer-col">'+
+            '<span class="year-footer-icon">'+fc.icon+'</span>'+
+            '<input class="year-footer-inp" placeholder="'+fc.placeholder+'" value="'+(DATA.goals[fc.key]||'')+'" onchange="DATA.goals[\''+fc.key+'\']=this.value;autoSave()">'+
           '</div>';
         }).join('')+
       '</div>';
@@ -653,25 +653,25 @@ function renderYear(panel,year){
     const isExpanded=focused||_yearExpanded===y||totalEvtCount>0;
     if(!isExpanded){
       strip+=
-        '<div class="my-year-section yr-collapsed" onclick="_yearExpanded='+y+';render()">'+
+        '<div class="my-year-section year-collapsed" onclick="_yearExpanded='+y+';render()">'+
           '<span class="my-year-num">'+y+'</span>'+
           '<span class="my-year-age">age '+age+'</span>'+
-          '<span class="yr-collapsed-meta">'+(contrib>0?'NISA ¥'+contrib.toLocaleString():'no NISA')+(DATA.goals[summaryKey]?' · '+DATA.goals[summaryKey]:'')+'</span>'+
-          '<span class="yr-collapsed-expand">expand →</span>'+
+          '<span class="year-collapsed-meta">'+(contrib>0?'NISA ¥'+contrib.toLocaleString():'no NISA')+(DATA.goals[summaryKey]?' · '+DATA.goals[summaryKey]:'')+'</span>'+
+          '<span class="year-collapsed-expand">expand →</span>'+
         '</div>';
     } else {
       strip+=
         '<div class="my-year-section'+(focused?' my-year-focused':'')+'">'+
-          '<div class="yr-card-hdr">'+
-            '<div class="yr-card-left">'+
+          '<div class="year-card-hdr">'+
+            '<div class="year-card-left">'+
               '<span class="my-year-num" onclick="cursor=new Date('+y+',0,1);render()" style="cursor:pointer" title="view '+y+'">'+y+'</span>'+
               '<span class="my-year-age">age '+age+'</span>'+
-              (catBadges?'<div class="yr-cat-badges">'+catBadges+'</div>':'')+
+              (catBadges?'<div class="year-cat-badges">'+catBadges+'</div>':'')+
             '</div>'+
-            '<div class="yr-card-center">'+
-              '<input class="yr-summary-inp" placeholder="year summary..." value="'+(DATA.goals[summaryKey]||'')+'" onchange="DATA.goals[\''+summaryKey+'\']=this.value;autoSave()">'+
+            '<div class="year-card-center">'+
+              '<input class="year-summary-inp" placeholder="year summary..." value="'+(DATA.goals[summaryKey]||'')+'" onchange="DATA.goals[\''+summaryKey+'\']=this.value;autoSave()">'+
             '</div>'+
-            '<div class="yr-card-right">'+nisaRight+'</div>'+
+            '<div class="year-card-right">'+nisaRight+'</div>'+
           '</div>'+
           tlHtml+
           footerHtml+
@@ -761,8 +761,8 @@ function addNisaYear(){
   if(!(y in DATA.nisa.lumpSumByYear)) DATA.nisa.lumpSumByYear[y]=0;
   render();
 }
-function removeNisaYear(yr){
-  if(DATA.nisa.lumpSumByYear) delete DATA.nisa.lumpSumByYear[yr];
+function removeNisaYear(year){
+  if(DATA.nisa.lumpSumByYear) delete DATA.nisa.lumpSumByYear[year];
   render();
 }
 function addProjectionYear(){
@@ -774,7 +774,7 @@ function addProjectionYear(){
   render();
 }
 function removeProjectionYear(y){
-  DATA.nisa.projectionYears=DATA.nisa.projectionYears.filter(function(yr){return yr!==y;});
+  DATA.nisa.projectionYears=DATA.nisa.projectionYears.filter(function(year){return year!==y;});
   render();
 }
 function addTsumitateYear(){
@@ -784,8 +784,8 @@ function addTsumitateYear(){
   if(!(y in DATA.nisa.tsumitateByYear)) DATA.nisa.tsumitateByYear[y]=getTsumitateForYear(DATA.nisa,y)||0;
   render();
 }
-function removeTsumitateYear(yr){
-  if(DATA.nisa.tsumitateByYear) delete DATA.nisa.tsumitateByYear[yr];
+function removeTsumitateYear(year){
+  if(DATA.nisa.tsumitateByYear) delete DATA.nisa.tsumitateByYear[year];
   render();
 }
 function updateBankBalance(id,val){
@@ -822,33 +822,33 @@ function renderSavings(panel){
   var thisYearTotal=thisYearRow?thisYearRow.total:0;
   var curYearMonthly=getTsumitateForYear(n,thisYear);
   var lsKeys=Object.keys(n.lumpSumByYear||{}).sort();
-  var lsNonEmpty=lsKeys.filter(function(yr){return (n.lumpSumByYear[yr]||0)>0;});
-  var lsEmpty=lsKeys.filter(function(yr){return (n.lumpSumByYear[yr]||0)===0;});
+  var lsNonEmpty=lsKeys.filter(function(year){return (n.lumpSumByYear[year]||0)>0;});
+  var lsEmpty=lsKeys.filter(function(year){return (n.lumpSumByYear[year]||0)===0;});
   var lsShow=_nisaLsExpanded?lsKeys:lsNonEmpty;
   var projRows=allRows.filter(function(r){return n.projectionYears.indexOf(r.year)>=0;});
   var notStarted=n.projectionYears.filter(function(y){return y<n.startYear;});
 
-  var tsRows=Object.keys(n.tsumitateByYear||{}).sort().map(function(yr){
-    var monthly=(n.tsumitateByYear[yr])||0;
+  var tsRows=Object.keys(n.tsumitateByYear||{}).sort().map(function(year){
+    var monthly=(n.tsumitateByYear[year])||0;
     var yearly=monthly*12;
     var overCap=yearly>1200000;
     return '<div class="nisa-tl-row">'+
-      '<span class="nisa-tl-yr">'+yr+'</span>'+
-      '<input class="nisa-tl-inp" type="number" step="1000" value="'+monthly+'" onchange="DATA.nisa.tsumitateByYear[\''+yr+'\']=parseInt(this.value)||0;render()">'+
+      '<span class="nisa-tl-year">'+year+'</span>'+
+      '<input class="nisa-tl-inp" type="number" step="1000" value="'+monthly+'" onchange="DATA.nisa.tsumitateByYear[\''+year+'\']=parseInt(this.value)||0;render()">'+
       '<span class="nisa-tl-annot">¥'+Math.round(Math.min(yearly,1200000)/10000)+'万</span>'+
       (overCap?'<span style="font-size:var(--fs-xs);color:#8b2c2c">!</span>':'')+
-      '<button class="nisa-tl-x" onclick="removeTsumitateYear(\''+yr+'\')">×</button>'+
+      '<button class="nisa-tl-x" onclick="removeTsumitateYear(\''+year+'\')">×</button>'+
     '</div>';
   }).join('');
 
-  var lsRowsHtml=lsShow.map(function(yr){
-    var val=(n.lumpSumByYear[yr])||0;
+  var lsRowsHtml=lsShow.map(function(year){
+    var val=(n.lumpSumByYear[year])||0;
     var overCap=val>2400000;
     return '<div class="nisa-tl-row">'+
-      '<span class="nisa-tl-yr">'+yr+'</span>'+
-      '<input class="nisa-tl-inp" type="number" step="10000" value="'+val+'" onchange="DATA.nisa.lumpSumByYear[\''+yr+'\']=parseInt(this.value)||0;render()">'+
+      '<span class="nisa-tl-year">'+year+'</span>'+
+      '<input class="nisa-tl-inp" type="number" step="10000" value="'+val+'" onchange="DATA.nisa.lumpSumByYear[\''+year+'\']=parseInt(this.value)||0;render()">'+
       (overCap?'<span style="font-size:var(--fs-xs);color:#8b2c2c">!</span>':'')+
-      '<button class="nisa-tl-x" onclick="removeNisaYear(\''+yr+'\')">×</button>'+
+      '<button class="nisa-tl-x" onclick="removeNisaYear(\''+year+'\')">×</button>'+
     '</div>';
   }).join('');
   var lsToggle=lsEmpty.length?
@@ -858,7 +858,7 @@ function renderSavings(panel){
 
   var snapRows=notStarted.map(function(y){
     return '<tr class="nisa-snap-row">'+
-      '<td class="nisa-snap-yr">'+y+'</td>'+
+      '<td class="nisa-snap-year">'+y+'</td>'+
       '<td style="color:var(--text3)">'+( y-birthYear)+'</td>'+
       '<td colspan="3" style="font-size:var(--fs-xs);color:var(--text3)">before start</td>'+
       '<td></td>'+
@@ -869,7 +869,7 @@ function renderSavings(panel){
     var tPct=Math.round(r.tsumitate/180000);
     var lPct=Math.round(r.lumpsum/180000);
     return '<tr class="nisa-snap-row">'+
-      '<td class="nisa-snap-yr">'+r.year+'</td>'+
+      '<td class="nisa-snap-year">'+r.year+'</td>'+
       '<td style="color:var(--text3)">'+r.age+'</td>'+
       '<td style="font-family:var(--mono);font-size:var(--fs-xs)">¥'+Math.round(r.tsumitate/10000)+'万</td>'+
       '<td style="font-family:var(--mono);font-size:var(--fs-xs)">'+(r.lumpsum?'¥'+Math.round(r.lumpsum/10000)+'万':'—')+'</td>'+
@@ -1012,22 +1012,22 @@ function renderSavings(panel){
           '<div class="nisa-hero-big">¥'+Math.round(thisYearTotal/10000)+'万</div>'+
         '</div>'+
         '<div class="nisa-hero-stat">'+
-          '<div class="nisa-hero-lab">avg / yr</div>'+
+          '<div class="nisa-hero-lab">avg / year</div>'+
           '<div class="nisa-hero-big">¥'+Math.round(avgPace/10000)+'万</div>'+
-          '<div class="nisa-hero-sub">over '+yearsCount+' yr'+(yearsCount!==1?'s':'')+'</div>'+
+          '<div class="nisa-hero-sub">over '+yearsCount+' year'+(yearsCount!==1?'s':'')+'</div>'+
         '</div>'+
       '</div>'+
 
       '<div class="nisa-2col">'+
         '<div class="nisa-panel ts">'+
-          '<div class="nisa-phdr">つみたて — monthly/yr</div>'+
-          '<div style="font-size:var(--fs-xs);color:var(--text3);margin-bottom:7px">cap ¥1.2M/yr</div>'+
+          '<div class="nisa-phdr">つみたて — monthly/year</div>'+
+          '<div style="font-size:var(--fs-xs);color:var(--text3);margin-bottom:7px">cap ¥1.2M/year</div>'+
           tsRows+
           '<button class="nisa-tl-add" onclick="addTsumitateYear()">+ add year</button>'+
         '</div>'+
         '<div class="nisa-panel gr">'+
-          '<div class="nisa-phdr">成長 — lump sum/yr</div>'+
-          '<div style="font-size:var(--fs-xs);color:var(--text3);margin-bottom:7px">cap ¥2.4M/yr</div>'+
+          '<div class="nisa-phdr">成長 — lump sum/year</div>'+
+          '<div style="font-size:var(--fs-xs);color:var(--text3);margin-bottom:7px">cap ¥2.4M/year</div>'+
           lsRowsHtml+
           lsToggle+
           '<button class="nisa-tl-add" onclick="addNisaYear()">+ add year</button>'+
@@ -1061,7 +1061,7 @@ function renderSavings(panel){
           '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:var(--fs-sm);color:var(--text2);cursor:pointer">+ add snapshot year</button>'+
         '</div>'+
       '</div>'+
-      '<div style="margin-top:10px;font-size:var(--fs-xs);color:var(--text3);line-height:1.6">Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined.</div>'+
+      '<div style="margin-top:10px;font-size:var(--fs-xs);color:var(--text3);line-height:1.6">Lifetime cap ¥18M — つみたて ¥1.2M/year · 成長 ¥2.4M/year · up to ¥3.6M/year combined.</div>'+
     '</div>'+
     '<div class="savings-card">'+
       '<div class="savings-title">currencies — enter amounts you hold</div>'+
@@ -1559,7 +1559,7 @@ function cdElapsed(dateStr){
   var mo=today.getMonth()-d.getMonth();
   if(mo<0){y--;mo+=12;}
   if(today.getDate()<d.getDate()){mo--;if(mo<0){y--;mo+=11;}}
-  if(y>=1)return y+' yr'+(y>1?'s':'')+(mo>0?' '+mo+' mo':'')+' since';
+  if(y>=1)return y+' year'+(y>1?'s':'')+(mo>0?' '+mo+' mo':'')+' since';
   if(mo>=2)return mo+' months since';
   return days+' day'+(days!==1?'s':'')+' since';
 }
@@ -1575,8 +1575,8 @@ function cdAnniversary(dateStr){
   var nextDate=new Date(ny,orig.getMonth(),orig.getDate());
   var diff=Math.round((nextDate-now)/86400000);
   var nextYears=ny-orig.getFullYear();
-  if(diff===0)return years+' yrs · turning '+nextYears+' today! 🎂';
-  return years+' yrs · turning '+nextYears+' in '+diff+' day'+(diff!==1?'s':'');
+  if(diff===0)return years+' years · turning '+nextYears+' today! 🎂';
+  return years+' years · turning '+nextYears+' in '+diff+' day'+(diff!==1?'s':'');
 }
 
 // ── BOND MATH ─────────────────────────────────────────────────────────

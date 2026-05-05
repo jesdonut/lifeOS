@@ -123,10 +123,10 @@ function nisaCum(upToYear){
 }
 
 // Finance: sum daily spend for a category across a month
-function monthSpend(yr,mo,cats){
+function monthSpend(year,mo,cats){
   let t=0;
-  for(let d=1;d<=daysInMonth(yr,mo);d++){
-    const dk=yr+'-'+p2(mo)+'-'+p2(d);
+  for(let d=1;d<=daysInMonth(year,mo);d++){
+    const dk=year+'-'+p2(mo)+'-'+p2(d);
     const s=DATA.spend[dk]||{};
     [].concat(cats).forEach(c=>{ t+=parseFloat(s[c])||0; });
   }
@@ -531,7 +531,7 @@ function renderYearContent(){
       cards.push(
         '<div class="year-card">'+
           '<div class="year-card-collapsed" onclick="toggleYear('+y+')">'+
-            '<div class="year-card-yr">'+y+'</div>'+
+            '<div class="year-card-year">'+y+'</div>'+
             '<div class="year-card-age">age '+calcAge(y)+'</div>'+
             '<div class="year-card-summary">'+(summary||'—')+'</div>'+
             '<div class="year-card-meta">'+(evCount?evCount+'ev':'no events')+'</div>'+
@@ -550,7 +550,7 @@ function renderYearContent(){
       cards.push(
         '<div class="year-card">'+
           '<div class="year-card-collapsed" onclick="toggleYear('+y+')" style="border-bottom:1px solid var(--border)">'+
-            '<div class="year-card-yr">'+y+'</div>'+
+            '<div class="year-card-year">'+y+'</div>'+
             '<div class="year-card-age">age '+calcAge(y)+'</div>'+
             '<div style="flex:1"></div>'+
             '<div class="year-card-meta">▲ collapse</div>'+
@@ -625,9 +625,9 @@ function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&l
 // Finance — helpers
 // ─────────────────────────────────────────────────────────────────────────────
 function finCalc(moKey){
-  const [yr,mo]=[parseInt(moKey),parseInt(moKey.split('-')[1])];
+  const [year,mo]=[parseInt(moKey),parseInt(moKey.split('-')[1])];
   const f=DATA.finance[moKey]||{};
-  const isNew=yr>2025||(yr===2025&&mo>=5);
+  const isNew=year>2025||(year===2025&&mo>=5);
 
   const salary    =evalExpr(f.salary)||0;
   const tReimb    =evalExpr(f.transportReimb)||0;
@@ -644,39 +644,39 @@ function finCalc(moKey){
   }
   const net=gross-ded;
 
-  const food        =monthSpend(yr,mo,'food');
-  const commuteAuto =monthSpend(yr,mo,'commute');
+  const food        =monthSpend(year,mo,'food');
+  const commuteAuto =monthSpend(year,mo,'commute');
   const commPass    =evalExpr(f.commutationPass)||0;
   const commute     =commuteAuto+commPass;
-  const transport   =monthSpend(yr,mo,'transport');
-  const necessities =monthSpend(yr,mo,['transport','paperwork','medical','necessities','nhi']);
-  const optional    =monthSpend(yr,mo,['project','fun','clothes']);
+  const transport   =monthSpend(year,mo,'transport');
+  const necessities =monthSpend(year,mo,['transport','paperwork','medical','necessities','nhi']);
+  const optional    =monthSpend(year,mo,['project','fun','clothes']);
   const fixed       =['rent','gas','water','electricity','phone','internet'].reduce((s,k)=>s+(evalExpr(f[k])||0),0);
   const balance     =net-commute-food-fixed-necessities-optional;
 
   return {gross,ded,net,salary,tReimb,other,momPays,food,commute,commuteAuto,commPass,
-          transport,necessities,optional,fixed,balance,f,isNew,yr,mo};
+          transport,necessities,optional,fixed,balance,f,isNew,year,mo};
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Finance — header
 // ─────────────────────────────────────────────────────────────────────────────
 function renderFinHeader(){
-  const [yr,mo]=curFinMo.split('-');
+  const [year,mo]=curFinMo.split('-');
   document.getElementById('m-header').innerHTML=
     '<div class="m-header-nav">'+
       '<button class="m-nav-btn" onclick="shiftFinMo(-1)">←</button>'+
       '<div class="m-header-range">Finance · '+MONTH_SHORT[parseInt(mo)-1]+'</div>'+
       '<button class="m-nav-btn" onclick="shiftFinMo(1)">→</button>'+
     '</div>'+
-    '<div class="m-header-detail">'+yr+'</div>';
+    '<div class="m-header-detail">'+year+'</div>';
 }
 
 function shiftFinMo(n){
-  let [yr,mo]=[parseInt(curFinMo),parseInt(curFinMo.split('-')[1])];
+  let [year,mo]=[parseInt(curFinMo),parseInt(curFinMo.split('-')[1])];
   mo+=n;
-  if(mo>12){mo=1;yr++;} if(mo<1){mo=12;yr--;}
-  curFinMo=yr+'-'+p2(mo);
+  if(mo>12){mo=1;year++;} if(mo<1){mo=12;year--;}
+  curFinMo=year+'-'+p2(mo);
   renderFinHeader(); renderFinContent();
 }
 
@@ -737,14 +737,14 @@ function renderFinContent(){
     buildAutoSection('commute','Commute 通勤',fmtY(c.commute),commuteBody(c,moKey)),
     buildAutoSection('food','Food 食べ物',fmtY(c.food),autoCatRow('食べ物','Food',c.food)),
     buildAutoSection('necessities','Necessities 生活費',fmtY(c.necessities),
-      autoCatRow('電車代金','Transport',monthSpend(c.yr,c.mo,'transport'))+
-      autoCatRow('メディカル','Medical',monthSpend(c.yr,c.mo,'medical'))+
-      autoCatRow('日常生活','Daily',monthSpend(c.yr,c.mo,'necessities'))+
-      autoCatRow('国民保険','NHI',monthSpend(c.yr,c.mo,'nhi'))),
+      autoCatRow('電車代金','Transport',monthSpend(c.year,c.mo,'transport'))+
+      autoCatRow('メディカル','Medical',monthSpend(c.year,c.mo,'medical'))+
+      autoCatRow('日常生活','Daily',monthSpend(c.year,c.mo,'necessities'))+
+      autoCatRow('国民保険','NHI',monthSpend(c.year,c.mo,'nhi'))),
     buildAutoSection('optional','Optional 任意支出',fmtY(c.optional),
-      autoCatRow('ゲーム/Project','Project',monthSpend(c.yr,c.mo,'project'))+
-      autoCatRow('エンターテインメント','Entertainment',monthSpend(c.yr,c.mo,'fun'))+
-      autoCatRow('服・髪','Clothes',monthSpend(c.yr,c.mo,'clothes'))),
+      autoCatRow('ゲーム/Project','Project',monthSpend(c.year,c.mo,'project'))+
+      autoCatRow('エンターテインメント','Entertainment',monthSpend(c.year,c.mo,'fun'))+
+      autoCatRow('服・髪','Clothes',monthSpend(c.year,c.mo,'clothes'))),
   ].join('');
 
   // Net
@@ -844,9 +844,9 @@ function saveFinField(moKey,field,val){
 }
 
 function prevMonth(moKey){
-  let [yr,mo]=[parseInt(moKey),parseInt(moKey.split('-')[1])];
-  mo--; if(mo<1){mo=12;yr--;}
-  return yr+'-'+p2(mo);
+  let [year,mo]=[parseInt(moKey),parseInt(moKey.split('-')[1])];
+  mo--; if(mo<1){mo=12;year--;}
+  return year+'-'+p2(mo);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -130,7 +130,7 @@ Add a `mode` field (`'until'` | `'since'`) to each countdown entry. Data model: 
 
 **Display logic:**
 - `until` → current behavior: "in X days" / "today!"
-- `since`, no yearly repeat → smart elapsed: < 60 days → "X days since" · < 24 months → "X months since" · else → "X yrs Y mo since"
+- `since`, no yearly repeat → smart elapsed: < 60 days → "X days since" · < 24 months → "X months since" · else → "X years Y mo since"
 - `since` + yearly → age/anniversary mode: "X years · next in Y days" (e.g. birthday: "age 30 · turning 31 in 8 days")
 
 **Upcoming tab:** `until` entries show as now; `since` + yearly shows next anniversary "in Y days"; `since` no repeat excluded (it's a tracker, not a future event).
@@ -485,10 +485,10 @@ Two issues in the multiyear (`years`) view:
 Redesigned the NISA section in the savings view to be cleaner and more information-dense.
 
 **Implemented:**
-- Hero strip: 4 stats — lifetime plan total + stacked progress bar (つみたて pink / 成長 navy), cap year, this year total, avg/yr
+- Hero strip: 4 stats — lifetime plan total + stacked progress bar (つみたて pink / 成長 navy), cap year, this year total, avg/year
 - Two-panel side-by-side budget editor: つみたて (pink) | 成長 (navy)
 - 成長 panel collapses empty ¥0 years with expand/collapse toggle
-- Compact meta strip: start year, start month, this yr monthly
+- Compact meta strip: start year, start month, this year monthly
 - Snapshot table with rows + mini progress bars (uses existing `projectionYears` list)
 - No new color tokens — `var(--accent)` for pink, `#2c4a6e` for navy
 
@@ -813,6 +813,16 @@ Implemented (codex wrote this):
 - NISA meta controls now sit in a left config column.
 - Year snapshots now sit in a right config column with `.nisa-snaps-scroll`.
 - Mobile was left unchanged because it does not render this desktop NISA config/snapshot UI.
+
+---
+
+## Maintenance — Expand Year Abbreviations
+
+Implemented (codex wrote this):
+- Replaced user-facing shortened year wording with full `year`, `years`, and `/year` wording.
+- Renamed matching internal CSS classes and local JS variables to use `year` so editor search no longer finds the old abbreviation.
+- Checked desktop and mobile class usage after the mechanical rename.
+- Verified `app.js` and `mobile-app.js` syntax.
 
 ---
 

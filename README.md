@@ -177,7 +177,7 @@ A financial planning screen with three sections.
 - Two-panel editor: つみたて 投資枠 (per-year monthly amount table) | 成長投資枠 (per-year lump sum table, collapses empty rows)
 - Meta strip: start year, start month, this year's monthly contribution
 - Snapshot table: chosen checkpoint years with cumulative totals and mini progress bars
-- Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined
+- Lifetime cap ¥18M — つみたて ¥1.2M/year · 成長 ¥2.4M/year · up to ¥3.6M/year combined
 
 **Currencies**
 - Enter amounts held in 8 currencies: JPY, IDR, USD, GBP, CNY, KRW, MYR, EUR
@@ -213,7 +213,7 @@ The right-hand sidebar is always visible and has three tabs:
 Each countdown has a **mode**:
 
 - **until** — counts down to a future date. Shows "in X days" or "today!". With yearly repeat, recurs annually.
-- **since** — tracks elapsed time from a past date. Shows "X days since", "X months since", or "X yrs Y mo since". With yearly repeat, switches to birthday/anniversary mode: "age X · turning Y in Z days".
+- **since** — tracks elapsed time from a past date. Shows "X days since", "X months since", or "X years Y mo since". With yearly repeat, switches to birthday/anniversary mode: "age X · turning Y in Z days".
 
 In the **upcoming** tab, `until` entries and `since + yearly` entries appear as future events. Plain `since` entries (one-off trackers) are excluded.
 
