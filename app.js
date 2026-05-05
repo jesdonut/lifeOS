@@ -139,6 +139,67 @@ function commitSpend(input,dayKey,catKey){
   autoSave();
 }
 
+// ── SPEND LOG (line-item tracking for food / commute / transport) ──────
+var LOG_CATS=['food','commute','transport'];
+function spendLogItems(dk,cat){
+  return ((DATA.spendLog||{})[dk]||{})[cat]||[];
+}
+function spendLogTotal(dk,cat){
+  return spendLogItems(dk,cat).reduce(function(s,e){return s+e.amount;},0);
+}
+function syncSpendLog(dk,cat){
+  if(!DATA.spend[dk]) DATA.spend[dk]={};
+  DATA.spend[dk][cat]=spendLogTotal(dk,cat);
+}
+function addSpendLogItem(dk,cat){
+  var amtEl=document.getElementById('sl-amt');
+  var lblEl=document.getElementById('sl-lbl');
+  var amt=parseExpr(amtEl.value.trim());
+  if(!amt) return;
+  var lbl=lblEl.value.trim();
+  if(!DATA.spendLog) DATA.spendLog={};
+  if(!DATA.spendLog[dk]) DATA.spendLog[dk]={};
+  if(!DATA.spendLog[dk][cat]) DATA.spendLog[dk][cat]=[];
+  DATA.spendLog[dk][cat].push({id:uid(),amount:amt,label:lbl});
+  syncSpendLog(dk,cat);
+  autoSave();
+  openSpendLog(dk,cat);
+}
+function deleteSpendLogItem(dk,cat,id){
+  if(!DATA.spendLog||!DATA.spendLog[dk]||!DATA.spendLog[dk][cat]) return;
+  DATA.spendLog[dk][cat]=DATA.spendLog[dk][cat].filter(function(e){return e.id!==id;});
+  syncSpendLog(dk,cat);
+  autoSave();
+  openSpendLog(dk,cat);
+}
+function openSpendLog(dk,cat){
+  var catLabel=SPEND_CATS.find(function(c){return c.key===cat;});
+  var label=(catLabel?catLabel.en:cat);
+  var d=new Date(dk+'T12:00:00');
+  var dateLabel=DAYS[d.getDay()==0?6:d.getDay()-1]+' '+d.getDate();
+  var items=spendLogItems(dk,cat);
+  var total=spendLogTotal(dk,cat);
+  var listHtml=items.length?items.map(function(e){
+    return '<div class="sl-item">'+
+      '<span class="sl-item-label">'+(e.label||'—')+'</span>'+
+      '<span class="sl-item-amount">¥'+e.amount.toLocaleString()+'</span>'+
+      '<button class="sl-del" onclick="deleteSpendLogItem(\''+dk+'\',\''+cat+'\',\''+e.id+'\')">×</button>'+
+    '</div>';
+  }).join(''):'<div style="font-size:11px;color:var(--text3);padding:6px 0">no entries yet</div>';
+  openModal(
+    '<div class="modal-title">'+label+' — '+dateLabel+'</div>'+
+    '<div class="sl-list">'+listHtml+'</div>'+
+    (items.length?'<div class="sl-total">total ¥'+total.toLocaleString()+'</div>':'')+
+    '<div class="sl-add-row">'+
+      '<input id="sl-amt" class="sl-inp" type="text" inputmode="decimal" placeholder="¥ amount" style="width:90px" onkeydown="if(event.key===\'Enter\')addSpendLogItem(\''+dk+'\',\''+cat+'\')">'+
+      '<input id="sl-lbl" class="sl-inp" type="text" placeholder="label (optional)" style="flex:1" onkeydown="if(event.key===\'Enter\')addSpendLogItem(\''+dk+'\',\''+cat+'\')">'+
+      '<button class="modal-btn" onclick="addSpendLogItem(\''+dk+'\',\''+cat+'\')">add</button>'+
+    '</div>'+
+    '<div style="margin-top:8px"><button class="modal-btn ghost" onclick="closeModal();render()">done</button></div>'
+  );
+  document.getElementById('sl-amt').focus();
+}
+
 // ── EVENTS CRUD ───────────────────────────────────────────────────────
 function getEvents(key){return DATA.events[key]||[];}
 function addEvent(key,text,color){
@@ -321,8 +382,13 @@ function renderWeek(panel,mon){
   var spHdr='<div class="wk-sp-corner">spend</div>'+
     wkDays.map(function(di,i){return '<div class="wk-sp-hdr">'+DAYS[i][0]+'<span class="wk-sp-hdr-n">'+di.d.getDate()+'</span></div>';}).join('');
   var spRows=SPEND_CATS.map(function(cat){
+    var isLog=LOG_CATS.indexOf(cat.key)>=0;
     return '<div class="wk-sp-lab"><span class="wk-sp-jp">'+cat.jp+'</span><span class="wk-sp-en">'+cat.en+'</span></div>'+
       wkDays.map(function(di){
+        if(isLog){
+          var tot=spendLogTotal(di.key,cat.key);
+          return '<div class="wk-sp-cell"><div class="wk-sp-log" onclick="openSpendLog(\''+di.key+'\',\''+cat.key+'\')">'+(tot?'¥'+tot.toLocaleString():'+')+' </div></div>';
+        }
         var val=spendVal((DATA.spend[di.key]||{})[cat.key]);
         return '<div class="wk-sp-cell"><input class="wk-sp-inp" type="text" inputmode="decimal" value="'+(val||'')+'" placeholder="0"'+
           ' onchange="commitSpend(this,\''+di.key+'\',\''+cat.key+'\');render()"></div>';

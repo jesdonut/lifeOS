@@ -105,6 +105,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .wk-sp-en{color:var(--text3);font-size:8px}
 .wk-sp-cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
 .wk-sp-inp{width:100%;border:none;outline:none;background:none;font-family:var(--mono);font-size:10px;text-align:right;padding:4px 5px;color:var(--text)}.wk-sp-inp:focus{background:var(--accent-light)}.wk-sp-inp::-webkit-inner-spin-button,.wk-sp-inp::-webkit-outer-spin-button{-webkit-appearance:none}
+.wk-sp-log{width:100%;font-family:var(--mono);font-size:10px;text-align:right;padding:4px 5px;color:var(--text);cursor:pointer;min-height:22px;box-sizing:border-box}.wk-sp-log:hover{background:var(--accent-light)}
+.sl-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;max-height:200px;overflow-y:auto}
+.sl-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)}
+.sl-item-label{flex:1;color:var(--text2)}
+.sl-item-amount{font-family:var(--mono);font-size:11px;color:var(--text)}
+.sl-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1}.sl-del:hover{color:var(--bad)}
+.sl-total{font-family:var(--mono);font-size:12px;text-align:right;color:var(--text2);margin-bottom:10px;padding-top:4px;border-top:1px solid var(--border2)}
+.sl-add-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.sl-inp{border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--sans);background:var(--bg);color:var(--text);outline:none}.sl-inp:focus{border-color:var(--accent)}
 .wk-sp-tot-lab{font-weight:600;border-top:1px solid var(--border2)}
 .wk-sp-tot{font-family:var(--mono);font-size:9px;text-align:right;padding:4px 5px;color:var(--text2);background:var(--surface2);border-right:1px solid var(--border);border-top:1px solid var(--border2)}
 .wc-evt{font-size:10px;border-radius:3px;padding:2px 6px;flex-shrink:0;display:flex;align-items:center;gap:3px}
