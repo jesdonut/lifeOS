@@ -764,6 +764,6 @@ Audit all five files for code that is no longer referenced after previous enhanc
 | 47 | Fix — ゲーム/P label → ゲーム/Project across finance view | ✅ |
 | 48 | Search — Event search on desktop (topbar button + / shortcut) and mobile (Search tab) | ✅ |
 | 49 | Font Scale — CSS Custom Properties + Larger Base Size | ⬜ |
-| 50 | Sidebar — Collapsible Toggle | ⬜ |
+| 50 | Sidebar — Collapsible Toggle | ✅ |
 | 51 | Settings Panel — Font Size Slider + Sidebar Default | ⬜ |
 | 52 | Code Cleanup — Remove Dead CSS and Unused JS | ✅ |

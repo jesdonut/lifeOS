@@ -234,6 +234,13 @@ function openModal(html){
 }
 function closeModal(){document.getElementById('modal-overlay').style.display='none';}
 
+function toggleSidebar(){
+  var sb=document.getElementById('sidebar');
+  var collapsed=sb.classList.toggle('collapsed');
+  document.getElementById('sidebar-toggle-btn').textContent=collapsed?'›':'‹';
+  localStorage.setItem('sidebar-collapsed',collapsed?'1':'');
+}
+
 // ── SEARCH ────────────────────────────────────────────────────────────
 function openSearchModal(){
   openModal(
@@ -271,6 +278,15 @@ document.addEventListener('keydown',function(e){
     e.preventDefault();openSearchModal();
   }
 });
+
+(function(){
+  if(localStorage.getItem('sidebar-collapsed')){
+    var sb=document.getElementById('sidebar');
+    if(sb) sb.classList.add('collapsed');
+    var btn=document.getElementById('sidebar-toggle-btn');
+    if(btn) btn.textContent='›';
+  }
+})();
 
 
 function openAddEventModal(key){
