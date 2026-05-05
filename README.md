@@ -60,12 +60,14 @@ DATA = {
                                           // key "YYYY-sum" = one-line year summary
   notes:        [{ id, text, date }]
   countdowns:   [{ id, label, date, yearly, color, mode }]  // mode: 'until' | 'since'
-  nisa:         { tsumitateByYear, lumpSumByYear, startYear, startMonth, projectionYears[] }
+  nisa:         { tsumitateMonthly, tsumitateByYear, lumpSumByYear,
+                  startYear, startMonth, projectionYears[] }
   currencies:   { "JPY": amount, "USD": amount, ... }
   currencyRates: { "USD": { jpy: 149.5, idr: 16000 }, ... }  // independent rates per currency
   currencyLots: [{ id, code, amount, rateIDR, date }]
   bonds:        [{ id, series, faceValue, couponRate, taxRate,
                    settlementDate, firstCouponDate, maturityDate, matured }]
+  bankAccounts: [{ id, name, currency, balance }]  // preserved for older saves; not shown in UI
   spendLog:     { "YYYY-MM-DD": { food: [{ id, amount, label }],
                                   commute: [...], transport: [...] } }
   finance:      { "YYYY-MM": { salary, transportReimb, otherIncome, momPays,
@@ -175,23 +177,26 @@ A financial planning screen with three sections.
 **NISA tracker**
 - Hero strip: lifetime plan total + stacked progress bar (つみたて pink / 成長 navy), projected cap year, this year's total, average per year
 - Two-panel editor: つみたて 投資枠 (per-year monthly amount table) | 成長投資枠 (per-year lump sum table, collapses empty rows)
-- Meta strip: start year, start month, this year's monthly contribution
+- Compact config row: start year, start month, this year's monthly contribution | scrollable snapshot table
 - Snapshot table: chosen checkpoint years with cumulative totals and mini progress bars
 - Lifetime cap ¥18M — つみたて ¥1.2M/year · 成長 ¥2.4M/year · up to ¥3.6M/year combined
 
 **Currencies**
-- Enter amounts held in 8 currencies: JPY, IDR, USD, GBP, CNY, KRW, MYR, EUR
+- Collapsible section. The header shows total held in both ¥ and Rp.
+- Visible currency cards: CNY, GBP, USD, MYR
+- IDR is kept internally for rate conversion and Indonesian bond/currency-lot calculations, but does not render as a card.
+- KRW and EUR values from older save files are preserved if present, but no longer render as cards.
 - Each currency card has two independent editable rate fields: `1 CODE = X ¥` and `1 CODE = Y Rp` — changing one does not affect the other
 - Equivalent shown as both ¥ and Rp on every card
-- **Purchase lots** — per-currency collapsible table tracking individual purchases: date, amount, total IDR cost, current rate, P&L
-- **Total held** row shows both ¥ and Rp totals
+- **Purchase lots** — per-currency purchase rows tracking date, amount, total IDR cost, current rate, and P&L
+- Expanded section includes a **Total held** row showing both ¥ and Rp totals
 
 **Government bonds**
+- Collapsed by default. The header shows active/matured counts and total net monthly income.
 - Track Indonesian retail bonds (ORI, SR, ST, SBR, etc.)
 - Fields: series, face value, coupon rate, tax rate, settlement date, first coupon date, maturity date
 - Derived per bond: gross/net monthly coupon, total coupons earned, coupons remaining, months to maturity
-- Active bonds and matured archive (collapsed)
-- Summary: total net monthly income across all active bonds
+- Expanded active bonds render in a two-column grid; matured archive remains collapsed
 - Maturity dates appear in the **upcoming** sidebar tab
 
 ---
@@ -232,6 +237,6 @@ Ten fixed categories used in the week view spend panel and aggregated into the F
 | `medical` | メディカル | Medical | Necessities |
 | `necessities` | 日常生活 | Daily | Necessities |
 | `nhi` | 国民保険 | NHI | Necessities |
-| `project` | ゲーム/P | Project/Game | Optional |
+| `project` | ゲーム/Project | Project/Game | Optional |
 | `fun` | エンターテインメント | Entertainment | Optional |
 | `clothes` | 服・髪 | Clothes/Hair | Optional |
