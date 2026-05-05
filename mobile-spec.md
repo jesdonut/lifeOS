@@ -6,7 +6,6 @@
 
 ## Routing
 - Desktop (`index.html`) detects mobile via user-agent and auto-redirects to `mobile.html`
-- `mobile.html` has a small "desktop →" link for reverting on tablets
 
 ## Data
 - Shares the **same save file format** as the desktop app (same `DATA` object structure)
@@ -26,11 +25,12 @@
 ## Persistence
 - All saves go to **`localStorage`** silently (key: `lifeos-mobile-data`) — no download dialogs during use
 - On next visit, splash shows **"continue last session"** to resume from localStorage
-- **"export ↑"** button (top-right, always visible) triggers a JSON download when the user is ready to transfer the file (e.g. AirDrop to Mac)
+- **Export** button in bottom nav triggers a JSON download when ready to transfer (e.g. AirDrop to Mac)
 - Loading a save file via the splash also writes immediately to localStorage
+- `overscroll-behavior: none` on body prevents iOS pull-to-refresh; only `#m-content` scrolls
 
 ## Navigation
-4 bottom tabs: **Day · Week · Year · Finance**
+5 bottom tabs: **Day · Week · Year · Finance · Export**
 
 ---
 
