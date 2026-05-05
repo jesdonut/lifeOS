@@ -2,3 +2,5 @@ lifeOS-save*.json
 calendar.csv
 .DS_Store
 CLAUDE.md
+import_calendar.py
+*.ics
