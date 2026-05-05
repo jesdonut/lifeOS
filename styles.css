@@ -10,9 +10,10 @@
   --c-income:#2d5a3d;--c-fixed:#86AFC5;--c-food:#C79A9A;--c-transport:#B8C89A;--c-necessities:#D1B36A;--c-optional:#B7A6B5;
   --radius:8px;--radius-lg:14px;
   --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+  --fs-base:15px;--fs-sm:13px;--fs-xs:11px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:var(--fs-base);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
 /* TOPBAR */
 .topbar{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}

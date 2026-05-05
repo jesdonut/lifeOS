@@ -241,6 +241,46 @@ function toggleSidebar(){
   localStorage.setItem('sidebar-collapsed',collapsed?'1':'');
 }
 
+function applyFontSize(px){
+  var base=parseInt(px)||15;
+  document.documentElement.style.setProperty('--fs-base',base+'px');
+  document.documentElement.style.setProperty('--fs-sm',(base-2)+'px');
+  document.documentElement.style.setProperty('--fs-xs',(base-4)+'px');
+}
+
+function setSidebarDefault(checked){
+  var sb=document.getElementById('sidebar');
+  var btn=document.getElementById('sidebar-toggle-btn');
+  if(checked){
+    sb.classList.add('collapsed');
+    if(btn) btn.textContent='›';
+    localStorage.setItem('sidebar-collapsed','1');
+  } else {
+    sb.classList.remove('collapsed');
+    if(btn) btn.textContent='‹';
+    localStorage.removeItem('sidebar-collapsed');
+  }
+}
+
+function openSettingsModal(){
+  var fs=parseInt(localStorage.getItem('fs-base'))||15;
+  var sbCollapsed=!!localStorage.getItem('sidebar-collapsed');
+  openModal(
+    '<div class="modal-title">settings</div>'+
+    '<div style="margin-bottom:16px">'+
+      '<div style="font-size:var(--fs-sm);color:var(--text2);margin-bottom:8px">font size — <span id="fs-val">'+fs+'</span>px</div>'+
+      '<input type="range" min="12" max="18" step="1" value="'+fs+'" style="width:100%;accent-color:var(--accent)" '+
+        'oninput="applyFontSize(this.value);document.getElementById(\'fs-val\').textContent=this.value;localStorage.setItem(\'fs-base\',this.value)">'+
+      '<div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--text3);margin-top:3px"><span>12px compact</span><span>15px default</span><span>18px large</span></div>'+
+    '</div>'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">'+
+      '<input type="checkbox" id="sb-default"'+(sbCollapsed?' checked':'')+' style="width:auto;margin:0;accent-color:var(--accent)" onchange="setSidebarDefault(this.checked)">'+
+      '<label for="sb-default" style="font-size:var(--fs-sm);color:var(--text2);cursor:pointer">sidebar collapsed by default</label>'+
+    '</div>'+
+    '<button class="modal-btn ghost" onclick="closeModal()">done</button>'
+  );
+}
+
 // ── SEARCH ────────────────────────────────────────────────────────────
 function openSearchModal(){
   openModal(
@@ -280,6 +320,8 @@ document.addEventListener('keydown',function(e){
 });
 
 (function(){
+  var fs=localStorage.getItem('fs-base');
+  if(fs) applyFontSize(fs);
   if(localStorage.getItem('sidebar-collapsed')){
     var sb=document.getElementById('sidebar');
     if(sb) sb.classList.add('collapsed');
