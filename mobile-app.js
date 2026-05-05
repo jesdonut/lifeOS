@@ -798,7 +798,7 @@ function finRow(label,sub,fieldKey,f,moKey){
   return '<div class="fin-field-row">'+
     '<div class="fin-field-label"><div>'+label+'</div>'+(sub?'<div class="fin-field-sub">'+sub+'</div>':'')+' </div>'+
     '<input class="fin-field-input'+(filled?' filled':'')+'" value="'+escHtml(String(val))+'"'+
-    ' placeholder="0"'+
+    ' placeholder="0" inputmode="decimal"'+
     ' onchange="saveFinField(\''+moKey+'\',\''+key+'\',this.value);this.classList.toggle(\'filled\',!!this.value)"'+
     '>'+
   '</div>';
