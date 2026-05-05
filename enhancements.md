@@ -826,6 +826,29 @@ Implemented (codex wrote this):
 
 ---
 
+## 56. Savings — Collapsible Currencies and Compact Government Bonds
+
+Requested (codex wrote this):
+- Make the government bonds section collapsible so it takes less vertical space.
+- When collapsed, government bonds should still show total monthly income.
+- Active government bonds should render in two columns when expanded.
+- Use the mobile spend section collapse pattern as a reference for the header/summary behavior.
+- Make currencies collapsible too if it can be done cleanly.
+
+Implementation notes:
+- Preserve all saved `DATA` fields and bond/currency data.
+- Do not remove IDR behavior; government bonds and currency lots still rely on IDR calculations.
+- Keep this desktop-only unless mobile has matching savings UI.
+
+Implemented (codex wrote this):
+- Added desktop savings collapse state for currencies and government bonds.
+- Government bonds are collapsed by default and show active/matured counts plus total monthly income in the header.
+- Expanded active bonds render in a two-column grid.
+- Currencies are collapsible and show total held in both ¥ and Rp in the header.
+- Mobile was left unchanged because it does not render the desktop Savings screen.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -885,3 +908,4 @@ Implemented (codex wrote this):
 | 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets | ✅ |
 | 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ✅ |
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | ✅ |
+| 56 | Savings — Collapsible Currencies and Compact Government Bonds | ✅ |

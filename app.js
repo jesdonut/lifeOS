@@ -61,6 +61,7 @@ const MIN_YEAR=1995,MAX_YEAR=2095;
 let view='week',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
 let _nisaLsExpanded=false;
 let _yearExpanded=null;
+let _currenciesExpanded=true,_bondsExpanded=false;
 
 // DATA MODEL
 // events: "YYYY-MM-DD": [{id, text, color}]
@@ -737,6 +738,11 @@ function getTsumitateForYear(n,y){
   return keys.length?n.tsumitateByYear[keys[0]]:0;
 }
 function nisaToggleLs(){_nisaLsExpanded=!_nisaLsExpanded;render();}
+function toggleSavingsPanel(panel){
+  if(panel==='currencies') _currenciesExpanded=!_currenciesExpanded;
+  if(panel==='bonds') _bondsExpanded=!_bondsExpanded;
+  render();
+}
 function nisaCalc(){
   var n=DATA.nisa,birthYear=1995;
   var cumulative=0,rows=[];
@@ -938,8 +944,8 @@ function renderSavings(panel){
     var days=bondDaysToMaturity(b);
     var daysLabel=days<=0?'matured':days===1?'1 day to maturity':days+' days to maturity';
     var pct=total>0?Math.round(received/total*100):0;
-    return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+    return '<div class="bond-card">'+
+      '<div class="bond-card-head">'+
         '<span style="font-weight:600;font-size:var(--fs-sm);font-family:var(--mono)">'+b.series+'</span>'+
         '<div style="display:flex;gap:6px">'+
           '<button onclick="toggleBondMatured(\''+b.id+'\')" style="font-size:var(--fs-xs);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;color:var(--text2);font-family:var(--sans)">mark matured</button>'+
@@ -978,16 +984,39 @@ function renderSavings(panel){
 
 
   var bondsSection=
-    '<div class="savings-card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
-        '<div class="savings-title" style="margin-bottom:0">government bonds</div>'+
-        '<button onclick="openAddBondModal()" style="font-size:var(--fs-xs);background:none;border:1px solid var(--border);border-radius:8px;padding:3px 10px;cursor:pointer;color:var(--text2);font-family:var(--sans)">+ add bond</button>'+
+    '<div class="savings-card savings-collapse'+(_bondsExpanded?' open':'')+'">'+
+      '<div class="savings-collapse-head" onclick="toggleSavingsPanel(\'bonds\')">'+
+        '<div class="savings-collapse-names">'+
+          '<div class="savings-title" style="margin-bottom:0">government bonds</div>'+
+          '<div class="savings-collapse-sub">'+activeBonds.length+' active'+(maturedBonds.length?' · '+maturedBonds.length+' matured':'')+'</div>'+
+        '</div>'+
+        '<div class="savings-collapse-total">Rp '+totalMonthlyNet.toLocaleString()+' / month</div>'+
+        '<button onclick="event.stopPropagation();openAddBondModal()" style="font-size:var(--fs-xs);background:none;border:1px solid var(--border);border-radius:8px;padding:3px 10px;cursor:pointer;color:var(--text2);font-family:var(--sans)">+ add bond</button>'+
+        '<div class="savings-collapse-chevron">▾</div>'+
       '</div>'+
-      (activeBonds.length?
-        activeBondCards+
-        (totalMonthlyNet?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:var(--fs-xs);color:var(--text2)">total monthly income</span><span style="font-family:var(--mono);font-size:var(--fs-sm);font-weight:500">Rp '+totalMonthlyNet.toLocaleString()+'</span></div>':'')
-        :'<div style="font-size:var(--fs-xs);color:var(--text3);padding:8px 0">no active bonds — click + add bond to get started.</div>')+
-      maturedArchive+
+      '<div class="savings-collapse-body">'+
+        (activeBonds.length?
+          '<div class="bond-grid">'+activeBondCards+'</div>'+
+          (totalMonthlyNet?'<div class="savings-total-row"><span>total monthly income</span><span>Rp '+totalMonthlyNet.toLocaleString()+'</span></div>':'')
+          :'<div style="font-size:var(--fs-xs);color:var(--text3);padding:8px 0">no active bonds — click + add bond to get started.</div>')+
+        maturedArchive+
+      '</div>'+
+    '</div>';
+
+  var currenciesSection=
+    '<div class="savings-card savings-collapse'+(_currenciesExpanded?' open':'')+'">'+
+      '<div class="savings-collapse-head" onclick="toggleSavingsPanel(\'currencies\')">'+
+        '<div class="savings-collapse-names">'+
+          '<div class="savings-title" style="margin-bottom:0">currencies — enter amounts you hold</div>'+
+          '<div class="savings-collapse-sub">'+displayCurrencies.length+' display currencies</div>'+
+        '</div>'+
+        '<div class="savings-collapse-total">¥'+Math.round(allJpy).toLocaleString()+' · Rp'+Math.round(allIdr).toLocaleString()+'</div>'+
+        '<div class="savings-collapse-chevron">▾</div>'+
+      '</div>'+
+      '<div class="savings-collapse-body">'+
+        '<div class="curr-grid">'+currCards+'</div>'+
+        (allJpy?'<div class="savings-total-row"><span>total held</span><span>¥'+Math.round(allJpy).toLocaleString()+' · Rp'+Math.round(allIdr).toLocaleString()+'</span></div>':'')+
+      '</div>'+
     '</div>';
 
   panel.innerHTML=
@@ -1063,11 +1092,7 @@ function renderSavings(panel){
       '</div>'+
       '<div style="margin-top:10px;font-size:var(--fs-xs);color:var(--text3);line-height:1.6">Lifetime cap ¥18M — つみたて ¥1.2M/year · 成長 ¥2.4M/year · up to ¥3.6M/year combined.</div>'+
     '</div>'+
-    '<div class="savings-card">'+
-      '<div class="savings-title">currencies — enter amounts you hold</div>'+
-      '<div class="curr-grid">'+currCards+'</div>'+
-      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:var(--fs-xs);color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:var(--fs-sm);font-weight:500">¥'+Math.round(allJpy).toLocaleString()+' · Rp'+Math.round(allIdr).toLocaleString()+'</span></div>':'')+
-    '</div>'+
+    currenciesSection+
     bondsSection+
     '</div>';
 }
