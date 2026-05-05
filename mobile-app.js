@@ -209,7 +209,6 @@ function showSplash(){
     '<button onclick="startFresh()" style="width:220px;padding:12px;background:none;color:var(--text3);border:1px solid var(--border);border-radius:var(--radius);font-family:var(--sans);font-size:13px">start fresh</button>'+
     '</div>';
   document.getElementById('m-nav').style.display='none';
-  document.getElementById('m-topbar').style.display='none';
 }
 
 function startFresh(){
@@ -219,7 +218,6 @@ function startFresh(){
 
 function startApp(){
   document.getElementById('m-nav').style.display='';
-  document.getElementById('m-topbar').style.display='flex';
   setTab('day');
 }
 

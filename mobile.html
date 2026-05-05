@@ -39,6 +39,8 @@ input  { font-family: inherit; }
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 html, body {
   height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
   background: var(--bg);
   font-family: var(--sans);
   color: var(--text);
@@ -49,6 +51,7 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100dvh;
+  overflow: hidden;
   max-width: 480px;
   margin: 0 auto;
   position: relative;
@@ -1054,10 +1057,6 @@ html, body {
 
 <div id="app">
 
-  <div id="m-topbar" style="display:none;flex-shrink:0;align-items:center;justify-content:flex-end;padding:6px 14px 4px;background:var(--bg);border-bottom:1px solid var(--border)">
-    <button onclick="exportData()" style="background:none;border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.4">export</button>
-  </div>
-
   <header id="m-header">
     <!-- rendered by mobile-app.js -->
   </header>
@@ -1082,6 +1081,10 @@ html, body {
     <button class="m-tab" data-tab="finance" onclick="setTab('finance')">
       <svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       Finance
+    </button>
+    <button class="m-tab" onclick="exportData()" style="color:var(--text3)">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Export
     </button>
   </nav>
 
