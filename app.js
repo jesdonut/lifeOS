@@ -45,7 +45,7 @@ const SPEND_CATS=[
   {key:'medical',    jp:'メディカル',       en:'Medical',       group:'necessities'},
   {key:'necessities',jp:'日常生活',         en:'Daily',         group:'necessities'},
   {key:'nhi',        jp:'国民保険',         en:'NHI',           group:'necessities'},
-  {key:'project',    jp:'ゲーム/P',         en:'Project/Game',  group:'optional'},
+  {key:'project',    jp:'ゲーム/Project',         en:'Project/Game',  group:'optional'},
   {key:'fun',        jp:'エンターテインメント', en:'Entertainment', group:'optional'},
   {key:'clothes',    jp:'服・髪',           en:'Clothes/Hair',  group:'optional'},
 ];
@@ -1137,7 +1137,7 @@ function renderFinance(panel,y,m){
     finReadRow('日常生活','Daily',monthSpendCat(y,m,'necessities'))+
     finReadRow('国民保険','NHI',monthSpendCat(y,m,'nhi'));
   var optRows=
-    finReadRow('ゲーム/P','Project/Game',monthSpendCat(y,m,'project'))+
+    finReadRow('ゲーム/Project','Project/Game',monthSpendCat(y,m,'project'))+
     finReadRow('エンターテインメント','Entertainment',monthSpendCat(y,m,'fun'))+
     finReadRow('服・髪','Clothes/Hair',monthSpendCat(y,m,'clothes'));
 

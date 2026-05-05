@@ -15,7 +15,7 @@ const CAT_LABELS = {
   medical:     {jp:'メディカル',            en:'Medical'},
   necessities: {jp:'日常生活',             en:'Daily'},
   nhi:         {jp:'国民保険',             en:'NHI'},
-  project:     {jp:'ゲーム/P',            en:'Project/Game'},
+  project:     {jp:'ゲーム/Project',            en:'Project/Game'},
   fun:         {jp:'エンターテインメント',    en:'Entertainment'},
   clothes:     {jp:'服・髪',              en:'Clothes/Hair'},
 };
@@ -753,8 +753,8 @@ function buildIncomeSection(c,moKey){
   const f=c.f; const isNew=c.isNew;
   const isOpen=openSections.has('income');
   const dedFields=isNew?
-    [['healthIns','Health ins'],['careIns','Care ins'],['childRearing','Child-rearing'],
-     ['pensionIns','Pension'],['employmentIns','Employment ins'],['incomeTax','Income tax (−)'],['residentTax','Resident tax (−)']]:
+    [['healthIns','Health insurance (−)'],['careIns','Care insurance (−)'],['childRearing','Child-rearing insurance (−)'],
+     ['pensionIns','Pension insurance (−)'],['employmentIns','Employment insurance (−)'],['incomeTax','Income tax (−)'],['residentTax','Resident tax (−)']]:
     [['taxWithheld','Tax withheld (−)'],['insuranceDed','Insurance (−)']];
 
   const rows=[
