@@ -22,7 +22,7 @@ Codex checklist after checking `app.js` and `mobile-app.js`:
 |---|---|---|---|
 | 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets on Start Fresh | Complete | Desktop and mobile now keep all save-file fields but use neutral defaults: `tsumitateMonthly:0`, empty `projectionYears`, and empty `bankAccounts`. Loading older saves still preserves existing NISA years and bank account data. |
 | 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | Complete | Desktop now renders only CNY, GBP, USD, and MYR cards. IDR remains in `CURRENCIES` with `hidden:true` so IDR rate lookups for lots/bonds keep working. KRW/EUR saved data is preserved in `DATA` but no longer has display cards. Mobile has no currency display card grid. |
-| 55 | NISA — Compact Config + Scrollable Snapshot Table | Unfinished on desktop; not applicable to mobile | `app.js` still renders `.nisa-meta` separately above a plain `<table class="nisa-snaps">`, with no `nisa-config-row`, no `nisa-config-left/right`, and no `nisa-snaps-scroll`. Mobile does not render this desktop NISA config/snapshot UI. |
+| 55 | NISA — Compact Config + Scrollable Snapshot Table | Complete | Desktop NISA config now uses `nisa-config-row` with meta controls on the left and a scrollable `nisa-snaps-scroll` snapshot table on the right. The initial desktop `DATA` uses 3 suggested snapshot years, while `startFresh()` stays clean from #53. Mobile has no matching NISA config UI. |
 
 Everything below this audit is the historical tracker/spec text (this is written by claude code).
 
@@ -779,7 +779,7 @@ Implemented (codex wrote this):
 
 ---
 
-## 55. NISA — Compact Config + Scrollable Snapshot Table
+## ~~55. NISA — Compact Config + Scrollable Snapshot Table~~ ✅ Complete
 
 Three improvements to the NISA card layout:
 
@@ -806,6 +806,13 @@ Three improvements to the NISA card layout:
 ```
 
 **Scope** — small. JS template restructure + 4 CSS rules.
+
+Implemented (codex wrote this):
+- Initial desktop `DATA.nisa.projectionYears` now seeds three suggested snapshot years: current year, current year + 2, and current year + 5.
+- `startFresh()` keeps the #53 clean default of `projectionYears:[]`.
+- NISA meta controls now sit in a left config column.
+- Year snapshots now sit in a right config column with `.nisa-snaps-scroll`.
+- Mobile was left unchanged because it does not render this desktop NISA config/snapshot UI.
 
 ---
 
@@ -867,4 +874,4 @@ Three improvements to the NISA card layout:
 | 52 | Code Cleanup — Remove Dead CSS and Unused JS | ✅ |
 | 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets | ✅ |
 | 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ✅ |
-| 55 | NISA — Compact Config + Scrollable Snapshot Table | ⬜ |
+| 55 | NISA — Compact Config + Scrollable Snapshot Table | ✅ |

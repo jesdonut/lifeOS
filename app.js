@@ -72,7 +72,7 @@ let _yearExpanded=null;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{}};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[today.getFullYear(),today.getFullYear()+2,today.getFullYear()+5]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{}};
 
 // ── UTILS ─────────────────────────────────────────────────────────────
 let _uid=0; function uid(){return 'id'+(++_uid)+Date.now();}
@@ -1034,28 +1034,33 @@ function renderSavings(panel){
         '</div>'+
       '</div>'+
 
-      '<div class="nisa-meta">'+
-        '<div class="nisa-meta-cell">'+
-          '<div class="nisa-meta-lab">start year</div>'+
-          '<input type="number" value="'+n.startYear+'" onchange="DATA.nisa.startYear=parseInt(this.value)||2026;render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text)">'+
+      '<div class="nisa-config-row">'+
+        '<div class="nisa-config-left">'+
+          '<div class="nisa-meta">'+
+            '<div class="nisa-meta-cell">'+
+              '<div class="nisa-meta-lab">start year</div>'+
+              '<input type="number" value="'+n.startYear+'" onchange="DATA.nisa.startYear=parseInt(this.value)||2026;render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text)">'+
+            '</div>'+
+            '<div class="nisa-meta-cell">'+
+              '<div class="nisa-meta-lab">start month</div>'+
+              '<select onchange="DATA.nisa.startMonth=parseInt(this.value);render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text);cursor:pointer">'+
+                ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m,i){return '<option value="'+(i+1)+'"'+(n.startMonth===i+1?' selected':'')+'>'+m+'</option>';}).join('')+
+              '</select>'+
+            '</div>'+
+            '<div class="nisa-meta-cell">'+
+              '<div class="nisa-meta-lab">this year monthly</div>'+
+              '<div style="font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text)">¥'+curYearMonthly.toLocaleString()+'</div>'+
+            '</div>'+
+          '</div>'+
         '</div>'+
-        '<div class="nisa-meta-cell">'+
-          '<div class="nisa-meta-lab">start month</div>'+
-          '<select onchange="DATA.nisa.startMonth=parseInt(this.value);render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text);cursor:pointer">'+
-            ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m,i){return '<option value="'+(i+1)+'"'+(n.startMonth===i+1?' selected':'')+'>'+m+'</option>';}).join('')+
-          '</select>'+
-        '</div>'+
-        '<div class="nisa-meta-cell">'+
-          '<div class="nisa-meta-lab">this year monthly</div>'+
-          '<div style="font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text)">¥'+curYearMonthly.toLocaleString()+'</div>'+
+        '<div class="nisa-config-right">'+
+          '<div style="font-size:var(--fs-xs);font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">year snapshots</div>'+
+          '<div class="nisa-snaps-scroll"><table class="nisa-snaps"><thead><tr>'+
+            '<th>year</th><th>age</th><th>つみたて</th><th>成長</th><th>cumulative</th><th>progress</th><th></th>'+
+          '</tr></thead><tbody>'+snapRows+'</tbody></table></div>'+
+          '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:var(--fs-sm);color:var(--text2);cursor:pointer">+ add snapshot year</button>'+
         '</div>'+
       '</div>'+
-
-      '<div style="font-size:var(--fs-xs);font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">year snapshots</div>'+
-      '<table class="nisa-snaps"><thead><tr>'+
-        '<th>year</th><th>age</th><th>つみたて</th><th>成長</th><th>cumulative</th><th>progress</th><th></th>'+
-      '</tr></thead><tbody>'+snapRows+'</tbody></table>'+
-      '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:var(--fs-sm);color:var(--text2);cursor:pointer">+ add snapshot year</button>'+
       '<div style="margin-top:10px;font-size:var(--fs-xs);color:var(--text3);line-height:1.6">Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined.</div>'+
     '</div>'+
     '<div class="savings-card">'+
