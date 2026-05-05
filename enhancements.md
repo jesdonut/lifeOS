@@ -622,6 +622,95 @@ Swatches now render as labelled pills (dot + name) instead of plain circles. All
 
 ---
 
+## 49. Font Scale — CSS Custom Properties + Larger Base Size
+
+Introduce three font-size custom properties on `:root` and apply them throughout `styles.css` and inline styles in `app.js`.
+
+**CSS variables (add to `:root` in `styles.css`):**
+```css
+--fs-base: 15px;   /* body text, tasks, notes, event labels */
+--fs-sm:   13px;   /* secondary labels, inputs, sidebar items */
+--fs-xs:   11px;   /* tertiary metadata, tiny tags, timestamps — absolute floor */
+```
+
+**Steps:**
+1. Add `--fs-base`, `--fs-sm`, `--fs-xs` to `:root` in `styles.css`
+2. Replace all hardcoded `font-size` values in `styles.css` with the appropriate variable
+3. Replace inline `font-size:NNpx` occurrences in `app.js` with `font-size:var(--fs-xs/sm/base)` using the same mapping
+4. Verify no font size below 11px remains anywhere
+
+**Mapping guide:**
+- 10px, 11px → `var(--fs-xs)`
+- 12px, 13px → `var(--fs-sm)`
+- 14px, 15px, 16px → `var(--fs-base)`
+
+**Scope** — small. CSS + grep-replace pass in app.js. No logic changes.
+
+---
+
+## 50. Sidebar — Collapsible Toggle
+
+Add a collapse button to the sidebar. When collapsed, the sidebar hides and the main content expands to fill the space. Preference saved to `localStorage` so it persists across sessions.
+
+**Steps:**
+1. Add a toggle button `‹` / `›` at the top of the sidebar panel in `index.html`
+2. Add `.sidebar-collapsed` class to `styles.css`: sidebar width → 0, overflow hidden, transition for slide
+3. On toggle click: add/remove `.sidebar-collapsed` on `#sidebar`, save state to `localStorage('sidebar-collapsed')`
+4. On page load: read `localStorage('sidebar-collapsed')` and apply class immediately (no flash)
+
+**Scope** — small. ~20 lines JS, ~10 lines CSS, minor HTML change.
+
+---
+
+## 51. Settings Panel — Font Size Slider + Sidebar Default
+
+A lightweight settings modal accessible from the topbar. Two controls only:
+
+1. **Font size slider** — range input from 12px to 18px (step 1). Changes `--fs-base` on `:root` live; `--fs-sm` and `--fs-xs` derive from base (base−2, base−4). Saved to `localStorage('fs-base')` and applied on load.
+2. **Sidebar default** — toggle: open by default / closed by default. Sets the `localStorage('sidebar-collapsed')` default used on first visit.
+
+**Steps:**
+1. Add `settings` button to topbar in `index.html`
+2. Add `openSettingsModal()` to `app.js` using existing `openModal()` infrastructure
+3. Slider `oninput` handler updates `document.documentElement.style.setProperty('--fs-base', val+'px')` and the derived sm/xs values, saves to localStorage
+4. On page load: read `localStorage('fs-base')` and apply before first render (no layout flash)
+
+**Prerequisite:** #49 must be complete (CSS variables must exist for the slider to work).
+
+**Scope** — small. ~30 lines JS, minor HTML change.
+
+---
+
+## 52. Code Cleanup — Remove Dead CSS and Unused JS
+
+Audit all five files for code that is no longer referenced after previous enhancements. Do NOT remove DATA model fields (bankAccounts, baseCurrency, etc.) — mobile and desktop share the same save file format, so all fields must be preserved even if not displayed everywhere.
+
+**Known candidates from prior enhancements:**
+
+`styles.css`:
+- Day view CSS (removed in #28): `.day-wrap`, `.day-card`, `.day-body`, `.day-slots-col`, `.day-spend-col`, `.day-spend-title`, `.day-hdr`, `.day-num-big`, `.day-info`, `.day-dow`, `.day-full`, `.today-badge`, `.tg-block`
+- Time slot input styles (day view): `.time-slot`, `.ts-label`, `.ts-input`
+- Spend summary bar chart (removed in #7): `.spend-summary`, `.ss-title`, `.bar-chart`, `.bar-col`, `.bar-fill`, `.bar-lbl`, `.bar-val`
+- Week spend toggle (removed in #39): `.wk-spend-toggle`, `.wk-spend-btn`
+- Bank account section styles if any existed (removed in #44)
+
+`app.js`:
+- `fmtBase()` — added in #35 for IDR base toggle; toggle removed in #38; check if still called anywhere
+- Any remaining day view render functions if not fully cleaned up in #28
+- `bankAccounts` default in DATA reset — keep for save compatibility
+
+`index.html` / `mobile.html` / `mobile-app.js`:
+- Cross-check any IDs or classes that no longer exist in the JS/CSS
+
+**Steps:**
+1. Grep each candidate class/function against all files to confirm zero references
+2. Remove confirmed dead code only — no speculative cleanup
+3. Run a final grep pass to confirm nothing was missed
+
+**Scope** — small-medium. Pure deletion, no logic changes. Safe as long as each removal is confirmed zero-reference.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -674,3 +763,7 @@ Swatches now render as labelled pills (dot + name) instead of plain circles. All
 | 46 | Desktop — Line-Item Spend Log for Food, Commute, Transport | ✅ |
 | 47 | Fix — ゲーム/P label → ゲーム/Project across finance view | ✅ |
 | 48 | Search — Event search on desktop (topbar button + / shortcut) and mobile (Search tab) | ✅ |
+| 49 | Font Scale — CSS Custom Properties + Larger Base Size | ⬜ |
+| 50 | Sidebar — Collapsible Toggle | ⬜ |
+| 51 | Settings Panel — Font Size Slider + Sidebar Default | ⬜ |
+| 52 | Code Cleanup — Remove Dead CSS and Unused JS | ✅ |

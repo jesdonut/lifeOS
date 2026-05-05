@@ -49,27 +49,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .evt-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;border-radius:3px;padding:2px 8px;margin:2px 0}
 .evt-pill button{background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:11px;padding:0;line-height:1}
 
-/* DAY VIEW */
-.day-wrap{margin:0}
-.day-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:10px}
-.day-body{display:flex;align-items:flex-start;}
-.day-slots-col{flex:3;min-width:0;border-right:1px solid var(--border);}
-.day-spend-col{flex:2;min-width:0;position:sticky;top:0;align-self:flex-start;}
-.day-spend-title{padding:10px 14px 4px;font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;}
-@media(max-width:800px){
-  .day-body{flex-direction:column;}
-  .day-slots-col{border-right:none;}
-  .day-spend-col{position:static;width:100%;border-top:1px solid var(--border);}
-}
-.day-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
-.day-num-big{font-family:var(--mono);font-size:32px;font-weight:300;line-height:1}
-.day-info{flex:1}.day-dow{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)}.day-full{font-size:12px;color:var(--text3);font-family:var(--mono)}
-.today-badge{background:var(--accent);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-family:var(--mono)}
-.time-slot{display:flex;align-items:flex-start;min-height:32px;border-bottom:1px solid var(--border)}.time-slot:last-child{border-bottom:none}
-.ts-label{width:46px;font-family:var(--mono);font-size:10px;color:var(--text3);padding:8px 6px 0 10px;flex-shrink:0;text-align:right}
-.ts-input{flex:1;padding:5px 10px;background:none;border:none;outline:none;font-family:var(--sans);font-size:12px;color:var(--text)}.ts-input::placeholder{color:var(--text3)}
-.tg-block{position:absolute;left:46px;right:4px;background:#daeaf5;border-left:3px solid #4a7fa5;border-radius:4px;padding:3px 7px;cursor:pointer;overflow:hidden;color:#2c4a6e;z-index:2;box-sizing:border-box}
-.tg-block:hover{background:#c8e0f0}
 
 /* SPEND */
 .spend-day-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 14px}
@@ -96,7 +75,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .wc-task-input{width:100%;background:none;border:none;border-bottom:1px dashed var(--border);outline:none;font-family:var(--sans);font-size:11px;color:var(--text2);padding:3px 2px;flex-shrink:0}
 .wc-spend{font-family:var(--mono);font-size:10px;color:var(--text3);padding-top:4px;border-top:1px solid var(--border);margin-top:auto;flex-shrink:0}
 .wk-spend-toggle{display:flex;align-items:center;justify-content:space-between;padding:4px 2px;flex-shrink:0}
-.wk-spend-btn{background:none;border:1px solid var(--border);border-radius:10px;padding:2px 10px;font-size:10px;color:var(--text2);cursor:pointer;font-family:var(--sans)}.wk-spend-btn:hover{border-color:var(--border2)}
 .wk-sp-corner{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);padding:5px 8px;border-right:1px solid var(--border);border-bottom:1px solid var(--border2);border-top:2px solid var(--border2);background:var(--surface2);display:flex;align-items:center}
 .wk-sp-hdr{font-family:var(--mono);font-size:10px;text-align:center;padding:4px 2px;border-right:1px solid var(--border);border-bottom:1px solid var(--border2);border-top:2px solid var(--border2);background:var(--surface2);color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:1px}
 .wk-sp-hdr-n{font-size:12px;color:var(--text);font-weight:500}
@@ -128,14 +106,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .mc-item{font-size:9px;border-radius:2px;padding:1px 4px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mc-spend{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px}
 
-/* SPEND SUMMARY */
-.spend-summary{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;margin-top:10px}
-.ss-title{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.bar-chart{display:flex;gap:4px;align-items:flex-end;height:60px;margin-top:8px}
-.bar-col{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
-.bar-fill{width:100%;border-radius:3px 3px 0 0;transition:height .3s}
-.bar-lbl{font-size:9px;color:var(--text3);font-family:var(--mono)}
-.bar-val{font-size:9px;color:var(--text2);font-family:var(--mono)}
 
 /* YEAR */
 .year-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -162,14 +132,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:13
 .my-year-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2)}
 .my-year-num{font-family:var(--mono);font-size:18px;font-weight:500}
 .my-year-age{font-size:11px;color:var(--text2)}
-.my-months-row{display:grid;grid-template-columns:repeat(12,1fr)}
-.my-month-cell{border-right:1px solid var(--border);padding:8px 6px;cursor:pointer;transition:.1s;min-width:0}.my-month-cell:last-child{border-right:none}.my-month-cell:hover{background:var(--surface2)}
-.my-month-name{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:4px;font-family:var(--mono)}
-.my-month-content{font-size:10px;color:var(--text);line-height:1.5;min-height:24px;min-width:0}
-.my-month-item{display:flex;align-items:center;min-width:0}.my-month-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.my-nisa-row{display:flex;align-items:center;gap:8px;padding:6px 14px;border-top:1px solid var(--border);background:var(--accent-light)}
-.my-nisa-label{font-size:10px;color:var(--accent);font-family:var(--mono)}
-.my-nisa-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent)}
 
 /* YEAR REDESIGN */
 .yr-strip{display:flex;gap:6px;padding:2px 0 10px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
