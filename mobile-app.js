@@ -36,7 +36,7 @@ let DATA = {
   events:{}, tasks:{}, slots:{}, spend:{}, goals:{}, notes:[], countdowns:[],
   spendLog:{},
   nisa:{tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,
-        tsumitateMonthly:60000,projectionYears:[]},
+        tsumitateMonthly:0,projectionYears:[]},
   currencies:{}, currencyRates:{}, currencyLots:[], bonds:[],
   bankAccounts:[], finance:{},
 };
@@ -180,7 +180,7 @@ function applyData(d){
     events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],
     spendLog:{},
     nisa:{tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,
-          tsumitateMonthly:60000,projectionYears:[]},
+          tsumitateMonthly:0,projectionYears:[]},
     currencies:{},currencyRates:{},currencyLots:[],bonds:[],
     bankAccounts:[],finance:{},
   },d);
@@ -213,6 +213,7 @@ function showSplash(){
 
 function startFresh(){
   localStorage.removeItem(LS_KEY);
+  applyData({});
   startApp();
 }
 

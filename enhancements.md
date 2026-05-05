@@ -1,5 +1,31 @@
 # lifeOS — Enhancements & Upgrade Tracker
 
+## Codex Audit — Unfinished Items (this is written by codex)
+
+User feedback recorded:
+- #10 is cancelled
+- #21 is cancelled
+- #24 is fixed
+- #25 is fixed
+- #26 is cancelled
+- #27 is done
+- #28 is done
+- #29 is done
+- #30 is done, likely
+- #50 is done
+- #51 is done
+- #52 is done
+
+Codex checklist after checking `app.js` and `mobile-app.js`:
+
+| # | Item | Codex status | Evidence |
+|---|---|---|---|
+| 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets on Start Fresh | Complete | Desktop and mobile now keep all save-file fields but use neutral defaults: `tsumitateMonthly:0`, empty `projectionYears`, and empty `bankAccounts`. Loading older saves still preserves existing NISA years and bank account data. |
+| 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | Unfinished on desktop; not applicable to mobile | `app.js` still includes IDR, KRW, and EUR in `CURRENCIES`, and the card render still filters only `c.code !== 'JPY'`, so those cards can still display. `mobile-app.js` has no currency display card grid. |
+| 55 | NISA — Compact Config + Scrollable Snapshot Table | Unfinished on desktop; not applicable to mobile | `app.js` still renders `.nisa-meta` separately above a plain `<table class="nisa-snaps">`, with no `nisa-config-row`, no `nisa-config-left/right`, and no `nisa-snaps-scroll`. Mobile does not render this desktop NISA config/snapshot UI. |
+
+Everything below this audit is the historical tracker/spec text (this is written by claude code).
+
 ---
 
 ## ~~1. Month View: Click Day → Navigate to Week~~ ✅ Complete
@@ -711,7 +737,7 @@ Audit all five files for code that is no longer referenced after previous enhanc
 
 ---
 
-## 53. Clean Defaults — Zero NISA Values + No Bank Account Presets on Start Fresh
+## ~~53. Clean Defaults — Zero NISA Values + No Bank Account Presets on Start Fresh~~ ✅ Complete
 
 When a user starts fresh, the DATA object should have neutral/zero values with no pre-filled entries.
 
@@ -721,6 +747,12 @@ When a user starts fresh, the DATA object should have neutral/zero values with n
 - `bankAccounts`: `[{BCA...},{MUFG...}]` → `[]` (empty array; #44 removed the UI, now remove the presets)
 
 **Scope** — tiny. Two identical DATA literals in app.js, change 3 values each.
+
+Implemented (codex wrote this):
+- Desktop `DATA` defaults and `startFresh()` now use `tsumitateMonthly:0`, `projectionYears:[]`, and `bankAccounts:[]`.
+- Desktop migration keeps the `bankAccounts` field for compatibility, but no longer inserts BCA/MUFG presets when the field is missing.
+- Mobile defaults now use `tsumitateMonthly:0`; mobile `startFresh()` also resets in-memory `DATA` to the clean default object after clearing localStorage.
+- Existing uploaded saves still preserve their saved `nisa`, `projectionYears`, `tsumitateByYear`, and `bankAccounts` values.
 
 ---
 
@@ -800,7 +832,7 @@ Three improvements to the NISA card layout:
 | 23 | Government Bonds Tracker (Active + Matured) | ✅ |
 | 24 | Bug Fix — Currency Lots rateIDR Semantics | ✅ |
 | 25 | NISA つみたて — Per-Year Monthly Amount | ✅ |
-| 26 | Bank Account Totals Tracker | ✅ |
+| 26 | Bank Account Totals Tracker | 🚫 cancelled |
 | 27 | Weekly Finance Tracker — Income, Bills, Spending | ✅ |
 | 28 | Remove Day View — Weekly Becomes Primary + Finance | ✅ |
 | 29 | Merge Year + Years → Single Year View with Calendar | ✅ |
@@ -827,6 +859,6 @@ Three improvements to the NISA card layout:
 | 50 | Sidebar — Collapsible Toggle | ✅ |
 | 51 | Settings Panel — Font Size Slider + Sidebar Default | ✅ |
 | 52 | Code Cleanup — Remove Dead CSS and Unused JS | ✅ |
-| 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets | ⬜ |
+| 53 | Clean Defaults — Zero NISA Values + No Bank Account Presets | ✅ |
 | 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ⬜ |
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | ⬜ |

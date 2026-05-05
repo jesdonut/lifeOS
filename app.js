@@ -73,7 +73,7 @@ let _yearExpanded=null;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}],finance:{}};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{}};
 
 // ── UTILS ─────────────────────────────────────────────────────────────
 let _uid=0; function uid(){return 'id'+(++_uid)+Date.now();}
@@ -1677,7 +1677,7 @@ function toggleBondMatured(id){
 }
 
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:60000,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[2026,2027,2028,2030,2032,2035,2040,2045,2050,2055,2060]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}]};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{}};
   startApp();
 }
 
@@ -1701,10 +1701,11 @@ function startApp(){
     delete DATA.nisa.lumpSumYearly;
   }
   if(!DATA.nisa.tsumitateByYear) DATA.nisa.tsumitateByYear={};
+  if(!DATA.nisa.projectionYears) DATA.nisa.projectionYears=[];
   if(!Object.keys(DATA.nisa.tsumitateByYear).length&&DATA.nisa.tsumitateMonthly>0)
     DATA.nisa.tsumitateByYear[DATA.nisa.startYear]=DATA.nisa.tsumitateMonthly;
   if(!DATA.nisa.startMonth) DATA.nisa.startMonth=1;
-  if(!DATA.bankAccounts) DATA.bankAccounts=[{id:'bank-bca',name:'BCA',currency:'IDR',balance:0},{id:'bank-mufg',name:'MUFG',currency:'JPY',balance:0}];
+  if(!DATA.bankAccounts) DATA.bankAccounts=[];
   if(!DATA.finance) DATA.finance={};
   document.getElementById('splash').style.display='none';
   const app=document.getElementById('app');
