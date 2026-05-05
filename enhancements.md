@@ -622,7 +622,7 @@ Swatches now render as labelled pills (dot + name) instead of plain circles. All
 
 ---
 
-## 49. Font Scale — CSS Custom Properties + Larger Base Size
+## ~~49. Font Scale — CSS Custom Properties + Larger Base Size~~ ✅ Complete
 
 Introduce three font-size custom properties on `:root` and apply them throughout `styles.css` and inline styles in `app.js`.
 

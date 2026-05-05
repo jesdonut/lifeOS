@@ -24,7 +24,7 @@ function buildSwatches(inputId,selected){
       return '<span onclick="selectSwatch(\''+p.color+'\',\''+inputId+'\')" data-swatch="'+inputId+'" data-color="'+p.color+'"'+
         ' style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 5px;border-radius:10px;cursor:pointer;border:1.5px solid '+(sel?'var(--text)':'transparent')+';background:var(--surface2);transition:.1s">'+
         '<span style="width:10px;height:10px;border-radius:50%;background:'+p.color+';flex-shrink:0"></span>'+
-        '<span style="font-size:10px;color:var(--text2)">'+p.label+'</span>'+
+        '<span style="font-size:var(--fs-xs);color:var(--text2)">'+p.label+'</span>'+
       '</span>';
     }).join('')+
     '<input type="hidden" id="'+inputId+'" value="'+(selected||PALETTE[0].color)+'">'+
@@ -185,7 +185,7 @@ function openSpendLog(dk,cat){
       '<span class="sl-item-amount">¥'+e.amount.toLocaleString()+'</span>'+
       '<button class="sl-del" onclick="deleteSpendLogItem(\''+dk+'\',\''+cat+'\',\''+e.id+'\')">×</button>'+
     '</div>';
-  }).join(''):'<div style="font-size:11px;color:var(--text3);padding:6px 0">no entries yet</div>';
+  }).join(''):'<div style="font-size:var(--fs-xs);color:var(--text3);padding:6px 0">no entries yet</div>';
   openModal(
     '<div class="modal-title">'+label+' — '+dateLabel+'</div>'+
     '<div class="sl-list">'+listHtml+'</div>'+
@@ -285,7 +285,7 @@ function openSettingsModal(){
 function openSearchModal(){
   openModal(
     '<div class="modal-title">search events</div>'+
-    '<input id="search-inp" type="text" placeholder="type to search..." class="sl-inp" style="width:100%;box-sizing:border-box;font-size:13px;padding:7px 10px;margin-bottom:8px" oninput="renderSearchResults(this.value)" onkeydown="if(event.key===\'Escape\')closeModal()">'+
+    '<input id="search-inp" type="text" placeholder="type to search..." class="sl-inp" style="width:100%;box-sizing:border-box;font-size:var(--fs-sm);padding:7px 10px;margin-bottom:8px" oninput="renderSearchResults(this.value)" onkeydown="if(event.key===\'Escape\')closeModal()">'+
     '<div id="search-results" style="max-height:320px;overflow-y:auto"></div>'+
     '<div style="margin-top:10px"><button class="modal-btn ghost" onclick="closeModal()">close</button></div>'
   );
@@ -302,14 +302,14 @@ function renderSearchResults(q){
     });
   });
   results.sort(function(a,b){return b.dk.localeCompare(a.dk);});
-  if(!results.length){res.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">no results</div>';return;}
+  if(!results.length){res.innerHTML='<div style="font-size:var(--fs-sm);color:var(--text3);padding:6px 0">no results</div>';return;}
   res.innerHTML=results.map(function(r){
     var d=new Date(r.dk+'T12:00:00');
     var dl=DAYS[d.getDay()===0?6:d.getDay()-1]+' '+d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)+' '+d.getFullYear();
     return '<div class="search-result" onclick="closeModal();cursor=new Date(\''+r.dk+'T12:00:00\');setView(\'week\')">'+
       '<span style="width:8px;height:8px;border-radius:50%;background:'+r.e.color+';flex-shrink:0;display:inline-block"></span>'+
-      '<span style="flex:1;font-size:13px;color:var(--text)">'+r.e.text+'</span>'+
-      '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+dl+'</span>'+
+      '<span style="flex:1;font-size:var(--fs-sm);color:var(--text)">'+r.e.text+'</span>'+
+      '<span style="font-size:var(--fs-xs);color:var(--text3);font-family:var(--mono)">'+dl+'</span>'+
     '</div>';
   }).join('');
 }
@@ -336,8 +336,8 @@ function openAddEventModal(key){
   openModal(
     '<div class="modal-title">add event — '+d+'</div>'+
     '<input id="evt-text" placeholder="event name..." autofocus>'+
-    '<input id="evt-date" type="date" value="'+d+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    '<input id="evt-date" type="date" value="'+d+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
+    '<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">colour</div>'+
     buildSwatches('evt-color',PALETTE[0].color)+
     '<div class="modal-row">'+
       '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
@@ -360,12 +360,12 @@ function submitAddEvent(){
 function openEditEventModal(key,id){
   var evt=(DATA.events[key]||[]).find(function(e){return e.id===id;});
   if(!evt) return;
-  var dateStyle='width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px';
+  var dateStyle='width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px';
   openModal(
     '<div class="modal-title">edit event</div>'+
     '<input id="evt-text" value="'+evt.text.replace(/"/g,'&quot;')+'" placeholder="event name...">'+
     '<input id="evt-date" type="date" value="'+key+'" style="'+dateStyle+'">'+
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    '<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">colour</div>'+
     buildSwatches('evt-color',evt.color)+
     '<div class="modal-row">'+
       '<button class="modal-btn ghost" style="color:var(--bad)" onclick="deleteEvent(\''+key+'\',\''+id+'\');closeModal();render()">delete</button>'+
@@ -448,7 +448,7 @@ function renderWeek(panel,mon){
     const evtHtml=evts.map(function(e){
       return '<div class="wc-evt" style="cursor:pointer;background:'+e.color+'18;color:'+e.color+'" onclick="openEditEventModal(\''+key+'\',\''+e.id+'\')">'+
         '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">'+e.text+'</span>'+
-        '<button style="background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:10px;flex-shrink:0" onclick="event.stopPropagation();deleteEvent(\''+key+'\',\''+e.id+'\');render()">×</button>'+
+        '<button style="background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:var(--fs-xs);flex-shrink:0" onclick="event.stopPropagation();deleteEvent(\''+key+'\',\''+e.id+'\');render()">×</button>'+
       '</div>';
     }).join('');
 
@@ -469,7 +469,7 @@ function renderWeek(panel,mon){
         evtHtml+
         taskHtml+
         '<input class="wc-task-input" placeholder="+ task" onkeydown="if(event.key===\'Enter\'&&this.value.trim()){addTask(\''+key+'\',this.value);this.value=\'\';render()}" />'+
-        '<button onclick="openAddEventModal(\''+key+'\')" style="background:none;border:1px dashed var(--border2);border-radius:10px;padding:2px 6px;font-size:10px;color:var(--text3);cursor:pointer;width:100%">+ event</button>'+
+        '<button onclick="openAddEventModal(\''+key+'\')" style="background:none;border:1px dashed var(--border2);border-radius:10px;padding:2px 6px;font-size:var(--fs-xs);color:var(--text3);cursor:pointer;width:100%">+ event</button>'+
         (spend?'<div class="wc-spend">'+fmtSpend(spend)+'</div>':'')+
       '</div>';
   }
@@ -502,7 +502,7 @@ function renderWeek(panel,mon){
   panel.innerHTML=
     '<div class="week-shell"><div class="wk-shell-spacer"></div>'+cols+spHdr+spRows+spTots+'</div>'+
     '<div class="wk-spend-toggle">'+
-      '<span style="font-family:var(--mono);font-size:11px;color:var(--text2)">week '+fmtSpend(weekTotal)+'</span>'+
+      '<span style="font-family:var(--mono);font-size:var(--fs-xs);color:var(--text2)">week '+fmtSpend(weekTotal)+'</span>'+
     '</div>';
 }
 
@@ -535,7 +535,7 @@ function renderMonth(panel,d){
   panel.innerHTML=
     '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">'+
       '<div style="display:flex;justify-content:flex-end;padding:8px 10px;border-bottom:1px solid var(--border)">'+
-        '<button onclick="openAddEventModal()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:3px 12px;font-size:11px;color:var(--text2);cursor:pointer">+ add event</button>'+
+        '<button onclick="openAddEventModal()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:3px 12px;font-size:var(--fs-xs);color:var(--text2);cursor:pointer">+ add event</button>'+
       '</div>'+
       '<div class="month-cal-grid">'+cells+'</div>'+
     '</div>';
@@ -714,12 +714,12 @@ function renderYear(panel,year){
         '<div class="ymb-head">'+
           '<span class="ymb-month-name" onclick="jumpMonth('+year+','+m+')" style="cursor:pointer" title="go to month">'+MS[m]+'</span>'+
           '<div style="display:flex;gap:8px;align-items:center">'+
-            (mTotal?'<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">'+fmtSpend(mTotal)+'</span>':'')+
-            '<button onclick="openAddEventModal(\''+ year+'-'+String(m+1).padStart(2,'0')+'-01\')" style="background:none;border:1px dashed var(--border2);border-radius:8px;padding:1px 8px;font-size:10px;color:var(--text3);cursor:pointer">+ event</button>'+
+            (mTotal?'<span style="font-family:var(--mono);font-size:var(--fs-xs);color:var(--text3)">'+fmtSpend(mTotal)+'</span>':'')+
+            '<button onclick="openAddEventModal(\''+ year+'-'+String(m+1).padStart(2,'0')+'-01\')" style="background:none;border:1px dashed var(--border2);border-radius:8px;padding:1px 8px;font-size:var(--fs-xs);color:var(--text3);cursor:pointer">+ event</button>'+
           '</div>'+
         '</div>'+
         '<div class="ymb-mini-grid">'+cells+'</div>'+
-        (taskCount?'<div style="padding:2px 8px 4px;font-size:9px;color:#9b7ec8;font-family:var(--mono)">'+taskCount+' open task'+(taskCount>1?'s':'')+'</div>':'')+
+        (taskCount?'<div style="padding:2px 8px 4px;font-size:var(--fs-xs);color:#9b7ec8;font-family:var(--mono)">'+taskCount+' open task'+(taskCount>1?'s':'')+'</div>':'')+
         '<div class="ymb-goals">'+goalRows+'</div>'+
       '</div>';
   }
@@ -837,7 +837,7 @@ function renderSavings(panel){
       '<span class="nisa-tl-yr">'+yr+'</span>'+
       '<input class="nisa-tl-inp" type="number" step="1000" value="'+monthly+'" onchange="DATA.nisa.tsumitateByYear[\''+yr+'\']=parseInt(this.value)||0;render()">'+
       '<span class="nisa-tl-annot">¥'+Math.round(Math.min(yearly,1200000)/10000)+'万</span>'+
-      (overCap?'<span style="font-size:9px;color:#8b2c2c">!</span>':'')+
+      (overCap?'<span style="font-size:var(--fs-xs);color:#8b2c2c">!</span>':'')+
       '<button class="nisa-tl-x" onclick="removeTsumitateYear(\''+yr+'\')">×</button>'+
     '</div>';
   }).join('');
@@ -848,7 +848,7 @@ function renderSavings(panel){
     return '<div class="nisa-tl-row">'+
       '<span class="nisa-tl-yr">'+yr+'</span>'+
       '<input class="nisa-tl-inp" type="number" step="10000" value="'+val+'" onchange="DATA.nisa.lumpSumByYear[\''+yr+'\']=parseInt(this.value)||0;render()">'+
-      (overCap?'<span style="font-size:9px;color:#8b2c2c">!</span>':'')+
+      (overCap?'<span style="font-size:var(--fs-xs);color:#8b2c2c">!</span>':'')+
       '<button class="nisa-tl-x" onclick="removeNisaYear(\''+yr+'\')">×</button>'+
     '</div>';
   }).join('');
@@ -861,7 +861,7 @@ function renderSavings(panel){
     return '<tr class="nisa-snap-row">'+
       '<td class="nisa-snap-yr">'+y+'</td>'+
       '<td style="color:var(--text3)">'+( y-birthYear)+'</td>'+
-      '<td colspan="3" style="font-size:10px;color:var(--text3)">before start</td>'+
+      '<td colspan="3" style="font-size:var(--fs-xs);color:var(--text3)">before start</td>'+
       '<td></td>'+
       '<td><button class="icon-btn" onclick="removeProjectionYear('+y+')">×</button></td>'+
     '</tr>';
@@ -872,8 +872,8 @@ function renderSavings(panel){
     return '<tr class="nisa-snap-row">'+
       '<td class="nisa-snap-yr">'+r.year+'</td>'+
       '<td style="color:var(--text3)">'+r.age+'</td>'+
-      '<td style="font-family:var(--mono);font-size:10px">¥'+Math.round(r.tsumitate/10000)+'万</td>'+
-      '<td style="font-family:var(--mono);font-size:10px">'+(r.lumpsum?'¥'+Math.round(r.lumpsum/10000)+'万':'—')+'</td>'+
+      '<td style="font-family:var(--mono);font-size:var(--fs-xs)">¥'+Math.round(r.tsumitate/10000)+'万</td>'+
+      '<td style="font-family:var(--mono);font-size:var(--fs-xs)">'+(r.lumpsum?'¥'+Math.round(r.lumpsum/10000)+'万':'—')+'</td>'+
       '<td style="font-family:var(--mono);font-weight:500;color:var(--accent)">¥'+Math.round(r.cumulative/10000)+'万</td>'+
       '<td><div class="nisa-snap-bar"><div style="width:'+tPct+'%;background:var(--accent)"></div><div style="width:'+lPct+'%;background:#2c4a6e"></div></div></td>'+
       '<td><button class="icon-btn" onclick="removeProjectionYear('+r.year+')">×</button></td>'+
@@ -899,14 +899,14 @@ function renderSavings(panel){
           var costPerUnit=l.rateIDR/l.amount;
           var pl=Math.round((idrRate-costPerUnit)*l.amount);
           var plColor=pl>=0?'#2d5a3d':'#8b2c2c';
-          return '<div style="font-size:9px;color:var(--text3);display:flex;justify-content:space-between;align-items:center;gap:3px;margin-bottom:3px">'+
+          return '<div style="font-size:var(--fs-xs);color:var(--text3);display:flex;justify-content:space-between;align-items:center;gap:3px;margin-bottom:3px">'+
             '<span>'+l.date.slice(5)+'</span>'+
             '<span>'+l.amount.toLocaleString()+'@'+Math.round(costPerUnit).toLocaleString()+'</span>'+
             '<span style="color:'+plColor+';font-weight:500">'+(pl>=0?'+':'')+'Rp'+Math.abs(pl).toLocaleString()+'</span>'+
-            '<button onclick="deleteLot(\''+l.id+'\')" style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--text3);padding:0;line-height:1;flex-shrink:0">×</button>'+
+            '<button onclick="deleteLot(\''+l.id+'\')" style="background:none;border:none;cursor:pointer;font-size:var(--fs-xs);color:var(--text3);padding:0;line-height:1;flex-shrink:0">×</button>'+
           '</div>';
         }).join('')+
-        '<div style="font-size:9px;font-weight:600;color:'+(totalPL>=0?'#2d5a3d':'#8b2c2c')+';padding-top:3px;border-top:1px solid var(--border)">P&L '+(totalPL>=0?'+':'')+'Rp'+Math.abs(totalPL).toLocaleString()+'</div>'+
+        '<div style="font-size:var(--fs-xs);font-weight:600;color:'+(totalPL>=0?'#2d5a3d':'#8b2c2c')+';padding-top:3px;border-top:1px solid var(--border)">P&L '+(totalPL>=0?'+':'')+'Rp'+Math.abs(totalPL).toLocaleString()+'</div>'+
       '</div>';
     }
     return '<div class="curr-card">'+
@@ -914,15 +914,15 @@ function renderSavings(panel){
       '<div class="curr-code">'+c.code+'</div>'+
       '<input class="curr-input" type="number" placeholder="0" value="'+amt+'" onchange="DATA.currencies[\''+c.code+'\']=this.value;render()" />'+
       '<div style="display:flex;align-items:center;gap:3px;margin-top:4px;border-top:1px solid var(--border);padding-top:4px">'+
-        '<span style="font-size:9px;color:var(--text3);flex-shrink:0">1'+c.code+'=</span>'+
-        '<input type="number" step="any" value="'+jpyRate+'" onchange="setRateJPY(\''+c.code+'\',this.value)" style="width:50px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
-        '<span style="font-size:9px;color:var(--text3)">¥</span>'+
-        '<input type="number" step="any" value="'+idrRate+'" onchange="setRateIDR(\''+c.code+'\',this.value)" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--text2)"/>'+
-        '<span style="font-size:9px;color:var(--text3)">Rp</span>'+
+        '<span style="font-size:var(--fs-xs);color:var(--text3);flex-shrink:0">1'+c.code+'=</span>'+
+        '<input type="number" step="any" value="'+jpyRate+'" onchange="setRateJPY(\''+c.code+'\',this.value)" style="width:50px;background:none;border:none;outline:none;font-family:var(--mono);font-size:var(--fs-xs);color:var(--text2)"/>'+
+        '<span style="font-size:var(--fs-xs);color:var(--text3)">¥</span>'+
+        '<input type="number" step="any" value="'+idrRate+'" onchange="setRateIDR(\''+c.code+'\',this.value)" style="width:60px;background:none;border:none;outline:none;font-family:var(--mono);font-size:var(--fs-xs);color:var(--text2)"/>'+
+        '<span style="font-size:var(--fs-xs);color:var(--text3)">Rp</span>'+
       '</div>'+
       (jpyEq?'<div class="curr-jpy">¥'+jpyEq.toLocaleString()+' · Rp'+idrEq.toLocaleString()+'</div>':'')+
       lotsHtml+
-      '<button onclick="openAddLotModal(\''+c.code+'\')" style="margin-top:5px;width:100%;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-size:9px;color:var(--text2);padding:2px 0;cursor:pointer;font-family:var(--sans)">+ lot</button>'+
+      '<button onclick="openAddLotModal(\''+c.code+'\')" style="margin-top:5px;width:100%;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-size:var(--fs-xs);color:var(--text2);padding:2px 0;cursor:pointer;font-family:var(--sans)">+ lot</button>'+
     '</div>';
   }).join('');
 
@@ -940,20 +940,20 @@ function renderSavings(panel){
     var pct=total>0?Math.round(received/total*100):0;
     return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
-        '<span style="font-weight:600;font-size:13px;font-family:var(--mono)">'+b.series+'</span>'+
+        '<span style="font-weight:600;font-size:var(--fs-sm);font-family:var(--mono)">'+b.series+'</span>'+
         '<div style="display:flex;gap:6px">'+
-          '<button onclick="toggleBondMatured(\''+b.id+'\')" style="font-size:10px;background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;color:var(--text2);font-family:var(--sans)">mark matured</button>'+
-          '<button onclick="deleteBond(\''+b.id+'\')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--text3);padding:0 2px">×</button>'+
+          '<button onclick="toggleBondMatured(\''+b.id+'\')" style="font-size:var(--fs-xs);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;color:var(--text2);font-family:var(--sans)">mark matured</button>'+
+          '<button onclick="deleteBond(\''+b.id+'\')" style="font-size:var(--fs-xs);background:none;border:none;cursor:pointer;color:var(--text3);padding:0 2px">×</button>'+
         '</div>'+
       '</div>'+
-      '<div style="font-size:11px;color:var(--text2);margin-bottom:4px">Rp '+b.faceValue.toLocaleString()+' · '+(b.couponRate*100).toFixed(2)+'% gross · '+(b.taxRate*100)+'% tax</div>'+
-      '<div style="display:flex;gap:16px;font-size:11px;margin-bottom:6px">'+
-        '<div><div style="color:var(--text3);font-size:10px">net/month</div><div style="font-family:var(--mono);font-weight:600">Rp '+monthly.toLocaleString()+'</div></div>'+
-        '<div><div style="color:var(--text3);font-size:10px">received</div><div style="font-family:var(--mono)">Rp '+received.toLocaleString()+'</div></div>'+
-        '<div><div style="color:var(--text3);font-size:10px">remaining</div><div style="font-family:var(--mono)">Rp '+remaining.toLocaleString()+'</div></div>'+
+      '<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:4px">Rp '+b.faceValue.toLocaleString()+' · '+(b.couponRate*100).toFixed(2)+'% gross · '+(b.taxRate*100)+'% tax</div>'+
+      '<div style="display:flex;gap:16px;font-size:var(--fs-xs);margin-bottom:6px">'+
+        '<div><div style="color:var(--text3);font-size:var(--fs-xs)">net/month</div><div style="font-family:var(--mono);font-weight:600">Rp '+monthly.toLocaleString()+'</div></div>'+
+        '<div><div style="color:var(--text3);font-size:var(--fs-xs)">received</div><div style="font-family:var(--mono)">Rp '+received.toLocaleString()+'</div></div>'+
+        '<div><div style="color:var(--text3);font-size:var(--fs-xs)">remaining</div><div style="font-family:var(--mono)">Rp '+remaining.toLocaleString()+'</div></div>'+
       '</div>'+
       '<div style="background:var(--border);border-radius:4px;height:4px;margin-bottom:5px"><div style="background:var(--accent);height:4px;border-radius:4px;width:'+pct+'%"></div></div>'+
-      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)">'+
+      '<div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--text3)">'+
         '<span>'+pct+'% of Rp '+total.toLocaleString()+' received</span>'+
         '<span>'+(days<=0?'<span style="color:var(--accent)">matured</span>':daysLabel)+'</span>'+
       '</div>'+
@@ -961,16 +961,16 @@ function renderSavings(panel){
   }).join('');
 
   var maturedArchive=maturedBonds.length?
-    '<details style="margin-top:8px"><summary style="font-size:11px;color:var(--text2);cursor:pointer;padding:4px 0">matured bonds ('+maturedBonds.length+')</summary>'+
+    '<details style="margin-top:8px"><summary style="font-size:var(--fs-xs);color:var(--text2);cursor:pointer;padding:4px 0">matured bonds ('+maturedBonds.length+')</summary>'+
     maturedBonds.map(function(b){
       var total=bondTotalNet(b);
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">'+
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:var(--fs-xs)">'+
         '<span style="font-family:var(--mono);font-weight:500">'+b.series+'</span>'+
         '<span style="color:var(--text2)">Rp '+b.faceValue.toLocaleString()+'</span>'+
         '<span style="color:var(--text2)">earned Rp '+total.toLocaleString()+'</span>'+
         '<div style="display:flex;gap:6px">'+
-          '<button onclick="toggleBondMatured(\''+b.id+'\')" style="font-size:10px;background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;color:var(--text2);font-family:var(--sans)">reactivate</button>'+
-          '<button onclick="deleteBond(\''+b.id+'\')" style="font-size:11px;background:none;border:none;cursor:pointer;color:var(--text3);padding:0 2px">×</button>'+
+          '<button onclick="toggleBondMatured(\''+b.id+'\')" style="font-size:var(--fs-xs);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;color:var(--text2);font-family:var(--sans)">reactivate</button>'+
+          '<button onclick="deleteBond(\''+b.id+'\')" style="font-size:var(--fs-xs);background:none;border:none;cursor:pointer;color:var(--text3);padding:0 2px">×</button>'+
         '</div>'+
       '</div>';
     }).join('')+
@@ -981,12 +981,12 @@ function renderSavings(panel){
     '<div class="savings-card">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
         '<div class="savings-title" style="margin-bottom:0">government bonds</div>'+
-        '<button onclick="openAddBondModal()" style="font-size:11px;background:none;border:1px solid var(--border);border-radius:8px;padding:3px 10px;cursor:pointer;color:var(--text2);font-family:var(--sans)">+ add bond</button>'+
+        '<button onclick="openAddBondModal()" style="font-size:var(--fs-xs);background:none;border:1px solid var(--border);border-radius:8px;padding:3px 10px;cursor:pointer;color:var(--text2);font-family:var(--sans)">+ add bond</button>'+
       '</div>'+
       (activeBonds.length?
         activeBondCards+
-        (totalMonthlyNet?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total monthly income</span><span style="font-family:var(--mono);font-size:13px;font-weight:500">Rp '+totalMonthlyNet.toLocaleString()+'</span></div>':'')
-        :'<div style="font-size:11px;color:var(--text3);padding:8px 0">no active bonds — click + add bond to get started.</div>')+
+        (totalMonthlyNet?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:var(--fs-xs);color:var(--text2)">total monthly income</span><span style="font-family:var(--mono);font-size:var(--fs-sm);font-weight:500">Rp '+totalMonthlyNet.toLocaleString()+'</span></div>':'')
+        :'<div style="font-size:var(--fs-xs);color:var(--text3);padding:8px 0">no active bonds — click + add bond to get started.</div>')+
       maturedArchive+
     '</div>';
 
@@ -998,9 +998,9 @@ function renderSavings(panel){
       '<div class="nisa-hero">'+
         '<div class="nisa-hero-stat" style="flex:2;min-width:0">'+
           '<div class="nisa-hero-lab">lifetime plan</div>'+
-          '<div class="nisa-hero-big">¥'+Math.round((totalPlannedTs+totalPlannedLs)/10000)+'万<span style="font-size:11px;color:var(--text3);font-weight:400"> / ¥1800万</span></div>'+
+          '<div class="nisa-hero-big">¥'+Math.round((totalPlannedTs+totalPlannedLs)/10000)+'万<span style="font-size:var(--fs-xs);color:var(--text3);font-weight:400"> / ¥1800万</span></div>'+
           '<div class="nisa-prog"><div class="nisa-prog-t" style="width:'+tsPct+'%"></div><div class="nisa-prog-g" style="width:'+lsPct+'%"></div></div>'+
-          '<div class="nisa-leg"><span style="font-size:9px;color:var(--accent)">▪ つみたて ¥'+Math.round(totalPlannedTs/10000)+'万</span>&nbsp;<span style="font-size:9px;color:#2c4a6e">▪ 成長 ¥'+Math.round(totalPlannedLs/10000)+'万</span></div>'+
+          '<div class="nisa-leg"><span style="font-size:var(--fs-xs);color:var(--accent)">▪ つみたて ¥'+Math.round(totalPlannedTs/10000)+'万</span>&nbsp;<span style="font-size:var(--fs-xs);color:#2c4a6e">▪ 成長 ¥'+Math.round(totalPlannedLs/10000)+'万</span></div>'+
         '</div>'+
         '<div class="nisa-hero-stat">'+
           '<div class="nisa-hero-lab">cap year</div>'+
@@ -1021,13 +1021,13 @@ function renderSavings(panel){
       '<div class="nisa-2col">'+
         '<div class="nisa-panel ts">'+
           '<div class="nisa-phdr">つみたて — monthly/yr</div>'+
-          '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">cap ¥1.2M/yr</div>'+
+          '<div style="font-size:var(--fs-xs);color:var(--text3);margin-bottom:7px">cap ¥1.2M/yr</div>'+
           tsRows+
           '<button class="nisa-tl-add" onclick="addTsumitateYear()">+ add year</button>'+
         '</div>'+
         '<div class="nisa-panel gr">'+
           '<div class="nisa-phdr">成長 — lump sum/yr</div>'+
-          '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">cap ¥2.4M/yr</div>'+
+          '<div style="font-size:var(--fs-xs);color:var(--text3);margin-bottom:7px">cap ¥2.4M/yr</div>'+
           lsRowsHtml+
           lsToggle+
           '<button class="nisa-tl-add" onclick="addNisaYear()">+ add year</button>'+
@@ -1037,31 +1037,31 @@ function renderSavings(panel){
       '<div class="nisa-meta">'+
         '<div class="nisa-meta-cell">'+
           '<div class="nisa-meta-lab">start year</div>'+
-          '<input type="number" value="'+n.startYear+'" onchange="DATA.nisa.startYear=parseInt(this.value)||2026;render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)">'+
+          '<input type="number" value="'+n.startYear+'" onchange="DATA.nisa.startYear=parseInt(this.value)||2026;render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text)">'+
         '</div>'+
         '<div class="nisa-meta-cell">'+
           '<div class="nisa-meta-lab">start month</div>'+
-          '<select onchange="DATA.nisa.startMonth=parseInt(this.value);render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);cursor:pointer">'+
+          '<select onchange="DATA.nisa.startMonth=parseInt(this.value);render()" style="width:100%;background:none;border:none;outline:none;font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text);cursor:pointer">'+
             ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m,i){return '<option value="'+(i+1)+'"'+(n.startMonth===i+1?' selected':'')+'>'+m+'</option>';}).join('')+
           '</select>'+
         '</div>'+
         '<div class="nisa-meta-cell">'+
-          '<div class="nisa-meta-lab">this yr monthly</div>'+
-          '<div style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)">¥'+curYearMonthly.toLocaleString()+'</div>'+
+          '<div class="nisa-meta-lab">this year monthly</div>'+
+          '<div style="font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--text)">¥'+curYearMonthly.toLocaleString()+'</div>'+
         '</div>'+
       '</div>'+
 
-      '<div style="font-size:10px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">year snapshots</div>'+
+      '<div style="font-size:var(--fs-xs);font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">year snapshots</div>'+
       '<table class="nisa-snaps"><thead><tr>'+
         '<th>year</th><th>age</th><th>つみたて</th><th>成長</th><th>cumulative</th><th>progress</th><th></th>'+
       '</tr></thead><tbody>'+snapRows+'</tbody></table>'+
-      '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer">+ add snapshot year</button>'+
-      '<div style="margin-top:10px;font-size:10px;color:var(--text3);line-height:1.6">Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined.</div>'+
+      '<button onclick="addProjectionYear()" style="margin-top:6px;width:100%;padding:6px;background:none;border:1px dashed var(--border2);border-radius:var(--radius);font-family:var(--sans);font-size:var(--fs-sm);color:var(--text2);cursor:pointer">+ add snapshot year</button>'+
+      '<div style="margin-top:10px;font-size:var(--fs-xs);color:var(--text3);line-height:1.6">Lifetime cap ¥18M — つみたて ¥1.2M/yr · 成長 ¥2.4M/yr · up to ¥3.6M/yr combined.</div>'+
     '</div>'+
     '<div class="savings-card">'+
       '<div class="savings-title">currencies — enter amounts you hold</div>'+
       '<div class="curr-grid">'+currCards+'</div>'+
-      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:12px;font-weight:500">¥'+Math.round(allJpy).toLocaleString()+' · Rp'+Math.round(allIdr).toLocaleString()+'</span></div>':'')+
+      (allJpy?'<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:var(--fs-xs);color:var(--text2)">total held</span><span style="font-family:var(--mono);font-size:var(--fs-sm);font-weight:500">¥'+Math.round(allJpy).toLocaleString()+' · Rp'+Math.round(allIdr).toLocaleString()+'</span></div>':'')+
     '</div>'+
     bondsSection+
     '</div>';
@@ -1254,7 +1254,7 @@ function renderFinance(panel,y,m){
             '<path d="'+spPath+'" fill="none" stroke="'+spColor+'" stroke-width="1.5"/>'+
             '<path d="'+spFill+'" fill="'+spSoft+'" opacity=".6"/>'+
           '</svg>'+
-          '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">'+
+          '<div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--text3);font-family:var(--mono);margin-top:2px">'+
             sp6L.map(function(l){return'<span>'+l+'</span>';}).join('')+
           '</div>'+
         '</div>'+
@@ -1342,8 +1342,8 @@ function renderSidebar(){
         if(cmode==='since'){var nYrs=d.getFullYear()-new Date(c.date+'T00:00:00').getFullYear();sub=diff===0?'turning '+nYrs+' today! 🎂':'turning '+nYrs+' in '+diff+' day'+(diff!==1?'s':'');}
         items.push({s:diff,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
           '<div style="width:4px;height:4px;border-radius:50%;background:'+c.color+';margin-top:5px;flex-shrink:0"></div>'+
-          '<div><div style="font-size:11px;font-weight:500">'+c.label+'</div>'+
-          '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+sub+'</div></div></div>'});
+          '<div><div style="font-size:var(--fs-xs);font-weight:500">'+c.label+'</div>'+
+          '<div style="font-size:var(--fs-xs);color:var(--text3);font-family:var(--mono)">'+sub+'</div></div></div>'});
       }
     });
     Object.keys(DATA.events).sort().forEach(function(key){
@@ -1353,8 +1353,8 @@ function renderSidebar(){
       if(diff>=0&&diff<=60){evts.forEach(function(e){
         items.push({s:diff,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
           '<div style="width:4px;height:4px;border-radius:50%;background:'+e.color+';margin-top:5px;flex-shrink:0"></div>'+
-          '<div><div style="font-size:11px;font-weight:500">'+e.text+'</div>'+
-          '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+(diff===0?'today!':'in '+diff+' day'+(diff!==1?'s':''))+'</div></div></div>'});
+          '<div><div style="font-size:var(--fs-xs);font-weight:500">'+e.text+'</div>'+
+          '<div style="font-size:var(--fs-xs);color:var(--text3);font-family:var(--mono)">'+(diff===0?'today!':'in '+diff+' day'+(diff!==1?'s':''))+'</div></div></div>'});
       });}
     });
     Object.keys(DATA.goals).forEach(function(gkey){
@@ -1363,8 +1363,8 @@ function renderSidebar(){
       const dm=(gy-today.getFullYear())*12+(gm-today.getMonth());
       if(dm>0)items.push({s:dm*30,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
         '<div style="width:4px;height:4px;border-radius:50%;background:var(--lavender-text);margin-top:5px;flex-shrink:0"></div>'+
-        '<div><div style="font-size:11px;font-weight:500">'+DATA.goals[gkey]+'</div>'+
-        '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">in '+dm+' month'+(dm!==1?'s':'')+'</div></div></div>'});
+        '<div><div style="font-size:var(--fs-xs);font-weight:500">'+DATA.goals[gkey]+'</div>'+
+        '<div style="font-size:var(--fs-xs);color:var(--text3);font-family:var(--mono)">in '+dm+' month'+(dm!==1?'s':'')+'</div></div></div>'});
     });
     (DATA.bonds||[]).filter(function(b){return !bondIsMatured(b);}).forEach(function(b){
       var days=bondDaysToMaturity(b);
@@ -1372,19 +1372,19 @@ function renderSidebar(){
         var sub=days===0?'matures today! 🎉':'matures in '+days+' day'+(days!==1?'s':'');
         items.push({s:days,html:'<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:flex-start">'+
           '<div style="width:4px;height:4px;border-radius:50%;background:#7a6830;margin-top:5px;flex-shrink:0"></div>'+
-          '<div><div style="font-size:11px;font-weight:500">'+b.series+'</div>'+
-          '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+sub+'</div></div></div>'});
+          '<div><div style="font-size:var(--fs-xs);font-weight:500">'+b.series+'</div>'+
+          '<div style="font-size:var(--fs-xs);color:var(--text3);font-family:var(--mono)">'+sub+'</div></div></div>'});
       }
     });
     items.sort(function(a,b){return a.s-b.s;});
     sc.innerHTML=
-      '<div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">upcoming</div>'+
-      (items.length?items.map(function(i){return i.html;}).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">nothing upcoming in 60 days</div>');
+      '<div style="font-size:var(--fs-xs);font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">upcoming</div>'+
+      (items.length?items.map(function(i){return i.html;}).join(''):'<div style="font-size:var(--fs-sm);color:var(--text3);padding:8px 0">nothing upcoming in 60 days</div>');
   } else if(stab==='countdowns'){
     const cds=DATA.countdowns||[];
     const now=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     sc.innerHTML=
-      '<div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">countdowns</div>'+
+      '<div style="font-size:var(--fs-xs);font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">countdowns</div>'+
       (cds.length?cds.map(function(c){
         var cmode=c.mode||'until';
         var dispText;
@@ -1400,13 +1400,13 @@ function renderSidebar(){
         return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border)">'+
           '<div style="width:8px;height:8px;border-radius:50%;background:'+c.color+';flex-shrink:0"></div>'+
           '<div style="flex:1;min-width:0">'+
-            '<div style="font-size:12px;font-weight:500">'+c.label+'</div>'+
-            '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+dispText+'</div>'+
+            '<div style="font-size:var(--fs-sm);font-weight:500">'+c.label+'</div>'+
+            '<div style="font-size:var(--fs-xs);color:var(--text3);font-family:var(--mono)">'+dispText+'</div>'+
           '</div>'+
           '<button class="icon-btn" onclick="openEditCountdownModal(\''+c.id+'\')">✎</button>'+
           '<button class="icon-btn" onclick="deleteCountdown(\''+c.id+'\');renderSidebar()">×</button>'+
         '</div>';
-      }).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">no countdowns yet</div>')+
+      }).join(''):'<div style="font-size:var(--fs-sm);color:var(--text3);padding:8px 0">no countdowns yet</div>')+
       '<button class="add-btn" onclick="openAddCountdownModal()">+ add countdown</button>';
   }
   autoSave();
@@ -1463,18 +1463,18 @@ function openAddCountdownModal(){
   openModal(
     '<div class="modal-title">add countdown</div>'+
     '<input id="cd-label" placeholder="label (e.g. Birthday)" autofocus style="margin-bottom:10px">'+
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">type</div>'+
+    '<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">type</div>'+
     '<div style="display:flex;margin-bottom:12px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">'+
-      '<button id="cd-mode-until" type="button" onclick="cdSetMode(\'until\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:var(--text);color:#fff">until →</button>'+
-      '<button id="cd-mode-since" type="button" onclick="cdSetMode(\'since\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:none;color:var(--text2)">← since</button>'+
+      '<button id="cd-mode-until" type="button" onclick="cdSetMode(\'until\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:var(--fs-sm);background:var(--text);color:#fff">until →</button>'+
+      '<button id="cd-mode-since" type="button" onclick="cdSetMode(\'since\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:var(--fs-sm);background:none;color:var(--text2)">← since</button>'+
     '</div>'+
     '<input type="hidden" id="cd-mode" value="until">'+
-    '<div id="cd-mode-hint" style="font-size:11px;color:var(--text3);margin:-8px 0 10px">counts down to this date</div>'+
-    '<input id="cd-date" type="date" value="'+fd(today)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
-    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
-      '<input id="cd-yearly" type="checkbox" style="width:auto;margin:0;flex-shrink:0"> repeat yearly <span id="cd-yearly-hint" style="font-size:10px;color:var(--text3);font-weight:400">(recurring event)</span>'+
+    '<div id="cd-mode-hint" style="font-size:var(--fs-xs);color:var(--text3);margin:-8px 0 10px">counts down to this date</div>'+
+    '<input id="cd-date" type="date" value="'+fd(today)+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);margin-bottom:10px;cursor:pointer">'+
+      '<input id="cd-yearly" type="checkbox" style="width:auto;margin:0;flex-shrink:0"> repeat yearly <span id="cd-yearly-hint" style="font-size:var(--fs-xs);color:var(--text3);font-weight:400">(recurring event)</span>'+
     '</label>'+
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    '<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">colour</div>'+
     buildSwatches('cd-color',PALETTE[0].color)+
     '<div class="modal-row">'+
       '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
@@ -1500,18 +1500,18 @@ function openEditCountdownModal(id){
   openModal(
     '<div class="modal-title">edit countdown</div>'+
     '<input id="cd-label" value="'+c.label+'" autofocus style="margin-bottom:10px">'+
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">type</div>'+
+    '<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">type</div>'+
     '<div style="display:flex;margin-bottom:12px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">'+
-      '<button id="cd-mode-until" type="button" onclick="cdSetMode(\'until\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:'+(m==='until'?'var(--text)':'none')+';color:'+(m==='until'?'#fff':'var(--text2)')+'">until →</button>'+
-      '<button id="cd-mode-since" type="button" onclick="cdSetMode(\'since\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:12px;background:'+(m==='since'?'var(--text)':'none')+';color:'+(m==='since'?'#fff':'var(--text2)')+'">← since</button>'+
+      '<button id="cd-mode-until" type="button" onclick="cdSetMode(\'until\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:var(--fs-sm);background:'+(m==='until'?'var(--text)':'none')+';color:'+(m==='until'?'#fff':'var(--text2)')+'">until →</button>'+
+      '<button id="cd-mode-since" type="button" onclick="cdSetMode(\'since\')" style="flex:1;padding:7px;border:none;cursor:pointer;font-family:var(--sans);font-size:var(--fs-sm);background:'+(m==='since'?'var(--text)':'none')+';color:'+(m==='since'?'#fff':'var(--text2)')+'">← since</button>'+
     '</div>'+
     '<input type="hidden" id="cd-mode" value="'+m+'">'+
-    '<div id="cd-mode-hint" style="font-size:11px;color:var(--text3);margin:-8px 0 10px">'+(m==='until'?'counts down to this date':'tracks time elapsed from this date')+'</div>'+
-    '<input id="cd-date" type="date" value="'+c.date+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:12px;background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
-    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:10px;cursor:pointer">'+
-      '<input id="cd-yearly" type="checkbox"'+(c.yearly?' checked':'')+' style="width:auto;margin:0;flex-shrink:0"> repeat yearly <span id="cd-yearly-hint" style="font-size:10px;color:var(--text3);font-weight:400">'+(m==='until'?'(recurring event)':'(birthday / anniversary mode)')+'</span>'+
+    '<div id="cd-mode-hint" style="font-size:var(--fs-xs);color:var(--text3);margin:-8px 0 10px">'+(m==='until'?'counts down to this date':'tracks time elapsed from this date')+'</div>'+
+    '<input id="cd-date" type="date" value="'+c.date+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-family:var(--sans);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none;margin-bottom:8px">'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);margin-bottom:10px;cursor:pointer">'+
+      '<input id="cd-yearly" type="checkbox"'+(c.yearly?' checked':'')+' style="width:auto;margin:0;flex-shrink:0"> repeat yearly <span id="cd-yearly-hint" style="font-size:var(--fs-xs);color:var(--text3);font-weight:400">'+(m==='until'?'(recurring event)':'(birthday / anniversary mode)')+'</span>'+
     '</label>'+
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:5px">colour</div>'+
+    '<div style="font-size:var(--fs-xs);color:var(--text2);margin-bottom:5px">colour</div>'+
     buildSwatches('cd-color',c.color)+
     '<div class="modal-row">'+
       '<button class="modal-btn ghost" style="color:var(--accent);border-color:var(--border)" onclick="deleteCountdown(\''+id+'\');closeModal();renderSidebar()">delete</button>'+
