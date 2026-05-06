@@ -849,6 +849,22 @@ Implemented (codex wrote this):
 
 ---
 
+## 57. Period Tracker — Toggleable View with Cycle Stats and Prediction Window
+
+Opt-in view enabled from Settings → "enable period tracker". When enabled, a "period" button appears in the topbar.
+
+**Data**: `DATA.period = {enabled, entries: [{start: "YYYY-MM-DD", length: N}], defaultLength}`. Only period start dates and durations are saved.
+
+**Prediction window**: calculated from the last period start ± shortest/longest cycle lengths across all logged entries. Window = last start + shortest cycle → last start + longest cycle.
+
+**Cycle stats panel**: shortest / average / longest cycle in days (needs 2+ entries). Next window shows date range and days until / "in window now" / "window passed".
+
+**Calendar**: monthly view with period days highlighted (rose), predicted window days shown with dashed rose border, and a dot marker on start days. Click any non-greyed day to log a period start or edit/delete an existing entry.
+
+**Log panel**: reverse-chronological list of all entries with edit buttons.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -909,3 +925,4 @@ Implemented (codex wrote this):
 | 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ✅ |
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | ✅ |
 | 56 | Savings — Collapsible Currencies and Compact Government Bonds | ✅ |
+| 57 | Period Tracker — Toggleable view with cycle stats and prediction window | ✅ |

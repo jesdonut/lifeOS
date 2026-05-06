@@ -73,7 +73,7 @@ let _currenciesExpanded=true,_bondsExpanded=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[today.getFullYear(),today.getFullYear()+2,today.getFullYear()+5]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{}};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[today.getFullYear(),today.getFullYear()+2,today.getFullYear()+5]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{},period:{enabled:false,entries:[],defaultLength:5}};
 
 // ── UTILS ─────────────────────────────────────────────────────────────
 let _uid=0; function uid(){return 'id'+(++_uid)+Date.now();}
@@ -273,9 +273,13 @@ function openSettingsModal(){
         'oninput="applyFontSize(this.value);document.getElementById(\'fs-val\').textContent=this.value;localStorage.setItem(\'fs-base\',this.value)">'+
       '<div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--text3);margin-top:3px"><span>12px compact</span><span>15px default</span><span>18px large</span></div>'+
     '</div>'+
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
       '<input type="checkbox" id="sb-default"'+(sbCollapsed?' checked':'')+' style="width:auto;margin:0;accent-color:var(--accent)" onchange="setSidebarDefault(this.checked)">'+
       '<label for="sb-default" style="font-size:var(--fs-sm);color:var(--text2);cursor:pointer">sidebar collapsed by default</label>'+
+    '</div>'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">'+
+      '<input type="checkbox" id="period-toggle"'+((DATA.period&&DATA.period.enabled)?' checked':'')+' style="width:auto;margin:0;accent-color:var(--accent)" onchange="DATA.period.enabled=this.checked;render()">'+
+      '<label for="period-toggle" style="font-size:var(--fs-sm);color:var(--text2);cursor:pointer">enable period tracker</label>'+
     '</div>'+
     '<button class="modal-btn ghost" onclick="closeModal()">done</button>'
   );
@@ -400,6 +404,7 @@ function nav(dir){
   else if(view==='month') cursor.setMonth(cursor.getMonth()+dir);
   else if(view==='year') cursor.setFullYear(cursor.getFullYear()+dir);
   else if(view==='finance') cursor.setMonth(cursor.getMonth()+dir);
+  else if(view==='period') cursor.setMonth(cursor.getMonth()+dir);
   var cy=cursor.getFullYear();
   if(cy<MIN_YEAR){cursor=new Date(MIN_YEAR,0,1);}
   if(cy>MAX_YEAR){cursor=new Date(MAX_YEAR,11,31);}
@@ -413,6 +418,9 @@ function render(){
   const panel=document.getElementById('main-panel');
   const label=document.getElementById('period-label');
   panel.style.display='';panel.style.flexDirection='';
+  var pvbtn=document.getElementById('period-vbtn');
+  if(pvbtn) pvbtn.style.display=(DATA.period&&DATA.period.enabled)?'':'none';
+  if(view==='period'&&!(DATA.period&&DATA.period.enabled)) view='week';
   if(view==='week'){
     const mon=getMon(new Date(cursor)),sun=new Date(mon);sun.setDate(sun.getDate()+6);
     label.textContent=MS[mon.getMonth()]+' '+mon.getDate()+' – '+MS[sun.getMonth()]+' '+sun.getDate()+' '+mon.getFullYear();
@@ -429,6 +437,9 @@ function render(){
   }else if(view==='finance'){
     label.textContent=MONTHS[cursor.getMonth()]+' '+cursor.getFullYear();
     renderFinance(panel,cursor.getFullYear(),cursor.getMonth());
+  }else if(view==='period'){
+    label.textContent='period · '+MONTHS[cursor.getMonth()]+' '+cursor.getFullYear();
+    renderPeriod(panel,cursor.getFullYear(),cursor.getMonth());
   }
   renderSidebar();
   autoSave();
@@ -1338,6 +1349,192 @@ function renderFinance(panel,y,m){
     '</div>';
 }
 
+// ── PERIOD TRACKER ────────────────────────────────────────────────────
+function getPeriodEntries(){
+  return((DATA.period&&DATA.period.entries)||[]).slice().sort(function(a,b){return a.start.localeCompare(b.start);});
+}
+function periodCycles(){
+  var e=getPeriodEntries();if(e.length<2)return[];
+  var c=[];
+  for(var i=1;i<e.length;i++){
+    var a=new Date(e[i-1].start+'T00:00:00'),b=new Date(e[i].start+'T00:00:00');
+    c.push(Math.round((b-a)/86400000));
+  }
+  return c;
+}
+function periodStats(){
+  var c=periodCycles();if(!c.length)return null;
+  var min=Math.min.apply(null,c),max=Math.max.apply(null,c);
+  var avg=c.reduce(function(s,v){return s+v;},0)/c.length;
+  return{min:min,max:max,avg:Math.round(avg*10)/10};
+}
+function periodWindow(){
+  var e=getPeriodEntries();if(!e.length)return null;
+  var st=periodStats();if(!st)return null;
+  var last=new Date(e[e.length-1].start+'T00:00:00');
+  var earliest=new Date(last);earliest.setDate(earliest.getDate()+st.min);
+  var latest=new Date(last);latest.setDate(latest.getDate()+st.max);
+  return{earliest:earliest,latest:latest};
+}
+function periodActiveDays(y,m){
+  var set=new Set();
+  getPeriodEntries().forEach(function(e){
+    var s=new Date(e.start+'T00:00:00');
+    var len=e.length||(DATA.period.defaultLength||5);
+    for(var d=0;d<len;d++){
+      var day=new Date(s);day.setDate(s.getDate()+d);
+      if(day.getFullYear()===y&&day.getMonth()===m) set.add(fd(day));
+    }
+  });
+  return set;
+}
+function periodWindowDays(y,m){
+  var win=periodWindow();if(!win)return new Set();
+  var set=new Set();
+  var cur=new Date(win.earliest);
+  while(cur<=win.latest){
+    if(cur.getFullYear()===y&&cur.getMonth()===m) set.add(fd(cur));
+    cur.setDate(cur.getDate()+1);
+  }
+  return set;
+}
+function openPeriodModal(dateKey){
+  var entries=getPeriodEntries();
+  var existing=entries.find(function(e){return e.start===dateKey;});
+  var defLen=DATA.period.defaultLength||5;
+  var len=existing?existing.length:defLen;
+  var d=new Date(dateKey+'T00:00:00');
+  var dlabel=DAYS[(d.getDay()+6)%7]+' '+d.getDate()+' '+MS[d.getMonth()]+' '+d.getFullYear();
+  openModal(
+    '<div class="modal-title">'+(existing?'edit period entry':'log period start')+'</div>'+
+    '<div style="font-size:var(--fs-sm);color:var(--text2);margin-bottom:14px">'+dlabel+'</div>'+
+    '<div style="margin-bottom:16px">'+
+      '<div style="font-size:var(--fs-sm);color:var(--text2);margin-bottom:6px">duration (days)</div>'+
+      '<input id="pd-len" type="number" min="1" max="14" step="1" value="'+len+'" style="width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none">'+
+    '</div>'+
+    '<div class="modal-row">'+
+      '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
+      (existing?'<button class="modal-btn ghost" style="border-color:var(--bad);color:var(--bad)" onclick="deletePeriodEntry(\''+dateKey+'\');closeModal()">delete</button>':'')+
+      '<button class="modal-btn primary" onclick="savePeriodEntry(\''+dateKey+'\',document.getElementById(\'pd-len\').value)">save</button>'+
+    '</div>'
+  );
+}
+function deletePeriodEntry(dateKey){
+  if(DATA.period&&DATA.period.entries)
+    DATA.period.entries=DATA.period.entries.filter(function(e){return e.start!==dateKey;});
+  autoSave();render();
+}
+function savePeriodEntry(dateKey,len){
+  if(!DATA.period.entries) DATA.period.entries=[];
+  var length=Math.max(1,parseInt(len)||DATA.period.defaultLength||5);
+  var idx=DATA.period.entries.findIndex(function(e){return e.start===dateKey;});
+  if(idx>=0) DATA.period.entries[idx].length=length;
+  else DATA.period.entries.push({start:dateKey,length:length});
+  autoSave();closeModal();render();
+}
+function renderPeriod(panel,y,m){
+  var entries=getPeriodEntries();
+  var stats=periodStats();
+  var win=periodWindow();
+  var activeDays=periodActiveDays(y,m);
+  var winDays=periodWindowDays(y,m);
+  // calendar grid
+  var fd_=new Date(y,m,1),startDow=(fd_.getDay()+6)%7;
+  var dim=new Date(y,m+1,0).getDate(),prevDim=new Date(y,m,0).getDate();
+  var cells=DAYS.map(function(d){return '<div class="mh-label">'+d+'</div>';}).join('');
+  var dc=1,nc=1,total=Math.ceil((startDow+dim)/7)*7;
+  for(var i=0;i<total;i++){
+    var cd,cm=m,cy=y,other=false;
+    if(i<startDow){cd=prevDim-startDow+1+i;cm=m-1;if(cm<0){cm=11;cy--;}other=true;}
+    else if(dc<=dim){cd=dc++;}
+    else{cd=nc++;cm=m+1;if(cm>11){cm=0;cy++;}other=true;}
+    var cdate=new Date(cy,cm,cd),ckey=fd(cdate);
+    var isPeriod=activeDays.has(ckey);
+    var isWin=!isPeriod&&winDays.has(ckey);
+    var isStart=!other&&entries.some(function(e){return e.start===ckey;});
+    var isTod=isToday(cdate);
+    cells+=
+      '<div class="mc'+(isTod?' today-mc':'')+(other?' other':'')+(isPeriod?' pd-active':'')+(isWin?' pd-window':'')+(isStart?' pd-start':'')+'"'+
+        (other?'':' onclick="openPeriodModal(\''+ckey+'\')"')+'>'+
+        '<div class="mc-num">'+cd+'</div>'+
+        (isStart?'<div class="pd-dot"></div>':'')+
+      '</div>';
+  }
+  // stats panel
+  var statsHtml='<div class="pd-empty-note">log 2+ periods to see cycle stats</div>';
+  if(stats){
+    statsHtml=
+      '<div class="pd-stat-row"><span>shortest</span><span>'+stats.min+' days</span></div>'+
+      '<div class="pd-stat-row"><span>average</span><span>'+stats.avg+' days</span></div>'+
+      '<div class="pd-stat-row"><span>longest</span><span>'+stats.max+' days</span></div>';
+  }
+  // prediction window
+  var winHtml='';
+  if(win){
+    var daysTil=Math.round((win.earliest-today)/86400000);
+    var status=win.earliest<=today&&win.latest>=today
+      ?'<span style="color:var(--accent);font-weight:600">in window now</span>'
+      :(win.earliest>today?'in '+daysTil+' day'+(daysTil!==1?'s':''):'window passed');
+    winHtml=
+      '<div class="pd-win-block">'+
+        '<div class="pd-section-sub">next window</div>'+
+        '<div class="pd-win-range">'+
+          MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+
+          ' → '+
+          MS[win.latest.getMonth()]+' '+win.latest.getDate()+
+          (win.earliest.getFullYear()!==win.latest.getFullYear()?' '+win.latest.getFullYear():'')+
+        '</div>'+
+        '<div class="pd-win-status">'+status+'</div>'+
+      '</div>';
+  }
+  var lastEntry=entries.length?entries[entries.length-1]:null;
+  var lastHtml='';
+  if(lastEntry){
+    var ld=new Date(lastEntry.start+'T00:00:00');
+    var daysSince=Math.round((today-ld)/86400000);
+    lastHtml=
+      '<div class="pd-last-row">'+
+        'last: <strong>'+MS[ld.getMonth()]+' '+ld.getDate()+', '+ld.getFullYear()+'</strong>'+
+        '<span> · '+daysSince+' days ago</span>'+
+      '</div>';
+  }
+  // entry log
+  var listHtml=entries.length
+    ?entries.slice().reverse().map(function(e){
+        var d=new Date(e.start+'T00:00:00');
+        return '<div class="pd-log-row">'+
+          '<span>'+MS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear()+'</span>'+
+          '<span class="pd-log-len">'+e.length+'d</span>'+
+          '<button class="pd-log-edit" onclick="openPeriodModal(\''+e.start+'\')">edit</button>'+
+        '</div>';
+      }).join('')
+    :'<div class="pd-empty-note">no entries yet — click any day to log a period</div>';
+  panel.innerHTML=
+    '<div class="pd-wrap">'+
+      '<div class="pd-col-left">'+
+        '<div class="pd-card">'+
+          (lastHtml?'<div class="pd-cal-header">'+lastHtml+'</div>':'')+
+          '<div class="month-cal-grid">'+cells+'</div>'+
+          '<div class="pd-legend">'+
+            '<span class="pd-leg"><span class="pd-leg-swatch pd-leg-active"></span>period</span>'+
+            '<span class="pd-leg"><span class="pd-leg-swatch pd-leg-window-swatch"></span>predicted window</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="pd-col-right">'+
+        '<div class="pd-card">'+
+          '<div class="pd-section-title">cycle stats</div>'+
+          statsHtml+
+          winHtml+
+        '</div>'+
+        '<div class="pd-card">'+
+          '<div class="pd-section-title">log</div>'+
+          listHtml+
+        '</div>'+
+      '</div>'+
+    '</div>';
+}
+
 // ── SIDEBAR ───────────────────────────────────────────────────────────
 function renderSidebar(){
   const sc=document.getElementById('sidebar-body');
@@ -1707,7 +1904,7 @@ function toggleBondMatured(id){
 }
 
 function startFresh(){
-  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{}};
+  DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{},period:{enabled:false,entries:[],defaultLength:5}};
   startApp();
 }
 
@@ -1737,6 +1934,9 @@ function startApp(){
   if(!DATA.nisa.startMonth) DATA.nisa.startMonth=1;
   if(!DATA.bankAccounts) DATA.bankAccounts=[];
   if(!DATA.finance) DATA.finance={};
+  if(!DATA.period) DATA.period={enabled:false,entries:[],defaultLength:5};
+  if(!DATA.period.entries) DATA.period.entries=[];
+  if(!DATA.period.defaultLength) DATA.period.defaultLength=5;
   document.getElementById('splash').style.display='none';
   const app=document.getElementById('app');
   app.style.display='flex';
