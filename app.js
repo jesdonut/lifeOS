@@ -1113,6 +1113,13 @@ function finSet(y,m,k,v){
   DATA.finance[key][k]=parseExpr(v);
   autoSave();
 }
+function finSetOverride(y,m,catKey,v){
+  var key=y+'-'+(m<9?'0':'')+(m+1);
+  if(!DATA.finance[key]) DATA.finance[key]={};
+  if(!DATA.finance[key].overrides) DATA.finance[key].overrides={};
+  DATA.finance[key].overrides[catKey]=parseExpr(v);
+  autoSave();
+}
 function monthSpendCat(y,m,catKey){
   var total=0,dim=new Date(y,m+1,0).getDate();
   for(var i=1;i<=dim;i++){
@@ -1124,6 +1131,17 @@ function monthSpendCat(y,m,catKey){
 function monthSpendGroup(y,m,group){
   return SPEND_CATS.filter(function(c){return c.group===group;}).reduce(function(s,c){return s+monthSpendCat(y,m,c.key);},0);
 }
+function monthSpendCatFinal(y,m,catKey){
+  var daily=monthSpendCat(y,m,catKey);
+  if(daily>0) return daily;
+  var isPast=y<today.getFullYear()||(y===today.getFullYear()&&m<today.getMonth());
+  if(!isPast) return 0;
+  var key=y+'-'+(m<9?'0':'')+(m+1);
+  return((DATA.finance[key]||{}).overrides||{})[catKey]||0;
+}
+function monthSpendGroupFinal(y,m,group){
+  return SPEND_CATS.filter(function(c){return c.group===group;}).reduce(function(s,c){return s+monthSpendCatFinal(y,m,c.key);},0);
+}
 function finTotals(d,y,m){
   var isNewIns=y>2025||(y===2025&&m>=4);
   var deductions=isNewIns
@@ -1131,12 +1149,12 @@ function finTotals(d,y,m){
     :(finVal(d,'taxWithheld')+finVal(d,'insuranceDed'));
   var income=(finVal(d,'salary')+finVal(d,'transportReimb')+finVal(d,'otherIncome')+finVal(d,'momPays'))-deductions;
   var commutePass=finVal(d,'commutationPass');
-  var commuteSpend=monthSpendGroup(y,m,'transport');
+  var commuteSpend=monthSpendGroupFinal(y,m,'transport');
   var commute=commutePass+commuteSpend;
   var bills=finVal(d,'rent')+finVal(d,'gas')+finVal(d,'water')+finVal(d,'electricity')+finVal(d,'phone')+finVal(d,'internet');
-  var food=monthSpendGroup(y,m,'food');
-  var necessities=monthSpendGroup(y,m,'necessities');
-  var optional=monthSpendGroup(y,m,'optional');
+  var food=monthSpendGroupFinal(y,m,'food');
+  var necessities=monthSpendGroupFinal(y,m,'necessities');
+  var optional=monthSpendGroupFinal(y,m,'optional');
   var balance=income-commute-bills-food-necessities-optional;
   return {income:income,commute:commute,commutePass:commutePass,commuteSpend:commuteSpend,bills:bills,food:food,necessities:necessities,optional:optional,balance:balance,isNewIns:isNewIns};
 }
@@ -1160,6 +1178,33 @@ function finReadRow(jpLabel,enLabel,val){
     '<div class="fin-chip-auto">'+
       '<span class="fin-chip-auto-badge">auto</span>'+
       '<span class="fin-chip-auto-val">'+(val?'¥'+val.toLocaleString():'¥0')+'</span>'+
+    '</div>'+
+  '</div>';
+}
+function finOverrideRow(y,m,catKey,jpLabel,enLabel){
+  var daily=monthSpendCat(y,m,catKey);
+  var isPast=y<today.getFullYear()||(y===today.getFullYear()&&m<today.getMonth());
+  var key=y+'-'+(m<9?'0':'')+(m+1);
+  var ovr=((DATA.finance[key]||{}).overrides||{})[catKey]||0;
+  var fin=daily>0?daily:(isPast&&ovr?ovr:0);
+  var usingOverride=isPast&&daily===0&&ovr>0;
+  return '<div class="fin-row has-override">'+
+    '<div class="fin-row-label">'+jpLabel+'<span class="en">'+enLabel+'</span></div>'+
+    '<div class="fin-override-wrap">'+
+      '<span class="fin-chip-auto">'+
+        '<span class="fin-chip-auto-badge">daily</span>'+
+        '<span class="fin-chip-auto-val">'+(daily?'¥'+daily.toLocaleString():'¥0')+'</span>'+
+      '</span>'+
+      (isPast?
+        '<div class="fin-inp-wrap'+(ovr?' filled':'')+'">'+
+          '<span class="yen">¥</span>'+
+          '<input type="number" step="1" value="'+(ovr||'')+'" placeholder="mo. override"'+
+            ' onchange="finSetOverride('+y+','+m+',\''+catKey+'\',this.value);render()">'+
+        '</div>':'')+
+      '<span class="fin-chip-auto'+(usingOverride?' active':'')+'">'+
+        '<span class="fin-chip-auto-badge">'+(usingOverride?'override':'final')+'</span>'+
+        '<span class="fin-chip-auto-val">¥'+(fin?fin.toLocaleString():'0')+'</span>'+
+      '</span>'+
     '</div>'+
   '</div>';
 }
@@ -1248,7 +1293,7 @@ function renderFinance(panel,y,m){
     insRows;
   var commuteRows=
     finRow(y,m,'commutationPass','通勤定期券','Commutation Pass',1000,false)+
-    finReadRow('通勤費','Daily Commute',monthSpendCat(y,m,'commute'));
+    finOverrideRow(y,m,'commute','通勤費','Daily Commute');
   var fixedRows=
     finRow(y,m,'rent','家賃','Rent',1000,false)+
     finRow(y,m,'gas','ガス費','Gas',100,false)+
@@ -1256,17 +1301,17 @@ function renderFinance(panel,y,m){
     finRow(y,m,'electricity','電気料金','Electricity',100,false)+
     finRow(y,m,'phone','携帯','Phone',100,false)+
     finRow(y,m,'internet','インターネット','Internet',100,false);
-  var foodRows=finReadRow('食べ物','Food',monthSpendCat(y,m,'food'));
+  var foodRows=finOverrideRow(y,m,'food','食べ物','Food');
   var necRows=
-    finReadRow('電車代金','Transport',monthSpendCat(y,m,'transport'))+
-    finReadRow('書類仕事','Paperwork',monthSpendCat(y,m,'paperwork'))+
-    finReadRow('メディカル','Medical',monthSpendCat(y,m,'medical'))+
-    finReadRow('日常生活','Daily',monthSpendCat(y,m,'necessities'))+
-    finReadRow('国民保険','NHI',monthSpendCat(y,m,'nhi'));
+    finOverrideRow(y,m,'transport','電車代金','Transport')+
+    finOverrideRow(y,m,'paperwork','書類仕事','Paperwork')+
+    finOverrideRow(y,m,'medical','メディカル','Medical')+
+    finOverrideRow(y,m,'necessities','日常生活','Daily')+
+    finOverrideRow(y,m,'nhi','国民保険','NHI');
   var optRows=
-    finReadRow('ゲーム/Project','Project/Game',monthSpendCat(y,m,'project'))+
-    finReadRow('エンターテインメント','Entertainment',monthSpendCat(y,m,'fun'))+
-    finReadRow('服・髪','Clothes/Hair',monthSpendCat(y,m,'clothes'));
+    finOverrideRow(y,m,'project','ゲーム/Project','Project/Game')+
+    finOverrideRow(y,m,'fun','エンターテインメント','Entertainment')+
+    finOverrideRow(y,m,'clothes','服・髪','Clothes/Hair');
 
   panel.innerHTML=
     '<div class="fin-wrap">'+

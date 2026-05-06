@@ -288,6 +288,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .fin-chip-auto{display:flex;align-items:center;justify-content:space-between;border:1px dashed var(--border2);border-radius:5px;padding:4px 7px;background:var(--surface2)}
 .fin-chip-auto-badge{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--text3)}
 .fin-chip-auto-val{font-size:var(--fs-sm);font-variant-numeric:tabular-nums;color:var(--text);font-family:var(--mono)}
+.fin-chip-auto.active{border-color:var(--accent);background:var(--accent-light)}.fin-chip-auto.active .fin-chip-auto-badge,.fin-chip-auto.active .fin-chip-auto-val{color:var(--accent)}
+.fin-row.has-override{grid-template-columns:1fr auto}
+.fin-override-wrap{display:flex;align-items:center;gap:5px}.fin-override-wrap .fin-chip-auto{gap:5px}.fin-override-wrap .fin-inp-wrap{width:106px}
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:500}

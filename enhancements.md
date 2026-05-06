@@ -849,6 +849,16 @@ Implemented (codex wrote this):
 
 ---
 
+## 57. Finance — Monthly Override for Daily-Spend Categories
+
+For past months where a spend category has no daily entries (daily total = 0), allow entering a monthly override stored in `DATA.finance["YYYY-MM"].overrides[catKey]`. The override only becomes the final value when the month is past and daily total is 0; if daily total is non-zero, daily wins.
+
+Applies to all `finReadRow` daily-spend categories: Daily Commute, Food, Transport, Paperwork, Medical, Daily (necessities), NHI, Project/Game, Entertainment, Clothes/Hair.
+
+UI: each row shows three elements — daily (auto chip), override input (visible only for past months), and final (highlighted in accent when override is active). `finTotals` uses `monthSpendCatFinal`/`monthSpendGroupFinal` so balances and the cumulative net pick up overrides correctly.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -909,3 +919,4 @@ Implemented (codex wrote this):
 | 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ✅ |
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | ✅ |
 | 56 | Savings — Collapsible Currencies and Compact Government Bonds | ✅ |
+| 57 | Finance — Monthly Override for Daily-Spend Categories | ✅ |
