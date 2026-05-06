@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 const BIRTH_YEAR  = 1995;
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DAY_LETTER  = ['M','T','W','T','F','S','S']; // Mon=0 … Sun=6
+const DAY_LETTER  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; // Mon=0 … Sun=6
 
 const CAT_LABELS = {
   food:        {jp:'食べ物',               en:'Food'},
@@ -15,7 +15,7 @@ const CAT_LABELS = {
   medical:     {jp:'メディカル',            en:'Medical'},
   necessities: {jp:'日常生活',             en:'Daily'},
   nhi:         {jp:'国民保険',             en:'NHI'},
-  project:     {jp:'ゲーム/Project',            en:'Project/Game'},
+  project:     {jp:'プロジェクト',            en:'Project'},
   fun:         {jp:'エンターテインメント',    en:'Entertainment'},
   clothes:     {jp:'服・髪',              en:'Clothes/Hair'},
 };
