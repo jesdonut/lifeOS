@@ -883,17 +883,24 @@ Track menstrual cycles across a full year at a glance. Designed for irregular cy
 **Data model** — new field `DATA.period`:
 ```js
 DATA.period = {
-  enabled: false,         // hides nav button when false
+  enabled: false,
   entries: [
-    { id, start, length, symptoms }
-    // start: "YYYY-MM-DD" (first day)
+    { id, start, length }
+    // start: "YYYY-MM-DD" (first day of period)
     // length: number of days (default 5)
-    // symptoms: string (optional free-text notes — pain level, cramps, mood, etc.)
+  ],
+  symptomLogs: [
+    { id, date, time, symptoms: ['cramps', 'bloating', ...] }
+    // date: "YYYY-MM-DD"
+    // time: "HH:MM" (24h, logged at time of entry)
+    // symptoms: array of keys from the fixed symptom list
   ],
   defaultLength: 5
 }
 ```
-Migration: `if(!DATA.period) DATA.period={enabled:false,entries:[],defaultLength:5}` in `startApp()`.
+Symptom keys are a fixed list defined in code (user will provide the list — placeholder for now). Examples: `cramps`, `bloating`, `headache`, `fatigue`, `mood_swings`, `back_pain`, `nausea`, `spotting`, `breast_tenderness`.
+
+Migration: `if(!DATA.period) DATA.period={enabled:false,entries:[],symptomLogs:[],defaultLength:5}` in `startApp()`. Also `if(!DATA.period.symptomLogs) DATA.period.symptomLogs=[]`.
 
 ---
 
@@ -913,10 +920,17 @@ Layout — two sections stacked:
 - Clicking an empty day on the bar opens the "log new period" modal with that date pre-filled
 
 **2. Stats + log panel** (below strip):
-- Last period: date + days since
-- Prediction: earliest → latest date range (based on last 6 cycles' min/max, not all-time — avoids old outliers distorting the window); "in X days" or "in window now"
+- **Status hero** (always visible at the top):
+  - "X days since your last period" (or "your period started X days ago" if currently in one)
+  - "next period in ~X days (est. [date range])" — prediction based on last 6 cycles' min/max
+  - "in window now" if today falls inside the predicted range
 - Cycle stats: shortest / average / longest (last 6 cycles)
-- Entry log table (reverse chronological): start date · duration · symptoms snippet · edit button
+- Entry log table (reverse chronological): start date · duration · edit button
+
+**3. Symptom log** (separate card below stats):
+- Chronological list of logged symptoms: date · time · symptom chips
+- "+ log symptoms" button — opens symptom picker modal (see below)
+- Pattern insight (shown once 2–3 months of symptom data exist): e.g. "you often log [cramps, fatigue] 1–3 days before your period starts" — derived by looking at symptom logs that fall in the N days before each recorded period start
 
 **Secondary view — Month calendar** (reachable via a toggle button in the period tab):
 - Standard month grid; period days highlighted; click any day to log
@@ -924,13 +938,19 @@ Layout — two sections stacked:
 
 ---
 
-**Logging modal (open from year strip or month calendar):**
+**Period logging modal** (open from year strip or month calendar):
 - Title: "log period" or "edit entry"
 - Start date (date input, pre-filled from click)
 - Duration in days (number input, default = `defaultLength`, range 1–14)
-- Symptoms (textarea, optional — free text: pain level, cramps, notes)
 - Delete button if editing existing entry
 - Save updates `DATA.period.entries` and calls `autoSave()`
+
+**Symptom logging modal** (open from "+ log symptoms" or from any day on the calendar):
+- Date: date input (default today)
+- Time: time input (default current time — this is the timestamp)
+- Symptom picker: grid of pill/chip buttons, one per symptom key; tap to toggle selected (highlighted in accent); multiple can be selected at once
+- Save appends to `DATA.period.symptomLogs` with `{id, date, time, symptoms:[...]}`
+- Symptom list: **user will provide the final list** — placeholder list in code until then
 
 ---
 
@@ -947,9 +967,18 @@ Layout — two sections stacked:
 
 **What to build fresh:**
 - Year strip renderer (the branch has no year view)
-- Symptoms field in modal and log
+- Symptom picker modal + symptom log card + pattern insight logic
 - Prediction based on last 6 cycles only (branch uses all-time)
+- Status hero ("X days since last period", "next period in ~X days")
 - Keep the bug #57 spendLog fix intact — do NOT copy the branch's `startApp()` which removed it
+
+**Pattern insight algorithm (simple):**
+- For each recorded period start date, look back N days (e.g. 7 days)
+- Collect all symptomLog entries in that window
+- Count frequency of each symptom key across all periods
+- If a symptom appears in ≥50% of pre-period windows, surface it as a pattern
+- Show: "you often feel [chip] [chip] in the days before your period"
+- Only show once there are ≥3 period entries with symptom logs in their pre-window
 
 ---
 
