@@ -1047,4 +1047,5 @@ Layout — two sections stacked:
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | ✅ |
 | 56 | Savings — Collapsible Currencies and Compact Government Bonds | ✅ |
 | 57 | Bug Fix — Spend Log Breakdown Missing After JSON Reload | ✅ |
+| 57b | Bug Fix — Week View Shows `+` Instead of Total for Imported LOG_CATS | ✅ |
 | 58 | Period Tracker — Year Strip + Symptom Log | 📋 spec |

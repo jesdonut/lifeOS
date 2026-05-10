@@ -489,7 +489,7 @@ function renderWeek(panel,mon){
     return '<div class="wk-sp-lab"><span class="wk-sp-jp">'+cat.jp+'</span><span class="wk-sp-en">'+cat.en+'</span></div>'+
       wkDays.map(function(di){
         if(isLog){
-          var tot=spendLogTotal(di.key,cat.key);
+          var tot=spendLogTotal(di.key,cat.key)||spendVal((DATA.spend[di.key]||{})[cat.key]);
           return '<div class="wk-sp-cell"><div class="wk-sp-log" onclick="openSpendLog(\''+di.key+'\',\''+cat.key+'\')">'+(tot?'¥'+tot.toLocaleString():'+')+' </div></div>';
         }
         var val=spendVal((DATA.spend[di.key]||{})[cat.key]);
