@@ -177,16 +177,19 @@ function openSpendLog(dk,cat){
   var label=(catLabel?catLabel.en:cat);
   var d=new Date(dk+'T12:00:00');
   var dateLabel=DAYS[d.getDay()==0?6:d.getDay()-1]+' '+d.getDate();
+  if(!DATA.spendLog[dk]) DATA.spendLog[dk]={};
+  if(!DATA.spendLog[dk][cat]){
+    var importedAmt=((DATA.spend[dk])||{})[cat]||0;
+    if(importedAmt){
+      DATA.spendLog[dk][cat]=[{id:uid(),amount:importedAmt,label:''}];
+      autoSave();
+    }
+  }
   var items=spendLogItems(dk,cat);
   var total=spendLogTotal(dk,cat);
-  var isFallback=false;
-  if(!items.length){
-    var importedAmt=((DATA.spend[dk])||{})[cat]||0;
-    if(importedAmt){items=[{id:'_fallback',amount:importedAmt,label:'imported total'}];isFallback=true;total=importedAmt;}
-  }
   var listHtml=items.length?items.map(function(e){
-    var del=isFallback?'':'<button class="sl-del" onclick="deleteSpendLogItem(\''+dk+'\',\''+cat+'\',\''+e.id+'\')">×</button>';
-    return '<div class="sl-item'+(isFallback?' sl-item-fallback':'')+'">'+
+    var del='<button class="sl-del" onclick="deleteSpendLogItem(\''+dk+'\',\''+cat+'\',\''+e.id+'\')">×</button>';
+    return '<div class="sl-item">'+
       '<span class="sl-item-label">'+(e.label||'—')+'</span>'+
       '<span class="sl-item-amount">¥'+e.amount.toLocaleString()+'</span>'+
       del+

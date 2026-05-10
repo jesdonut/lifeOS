@@ -862,11 +862,9 @@ After importing a save file, cells in the week view show the correct ¥ total bu
 
 **Fixes:**
 1. `startApp()` — add `if(!DATA.spendLog) DATA.spendLog={};` guard so load never leaves spendLog undefined
-2. `openSpendLog()` — when `spendLogItems()` returns an empty array but `DATA.spend[dk][cat]` has a non-zero value, synthesise a single read-only fallback row `{amount, label:'imported total'}` so the total is visible. Fallback row has no delete button and is styled in italic/muted text
-3. Once the user adds a real item, `syncSpendLog()` takes over and the fallback disappears naturally
-4. CSS — `.sl-item-fallback .sl-item-label` styled italic + muted
+2. `openSpendLog()` — when `spendLogItems()` returns an empty array but `DATA.spend[dk][cat]` has a non-zero value, automatically create a real spendLog entry `{id, amount, label:''}` and call `autoSave()`. This converts the imported total into a permanent line item immediately on modal open, so adding further entries never erases the existing total. Label starts empty — user can fill it in or leave it blank.
 
-**No data migration needed** — existing saves are unaffected; the fallback is display-only.
+**No data migration needed** — conversion happens lazily on first modal open per date+category.
 
 ---
 
