@@ -872,38 +872,88 @@ After importing a save file, cells in the week view show the correct ¥ total bu
 
 ## 58. Period Tracker
 
-Track menstrual cycles directly in the app. Designed for irregular cycles — no fixed-length assumptions, just logged history and a best-guess prediction range.
+Track menstrual cycles across a full year at a glance. Designed for irregular cycles — no fixed assumptions, just logged history, visual year strips, and a prediction range.
 
-**Data model** — new array `DATA.periods`:
+**Context:** User currently uses Apple Health but finds it hard to see month-to-month patterns. Goal is to see the whole year — where each period starts and how long it lasts (typically 4–5 days) — in a single view. Pain/symptom tracking is a future addition.
+
+**A period branch exists** (`origin/period`) with a working month-calendar implementation. It should NOT be merged as-is because: (a) it reverted the bug #57 spendLog fix, (b) it only shows one month at a time, (c) no symptom tracking. Use it for reference only (CSS classes, prediction logic, modal pattern).
+
+---
+
+**Data model** — new field `DATA.period`:
 ```js
-{ id, start, end }
-// start/end: "YYYY-MM-DD" strings; end may be null if cycle is still ongoing
+DATA.period = {
+  enabled: false,         // hides nav button when false
+  entries: [
+    { id, start, length, symptoms }
+    // start: "YYYY-MM-DD" (first day)
+    // length: number of days (default 5)
+    // symptoms: string (optional free-text notes — pain level, cramps, mood, etc.)
+  ],
+  defaultLength: 5
+}
 ```
+Migration: `if(!DATA.period) DATA.period={enabled:false,entries:[],defaultLength:5}` in `startApp()`.
 
-**Derived calculations:**
-- Cycle length = days from one `start` to the next `start`
-- Period duration = days from `start` to `end` (for completed cycles)
-- Average cycle length = mean of last N complete cycles (N = however many exist, min 2 to show)
-- Next period estimate = last start + average cycle length, shown as a ±5 day range to reflect irregularity
-- If fewer than 2 complete cycles, show "not enough data yet" instead of prediction
+---
 
-**Display** — new collapsible section in an appropriate view (suggestion: bottom of the Savings panel, or a dedicated tab — to be decided at implementation time):
-- Header: "Period Tracker" with collapse toggle; when collapsed shows last start date + days since
-- Expanded:
-  - Prediction strip: "next period estimated around [date range]" (or "not enough data")
-  - Average cycle: X days · average duration: X days (from logged history)
-  - History list: one row per cycle — start date · end date (or "ongoing") · cycle length · duration
-  - "+ log period" button: opens modal with start date (default today) and optional end date
-  - Each row has an edit (pencil) and delete (×) button
-  - "mark ended" button on the most recent entry if end is null
+**Primary view — Year strip (the main ask)**
 
-**Modal fields:**
-- Start date (date input, default today)
-- End date (date input, optional — can be filled in later)
+A dedicated "period" nav tab. Default view is the **year strip**, not a month calendar.
 
-**Calendar integration (optional, future):** highlight period days on the month view with a subtle background tint.
+Layout — two sections stacked:
 
-**Scope** — small-medium. New data array, one collapsible section, one modal. No graph in first pass.
+**1. Year strip** (top):
+- One row per year shown (current year + 1 prior year minimum; scroll or nav to see more)
+- Each row: year label on left, then a continuous 365-day bar
+- Period days filled with accent pink block; non-period days transparent
+- Start of each period: slightly darker leading edge or dot
+- Predicted window for next period: dashed outline block on the bar
+- Hovering/clicking a period block opens the edit modal for that entry
+- Clicking an empty day on the bar opens the "log new period" modal with that date pre-filled
+
+**2. Stats + log panel** (below strip):
+- Last period: date + days since
+- Prediction: earliest → latest date range (based on last 6 cycles' min/max, not all-time — avoids old outliers distorting the window); "in X days" or "in window now"
+- Cycle stats: shortest / average / longest (last 6 cycles)
+- Entry log table (reverse chronological): start date · duration · symptoms snippet · edit button
+
+**Secondary view — Month calendar** (reachable via a toggle button in the period tab):
+- Standard month grid; period days highlighted; click any day to log
+- Same as the branch implementation but kept as a secondary mode
+
+---
+
+**Logging modal (open from year strip or month calendar):**
+- Title: "log period" or "edit entry"
+- Start date (date input, pre-filled from click)
+- Duration in days (number input, default = `defaultLength`, range 1–14)
+- Symptoms (textarea, optional — free text: pain level, cramps, notes)
+- Delete button if editing existing entry
+- Save updates `DATA.period.entries` and calls `autoSave()`
+
+---
+
+**Settings modal addition:**
+- Checkbox: "enable period tracker" — shows/hides the nav button
+- Number input: "default duration (days)" — updates `DATA.period.defaultLength`
+
+---
+
+**What to reuse from the branch:**
+- CSS class names and styles (`.pd-*`) — they're well-structured
+- `getPeriodEntries()`, `periodCycles()`, `periodStats()`, `periodWindow()`, `periodActiveDays()` helper functions
+- The modal structure
+
+**What to build fresh:**
+- Year strip renderer (the branch has no year view)
+- Symptoms field in modal and log
+- Prediction based on last 6 cycles only (branch uses all-time)
+- Keep the bug #57 spendLog fix intact — do NOT copy the branch's `startApp()` which removed it
+
+---
+
+**Scope** — medium. Year strip is new work; rest can be adapted from branch.
 
 ---
 
@@ -968,4 +1018,4 @@ Track menstrual cycles directly in the app. Designed for irregular cycles — no
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | ✅ |
 | 56 | Savings — Collapsible Currencies and Compact Government Bonds | ✅ |
 | 57 | Bug Fix — Spend Log Breakdown Missing After JSON Reload | ✅ |
-| 58 | Period Tracker | 📋 spec |
+| 58 | Period Tracker — Year Strip + Symptom Log | 📋 spec |
