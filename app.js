@@ -179,11 +179,17 @@ function openSpendLog(dk,cat){
   var dateLabel=DAYS[d.getDay()==0?6:d.getDay()-1]+' '+d.getDate();
   var items=spendLogItems(dk,cat);
   var total=spendLogTotal(dk,cat);
+  var isFallback=false;
+  if(!items.length){
+    var importedAmt=((DATA.spend[dk])||{})[cat]||0;
+    if(importedAmt){items=[{id:'_fallback',amount:importedAmt,label:'imported total'}];isFallback=true;total=importedAmt;}
+  }
   var listHtml=items.length?items.map(function(e){
-    return '<div class="sl-item">'+
+    var del=isFallback?'':'<button class="sl-del" onclick="deleteSpendLogItem(\''+dk+'\',\''+cat+'\',\''+e.id+'\')">×</button>';
+    return '<div class="sl-item'+(isFallback?' sl-item-fallback':'')+'">'+
       '<span class="sl-item-label">'+(e.label||'—')+'</span>'+
       '<span class="sl-item-amount">¥'+e.amount.toLocaleString()+'</span>'+
-      '<button class="sl-del" onclick="deleteSpendLogItem(\''+dk+'\',\''+cat+'\',\''+e.id+'\')">×</button>'+
+      del+
     '</div>';
   }).join(''):'<div style="font-size:var(--fs-xs);color:var(--text3);padding:6px 0">no entries yet</div>';
   openModal(
@@ -1713,6 +1719,7 @@ function startFresh(){
 
 function startApp(){
   DATA.slots={};
+  if(!DATA.spendLog) DATA.spendLog={};
   // migrate old spend format {raw,val} → plain number
   Object.keys(DATA.spend||{}).forEach(function(dk){
     var sp=DATA.spend[dk];

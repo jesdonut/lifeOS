@@ -38,7 +38,7 @@
 
 **Header:** ← [Day letter · Month Day] →
 **Sub:** Year · age N
-**Mini week strip:** M T W T F S S — dot below days with events, today highlighted in accent circle, tap any day to jump
+**Mini week strip:** Mon Tue Wed Thu Fri Sat Sun — dot below days with events, today highlighted in accent circle, tap any day to jump
 
 **Events section**
 - List events for the day (colour dot + label)
@@ -117,7 +117,7 @@ Year goal edits save to `DATA.goals` immediately.
 | Commute | Manual + Auto | Commutation pass (manual) + Daily commute (auto) |
 | Food 食べ物 | Auto | From Daily Spend — single row with JP label |
 | Necessities 生活費 | Auto | Transport 電車代金 · Medical メディカル · Daily 日常生活 · NHI 国民保険 — each row shows JP + EN label and amount |
-| Optional 任意支出 | Auto | Project ゲーム/Project · Entertainment エンターテインメント · Clothes 服・髪 — each row shows JP + EN label and amount |
+| Optional 任意支出 | Auto | Project プロジェクト · Entertainment エンターテインメント · Clothes 服・髪 — each row shows JP + EN label and amount |
 
 - Income open by default, others collapsed
 - Manual fields accept arithmetic expressions (e.g. `50000*2`)

@@ -849,6 +849,64 @@ Implemented (codex wrote this):
 
 ---
 
+## Maintenance — Project Category Label + Day Letter Abbreviations
+
+- `project` category label updated: `ゲーム/Project` / `Project/Game` → `プロジェクト` / `Project` (app.js SPEND_CATS, renderFinance, mobile-app.js CAT_LABELS)
+- `DAY_LETTER` on mobile expanded from single chars `['M','T','W','T','F','S','S']` to 3-letter abbreviations `['Mon','Tue','Wed','Thu','Fri','Sat','Sun']`
+
+---
+
+## 57. Bug Fix — Spend Log Breakdown Missing After JSON Reload
+
+After importing a save file, cells in the week view show the correct ¥ total but clicking the breakdown shows no rows. Root cause: `DATA.spend[date][cat]` (the total number) is always saved, but `DATA.spendLog[date][cat]` (the line-item array with labels) may be absent if the file was saved before line items existed, or if spendLog was not present in an older export.
+
+**Fixes:**
+1. `startApp()` — add `if(!DATA.spendLog) DATA.spendLog={};` guard so load never leaves spendLog undefined
+2. `openSpendLog()` — when `spendLogItems()` returns an empty array but `DATA.spend[dk][cat]` has a non-zero value, synthesise a single read-only fallback row `{amount, label:'imported total'}` so the total is visible. Fallback row has no delete button and is styled in italic/muted text
+3. Once the user adds a real item, `syncSpendLog()` takes over and the fallback disappears naturally
+4. CSS — `.sl-item-fallback .sl-item-label` styled italic + muted
+
+**No data migration needed** — existing saves are unaffected; the fallback is display-only.
+
+---
+
+## 58. Period Tracker
+
+Track menstrual cycles directly in the app. Designed for irregular cycles — no fixed-length assumptions, just logged history and a best-guess prediction range.
+
+**Data model** — new array `DATA.periods`:
+```js
+{ id, start, end }
+// start/end: "YYYY-MM-DD" strings; end may be null if cycle is still ongoing
+```
+
+**Derived calculations:**
+- Cycle length = days from one `start` to the next `start`
+- Period duration = days from `start` to `end` (for completed cycles)
+- Average cycle length = mean of last N complete cycles (N = however many exist, min 2 to show)
+- Next period estimate = last start + average cycle length, shown as a ±5 day range to reflect irregularity
+- If fewer than 2 complete cycles, show "not enough data yet" instead of prediction
+
+**Display** — new collapsible section in an appropriate view (suggestion: bottom of the Savings panel, or a dedicated tab — to be decided at implementation time):
+- Header: "Period Tracker" with collapse toggle; when collapsed shows last start date + days since
+- Expanded:
+  - Prediction strip: "next period estimated around [date range]" (or "not enough data")
+  - Average cycle: X days · average duration: X days (from logged history)
+  - History list: one row per cycle — start date · end date (or "ongoing") · cycle length · duration
+  - "+ log period" button: opens modal with start date (default today) and optional end date
+  - Each row has an edit (pencil) and delete (×) button
+  - "mark ended" button on the most recent entry if end is null
+
+**Modal fields:**
+- Start date (date input, default today)
+- End date (date input, optional — can be filled in later)
+
+**Calendar integration (optional, future):** highlight period days on the month view with a subtle background tint.
+
+**Scope** — small-medium. New data array, one collapsible section, one modal. No graph in first pass.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -909,3 +967,5 @@ Implemented (codex wrote this):
 | 54 | Currencies — Remove IDR, KRW, EUR from Display Cards | ✅ |
 | 55 | NISA — Compact Config + Scrollable Snapshot Table | ✅ |
 | 56 | Savings — Collapsible Currencies and Compact Government Bonds | ✅ |
+| 57 | Bug Fix — Spend Log Breakdown Missing After JSON Reload | ✅ |
+| 58 | Period Tracker | 📋 spec |
