@@ -1005,28 +1005,33 @@ For each past period entry, check if there were travel events in the 14 days bef
 - delay = avg(travel cycles) − avg(normal cycles)
 - If delay > 0 and at least 2 travel cycles exist, surface it
 
-**Step 4 — Display in the status hero**
+**Step 4 — Pattern threshold**
 
-Add a callout card between the status hero and the year grid (only shown when travel is detected near the window):
+Only activate travel-adjusted prediction when there are **≥3 past travel cycles** where the period arrived later than the non-travel average. Fewer than 3 = not enough to call it a pattern; show nothing.
+
+**Step 5 — Shift the prediction range in the year grid**
+
+When the pattern is confirmed and travel is detected near the upcoming window:
+- Compute the adjusted range: `earliest + avgDelay` → `latest + avgDelay`
+- Render the adjusted predicted days in the month grid using **travel yellow** (`#D1B36A`) dashed circles instead of the usual pink dashed circles
+- The original (unadjusted) predicted range is not shown separately — the shifted range replaces it in the grid
+
+**Step 6 — Callout note**
+
+Add a small callout below the status hero (travel yellow border/background), only when the shifted prediction is active:
 
 ```
-✈ You have travel logged near your predicted window (Jun 3–8).
-  In past cycles with nearby travel, your period averaged +X days later.
-  Adjusted estimate: Jun 15–21.
+✈ travel detected near your window — based on past patterns, your period
+  may be ~X days later than usual.  est. Jun 15–21
 ```
 
-- If < 2 historical travel cycles: show the warning only ("travel detected near your window — periods sometimes run late")
-- If ≥ 2 historical travel cycles: also show the adjusted range
-
-**Step 5 — Adjusted prediction (optional display)**
-
-The adjusted range adds the calculated delay to both `earliest` and `latest` from `periodWindow()`. It is shown as a secondary estimate in the callout — the main status hero still shows the unadjusted prediction so the user can compare.
+The callout identifies which travel events triggered it (event text + dates) and states the average delay in days.
 
 ---
 
 **What NOT to do:**
-- Do not overwrite the main prediction — show the adjustment as a separate note only
-- Do not invent a delay if there's no travel data or only 1 travel cycle
+- Do not show any travel adjustment if the pattern hasn't been confirmed (< 3 travel cycles with delay)
+- Do not show both original and adjusted ranges — only the adjusted one when the pattern is confirmed
 
 **Scope** — small-to-medium. No new data model changes needed; reads existing `DATA.events`.
 
