@@ -2,7 +2,7 @@
 
 ## Files
 - `mobile.html` — separate entry point, all CSS inline in `<style>`
-- `mobile-app.js` — separate logic, no shared code with `app.js`
+- `mobile-app.js` — separate logic, no shared code with `desktop.js`
 
 ## Routing
 - Desktop (`index.html`) detects mobile via user-agent and auto-redirects to `mobile.html`

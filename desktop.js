@@ -457,8 +457,13 @@ function nav(dir){
   else if(view==='finance') cursor.setMonth(cursor.getMonth()+dir);
   else if(view==='period') cursor.setFullYear(cursor.getFullYear()+dir);
   var cy=cursor.getFullYear();
-  if(cy<MIN_YEAR){cursor=new Date(MIN_YEAR,0,1);}
-  if(cy>MAX_YEAR){cursor=new Date(MAX_YEAR,11,31);}
+  if(view==='period'){
+    if(cy<2017)cursor=new Date(2017,0,1);
+    if(cy>2055)cursor=new Date(2055,0,1);
+  }else{
+    if(cy<MIN_YEAR){cursor=new Date(MIN_YEAR,0,1);}
+    if(cy>MAX_YEAR){cursor=new Date(MAX_YEAR,11,31);}
+  }
   multiYearStart=Math.max(MIN_YEAR,Math.min(MAX_YEAR-4,multiYearStart));
   render();
 }
@@ -1516,7 +1521,7 @@ function openSymptomLogModal(dateKey){
   var selFlow=existing?(existing.flow||''):'';
   var d=new Date(dateKey+'T00:00:00');
   var dlabel=MS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
-  var inp='border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-family:var(--mono);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none;box-sizing:border-box';
+  var isPeriodStart=getPeriodEntries().some(function(e){return e.start===dateKey;});
   var flowHtml=FLOW_LEVELS.map(function(f){
     return '<button type="button" class="pd-chip'+(selFlow===f.key?' pd-chip-active':'')+'" id="pfl-'+f.key+'" onclick="pdToggleFlow(\''+f.key+'\')">'+f.en+'</button>';
   }).join('');
@@ -1533,8 +1538,9 @@ function openSymptomLogModal(dateKey){
     '<div class="pd-sym-cat-label">Flow</div>'+
     '<div class="pd-chip-row" style="margin-bottom:12px">'+flowHtml+'</div>'+
     '<div style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:10px">'+symHtml+'</div>'+
-    '<div class="modal-row" style="margin-top:14px">'+
+    '<div class="modal-row" style="margin-top:14px;flex-wrap:wrap;gap:6px">'+
       '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
+      '<button class="modal-btn ghost" style="font-size:var(--fs-xs)" onclick="closeModal();openPeriodModal(\''+dateKey+'\')">'+(isPeriodStart?'edit period':'+ period start')+'</button>'+
       (existing?'<button class="modal-btn ghost" style="border-color:var(--bad);color:var(--bad)" onclick="deleteSymptomLog(\''+dateKey+'\');closeModal()">delete</button>':'')+
       '<button class="modal-btn primary" onclick="saveSymptomLog(\''+dateKey+'\')">save</button>'+
     '</div>'
@@ -1593,7 +1599,7 @@ function pdDayClick(dk){
     });
     if(hit){openPeriodModal(hit.start);return;}
   }
-  openPeriodModal(dk);
+  openSymptomLogModal(dk);
 }
 function renderPeriodStatusHero(){
   var entries=getPeriodEntries();
@@ -1664,11 +1670,13 @@ function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates){
     var dk=fd(new Date(y,m,d));
     var isPeriod=activeDays.has(dk),isStart=startDays.has(dk),isPred=!isPeriod&&winDays.has(dk);
     var isTod=dk===fd(today),hasSym=symDates.has(dk);
+    var isBeforeMin=y<2017;
     var cls='pd-mc-day';
-    if(isPeriod)cls+=(isStart?' pd-mc-start':' pd-mc-period');
+    if(isBeforeMin)cls+=' pd-mc-disabled';
+    else if(isPeriod)cls+=(isStart?' pd-mc-start':' pd-mc-period');
     else if(isPred)cls+=' pd-mc-pred';
     if(isTod)cls+=' pd-mc-today';
-    cells+='<div class="'+cls+'" onclick="pdDayClick(\''+dk+'\')">'+d+(hasSym?'<div class="pd-mc-sym-dot"></div>':'')+'</div>';
+    cells+='<div class="'+cls+'"'+(isBeforeMin?'':' onclick="pdDayClick(\''+dk+'\')"')+'>'+d+(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'')+'</div>';
   }
   return '<div class="pd-month-card">'+
     '<div class="pd-mc-header">'+

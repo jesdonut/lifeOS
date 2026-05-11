@@ -1075,6 +1075,157 @@ Load your existing save in lifeOS, then the script output can either be:
 
 ---
 
+## 61. Bug Fix — Period: Clicking Past Day Should Open Symptom Modal
+
+Currently `pdDayClick()` always opens the period modal regardless of what was clicked. Clicking a day that is not a period start (e.g. any past day mid-cycle, or a random day to log symptoms) only offers period logging — there is no way to reach the symptom modal from the calendar grid.
+
+**Fix:**
+- If the clicked day falls within an active period (any day of a logged period, not just the start) → open `openPeriodModal(start)` for the entry's start date (same as now)
+- Otherwise → open `openSymptomLogModal(dk)` directly
+- Inside `openSymptomLogModal`, add a secondary link/button: "log this as period start" → calls `openPeriodModal(dk)` so the user can still start a new period from any day
+
+**Scope** — tiny. Change in `pdDayClick()` + one link added to the symptom modal footer.
+
+---
+
+## 62. Period — Fertile Window + Ovulation Day Visualization
+
+Show the estimated fertile window and ovulation day in the month grid, based on a standard 14-day pre-period luteal phase estimate from the predicted next period start.
+
+**Calculations (display-only, no new data fields):**
+- Predicted ovulation day = `periodWindow().earliest − 14 days`
+- Fertile window = 5 days ending on ovulation day (i.e. ovulation−4 through ovulation)
+- These are derived entirely from existing `periodWindow()` — no extra data stored
+
+**Month grid day states to add:**
+- Fertile window days → lavender/soft purple filled circle (`.pd-mc-fertile`)
+- Ovulation day → dark purple filled circle (`.pd-mc-ovulation`)
+- These only render when a predicted window exists; they do not render on past cycles
+
+**Legend update:** add "Fertile" (lavender) and "Ovulation" (dark purple) to the year header legend row.
+
+**Today card update:**
+- If today falls in the fertile window: show a `FERTILE WINDOW` badge chip next to the "Day X of cycle" line
+- If today is the predicted ovulation day: show an `OVULATION` badge
+- Add a subtitle line below: e.g. "Fertile · 5 days to predicted ovulation" or "Ovulation day est." — derived from the same calculation
+
+**Cycle stats hero update:**
+- Add σ (standard deviation) to the stats column: `range 26–34 · σ 3.2`
+- Add `irregular` label when σ > 3 (or range span > 10 days)
+- Change "80% likely range" wording to match: next period column shows min/max as the window
+
+**Scope** — small-medium. Pure derived display logic, no new data fields. New CSS classes for fertile/ovulation states.
+
+---
+
+## 63. Period — BBT (Basal Body Temperature) Tracking
+
+Track daily waking temperature to detect ovulation via thermal shift. BBT is the only fertility signal that confirms ovulation has occurred (vs. the fertile window estimate in #62 which is predictive only).
+
+**Data model addition** — new field on each symptom log entry:
+```js
+symptomLogs: [{ id, date, time, flow, symptoms, bbt }]
+// bbt: number (°C, e.g. 36.62) or null/undefined if not logged
+```
+Migration: existing entries without `bbt` field simply have no temperature — no action needed.
+
+**Today card:**
+- New "BASAL TEMP · TAKEN HH:MM" section at the bottom of the today card (below symptom chips)
+- Input field: number, step 0.01, placeholder `36.00`, suffix `°C`
+- If a baseline exists (avg of pre-ovulation temps this cycle): show `+0.XX vs baseline` delta in accent color
+- Saves to `symptomLogs[today].bbt` on blur; creates entry if none exists
+
+**BBT line chart (right panel, replaces or sits above cycle history):**
+- Title: "BBT THIS CYCLE · THERMAL SHIFT DETECTED" (or just "BBT THIS CYCLE" if no shift)
+- X axis: cycle days 1–N; Y axis: temperature range (auto-scaled, ±0.3°C around values)
+- Dots plotted for each day with a `bbt` reading this cycle
+- Dashed horizontal baseline = average of pre-ovulation temps (days 1–(ovulation−1))
+- After thermal shift (≥3 consecutive days 0.2°C above baseline): render post-shift dots in purple, annotate ovulation day
+- Three stat chips below chart: Pre-shift avg · Post-shift avg · Δ shift
+
+**Hero 4th column:**
+- "BASAL TEMP · TODAY" — shows today's BBT value or "—" if not logged
+- Below: `+0.XX vs baseline` delta if baseline exists; `thermal shift detected` in purple if shift confirmed
+
+**Scope** — medium. New data field on symptom logs, new chart section (SVG or canvas), hero column addition, today card input.
+
+---
+
+## 64. Period — Discharge Symptom Category
+
+Add a fourth symptom category "Discharge" to the symptom log modal and today card, with 5 fixed options describing cervical mucus — a key fertility signal.
+
+**New category to add to `SYMPTOM_CATS`:**
+```js
+{ label: 'Discharge', items: [
+  { key: 'discharge_dry',      en: 'dry' },
+  { key: 'discharge_sticky',   en: 'sticky' },
+  { key: 'discharge_creamy',   en: 'creamy' },
+  { key: 'discharge_watery',   en: 'watery' },
+  { key: 'discharge_eggwhite', en: 'egg-white' }
+]}
+```
+
+**Behavior:** single-select (only one discharge type per day makes sense). In the symptom log modal, render it as a chip row where selecting one deselects the others. On the today card inline panel, same single-select behavior. The symptom dot in the month grid already covers any logged symptom (no change needed there).
+
+**Scope** — tiny. Add one category to `SYMPTOM_CATS`, add single-select behavior for that category in both the modal and today card.
+
+---
+
+## 65. Period — Travel Day Visualization in Month Grid
+
+Show travel events from `DATA.events` directly in the month grid as teal/blue dots, so the period view gives context for why a cycle may have been longer.
+
+**Month grid:**
+- Any day with at least one event of color `#D1B36A` (travel) gets a small teal/blue dot (`.pd-mc-travel-dot`) rendered below the day number, similar to the symptom dot
+- The dots are display-only — clicking the day still triggers `pdDayClick` as normal
+
+**Month card header:**
+- If any travel event falls within a month that also has a period entry (or predicted window), add a `· travel` tag next to the cycle label: e.g. `cycle 34d · travel`
+
+**Cycle history:**
+- If a travel event falls within 14 days before a period start, add a ✈ icon at the end of that cycle history row (`.pd-ch-travel-icon`)
+
+**Legend update:** add "Travel" (teal dot) to the year header legend row.
+
+**Note:** this is a display companion to #59 (travel-aware prediction). #59 adjusts the prediction math; this just makes travel visible in the grid. They can be implemented independently.
+
+**Scope** — small. Read `DATA.events` for travel color, add dot rendering to month card + history row, update legend.
+
+---
+
+## 66. Period — Today Card Full Symptom Panel
+
+Redesign the today card to show all four symptom categories inline as quick-toggle chip rows, replacing the current "summary text + log/edit button" approach.
+
+**Current today card:**
+- Flow chips (quick-toggle)
+- Symptom summary text ("no symptoms logged today" or list of active keys)
+- "log / edit symptoms" button → opens full modal
+
+**New today card layout:**
+- Flow chips row (unchanged)
+- **Mood** chip row — 6 most common mood keys as quick-toggle chips
+- **Pain** chip row — 5 most common pain keys
+- **Physical** chip row — 5 most common physical keys
+- **Discharge** chip row — all 5 discharge options (single-select, from #64)
+- BBT input field (from #63, if implemented)
+- Small "more symptoms →" link at the bottom that opens the full modal for the complete list
+
+**Chip selection** — each chip calls `pdQuickSym(dk, key)` exactly as the quick-toggle on today already works. Discharge uses `pdQuickDischarge(dk, key)` (single-select variant).
+
+**Which keys to show inline (abbreviated list):**
+- Mood: mood_swings, irritability, sadness, anxiety, low_motivation, brain_fog
+- Pain: stomach_cramps, back_pain, headache, breast_pain, body_aches
+- Physical: fatigue, bloating, nausea, food_cravings, insomnia
+- Discharge: all 5 (from #64)
+
+The full modal (opened via "more symptoms →") remains unchanged and shows all categories/keys.
+
+**Scope** — small-medium. Restructure `renderTodayLogCard()`, add abbreviated key lists as a constant, add `pdQuickDischarge()` for single-select behavior.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -1140,3 +1291,9 @@ Load your existing save in lifeOS, then the script output can either be:
 | 58 | Period Tracker — Year Strip + Symptom Log | ✅ |
 | 59 | Period Tracker — Travel-Aware Prediction | 📋 spec |
 | 60 | Apple Health Period Import Script | 📋 spec |
+| 61 | Bug Fix — Period: Past Day Click Opens Symptom Modal | ✅ |
+| 62 | Period — Fertile Window + Ovulation Day Visualization | 📋 spec |
+| 63 | Period — BBT (Basal Body Temperature) Tracking | 📋 spec |
+| 64 | Period — Discharge Symptom Category | 📋 spec |
+| 65 | Period — Travel Day Visualization in Month Grid | 📋 spec |
+| 66 | Period — Today Card Full Symptom Panel | 📋 spec |

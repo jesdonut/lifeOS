@@ -3,6 +3,5 @@ calendar.csv
 .DS_Store
 CLAUDE.md
 import_calendar.py
-apple_health_period_to_lifeos.py
 *.ics
-merge.html
+_local/

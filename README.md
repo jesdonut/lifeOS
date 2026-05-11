@@ -10,9 +10,9 @@ A mobile companion (`mobile.html`) is also live — optimised for on-the-go dail
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Structure | HTML5 | `index.html` (desktop) + `mobile.html` (mobile) |
-| Styles | Plain CSS (`styles.css`, inline in `mobile.html`) | CSS custom properties for theming; no framework |
-| Logic | Vanilla JavaScript (`app.js`, `mobile-app.js`) | No dependencies, no build step |
+| Structure | HTML5 | `index.html` (desktop entry + mobile redirect) + `mobile.html` (mobile) |
+| Styles | Plain CSS (`desktop.css`, `mobile.css`) | CSS custom properties for theming; no framework |
+| Logic | Vanilla JavaScript (`desktop.js`, `mobile.js`) | No dependencies, no build step |
 | Fonts | Google Fonts | DM Mono (monospaced) + DM Sans (UI text), loaded via `@import` |
 | Persistence (desktop) | File System Access API (Chrome) + fallback download | Auto-saves to a local JSON file |
 | Persistence (mobile) | `localStorage` + manual export | Saves silently on every change; export button for JSON download |
@@ -24,7 +24,7 @@ There is no backend, no database, no bundler, and no package manager.
 ## Getting Started
 
 ### Desktop
-1. Open `index.html` in Chrome (recommended) or another modern browser.
+1. Open `index.html` in Chrome (recommended) or another modern browser. The desktop app loads `desktop.js` and `desktop.css`.
 2. On the splash screen, choose **start fresh** to begin with a blank slate, or **load save file** to restore a previous session.
 3. On first start you'll be asked once where to save your file (`lifeOS-save.json`). After that the app auto-saves silently after every change. A faint "✓ saved" indicator appears in the top bar.
 4. Next time, click **load** in the top bar (or use the splash screen) to reopen your save file.
@@ -80,6 +80,12 @@ DATA = {
                                commutationPass,
                                // fixed bills:
                                rent, gas, water, electricity, phone, internet } }
+  period:       { enabled: boolean,
+                  defaultLength: number,            // days (default 5)
+                  entries: [{ id, start, length }], // start: "YYYY-MM-DD"
+                  symptomLogs: [{ id, date, time, flow, symptoms: [keys] }] }
+                  // flow: one of none/spotting/light/medium/heavy
+                  // symptoms: array of keys from SYMPTOM_CATS constant
 }
 ```
 
@@ -89,7 +95,7 @@ DATA = {
 
 Navigation is in the top bar. The **← →** arrows move the current period. Clicking the **lifeOS** logo jumps to today's week.
 
-Nav order: **week → month → year → finance → savings**
+Nav order: **week → month → year → finance → savings** (+ **period** when enabled in settings)
 
 ---
 
@@ -221,6 +227,29 @@ Each countdown has a **mode**:
 - **since** — tracks elapsed time from a past date. Shows "X days since", "X months since", or "X years Y mo since". With yearly repeat, switches to birthday/anniversary mode: "age X · turning Y in Z days".
 
 In the **upcoming** tab, `until` entries and `since + yearly` entries appear as future events. Plain `since` entries (one-off trackers) are excluded.
+
+---
+
+### Period *(enable in Settings → Period Tracker)*
+
+A menstrual cycle tracker showing a full year at a glance.
+
+**Status hero** — 3-column card: Cycle Status (current day of cycle) · Next Period (predicted window) · Cycle Stats (median, range across last 6 cycles).
+
+**12-month year grid** — 4×3 grid of mini-calendars. Each day is clickable. Day states: period (pink), period start (dark pink), predicted window (dashed), today (outline), symptom-logged (dot). Navigate years with the **← →** arrows (clamped to 2017–2055).
+
+- Clicking a **period day** opens the period entry modal (edit duration / delete).
+- Clicking **any other day** opens the symptom log modal for that date, with a secondary "period start" button to log it as a period start if needed.
+
+**Today card** — flow level quick-chips (none / spotting / light / medium / heavy), symptom summary, and "log / edit symptoms" button. Changes save immediately without opening the full modal.
+
+**Cycle history** — bar chart of last 6 cycles showing period length vs total cycle length, with a predicted bar for the current cycle.
+
+**Pattern insight** — shown when ≥3 cycles have symptom logs in their pre-period window. Surfaces symptoms present in ≥50% of those windows.
+
+**Symptom log** — per-day log with 3 categories (Mood · Pain · Physical, 58 keys total) and a flow level. One entry per date, updated in place.
+
+**Settings** — enable/disable toggle + default period length (Settings modal → Period Tracker section).
 
 ---
 
