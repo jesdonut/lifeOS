@@ -37,6 +37,39 @@ function selectSwatch(color,inputId){
   });
 }
 
+const SYMPTOM_CATS=[
+  {key:'mood',label:'Mood',items:[
+    {key:'mood_swings',en:'Mood swings'},{key:'irritability',en:'Irritable'},{key:'sadness',en:'Sad'},
+    {key:'crying_easily',en:'Crying easily'},{key:'anxiety',en:'Anxious'},{key:'emotional_sensitivity',en:'Emotional'},
+    {key:'low_motivation',en:'Low motivation'},{key:'brain_fog',en:'Brain fog'},
+  ]},
+  {key:'pain',label:'Pain',items:[
+    {key:'stomach_cramps',en:'Cramps'},{key:'lower_abdominal_pain',en:'Lower abdominal'},{key:'back_pain',en:'Back pain'},
+    {key:'headache',en:'Headache'},{key:'migraine',en:'Migraine'},{key:'breast_pain',en:'Breast tender'},
+    {key:'pelvic_heaviness',en:'Pelvic heavy'},{key:'body_aches',en:'Body aches'},{key:'muscle_aches',en:'Muscle aches'},
+    {key:'joint_aches',en:'Joint aches'},{key:'leg_pain',en:'Leg pain'},{key:'shoulder_stiffness',en:'Shoulder stiff'},
+    {key:'neck_stiffness',en:'Neck stiff'},{key:'jaw_pain',en:'Jaw pain'},{key:'chest_tightness',en:'Chest tight'},
+    {key:'heart_palpitations',en:'Palpitations'},{key:'skin_sensitivity',en:'Skin sensitive'},{key:'body_sore',en:'Body sore'},
+  ]},
+  {key:'physical',label:'Physical',items:[
+    {key:'fatigue',en:'Fatigue'},{key:'sleepiness',en:'Sleepy'},{key:'insomnia',en:'Insomnia'},
+    {key:'difficulty_waking',en:'Hard to wake'},{key:'bloating',en:'Bloating'},{key:'gas',en:'Gas'},
+    {key:'diarrhea',en:'Diarrhea'},{key:'constipation',en:'Constipation'},{key:'frequent_bowel',en:'Frequent bowel'},
+    {key:'nausea',en:'Nausea'},{key:'food_cravings',en:'Cravings'},{key:'food_cravings_specific',en:'Sweet/salty/carbs'},
+    {key:'appetite_changes',en:'Appetite changes'},{key:'increased_appetite',en:'Very hungry'},
+    {key:'acne',en:'Acne'},{key:'dry_skin',en:'Dry skin'},{key:'oily_skin',en:'Oily skin'},{key:'hair_loss',en:'Hair loss'},
+    {key:'dizziness',en:'Dizzy'},{key:'lightheadedness',en:'Lightheaded'},{key:'hot_flashes',en:'Hot flashes'},
+    {key:'cold_hands_feet',en:'Cold extremities'},{key:'swelling',en:'Swelling'},{key:'weight_fluctuation',en:'Weight change'},
+    {key:'clumsiness',en:'Clumsy'},{key:'sneezing',en:'Sneezing'},{key:'chills',en:'Chills'},
+    {key:'feeling_feverish',en:'Feverish'},{key:'mild_fever',en:'Mild fever'},{key:'malaise',en:'Malaise'},
+    {key:'acid_reflux',en:'Acid reflux'},{key:'gum_sensitivity',en:'Gum sensitive'},
+  ]},
+];
+const FLOW_LEVELS=[
+  {key:'none',en:'none'},{key:'spotting',en:'spotting'},{key:'light',en:'light'},
+  {key:'medium',en:'medium'},{key:'heavy',en:'heavy'},
+];
+
 const SPEND_CATS=[
   {key:'food',       jp:'食べ物',          en:'Food',          group:'food'},
   {key:'commute',    jp:'通勤費',           en:'Commute',       group:'transport'},
@@ -59,6 +92,7 @@ const CURRENCIES=[
 const today=new Date();
 const MIN_YEAR=1995,MAX_YEAR=2095;
 let view='week',stab='notes',cursor=new Date(today),multiYearStart=2026,focusDay=null;
+let _periodSymKey={}; // flat key→en lookup, built lazily
 let _nisaLsExpanded=false;
 let _yearExpanded=null;
 let _currenciesExpanded=true,_bondsExpanded=false;
@@ -73,7 +107,7 @@ let _currenciesExpanded=true,_bondsExpanded=false;
 // nisa: {tsumitateMonthly, lumpSumYearly, startYear, projectionYears}
 // currencies: {code: amount}
 
-let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[today.getFullYear(),today.getFullYear()+2,today.getFullYear()+5]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{}};
+let DATA={events:{},tasks:{},slots:{},spend:{},goals:{},notes:[],countdowns:[],nisa:{tsumitateMonthly:0,tsumitateByYear:{},lumpSumByYear:{},startYear:2026,startMonth:1,projectionYears:[today.getFullYear(),today.getFullYear()+2,today.getFullYear()+5]},currencies:{},currencyRates:{},baseCurrency:'JPY',currencyLots:[],bonds:[],bankAccounts:[],finance:{},period:{enabled:false,entries:[],symptomLogs:[],defaultLength:5}};
 
 // ── UTILS ─────────────────────────────────────────────────────────────
 let _uid=0; function uid(){return 'id'+(++_uid)+Date.now();}
@@ -282,9 +316,21 @@ function openSettingsModal(){
         'oninput="applyFontSize(this.value);document.getElementById(\'fs-val\').textContent=this.value;localStorage.setItem(\'fs-base\',this.value)">'+
       '<div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--text3);margin-top:3px"><span>12px compact</span><span>15px default</span><span>18px large</span></div>'+
     '</div>'+
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
       '<input type="checkbox" id="sb-default"'+(sbCollapsed?' checked':'')+' style="width:auto;margin:0;accent-color:var(--accent)" onchange="setSidebarDefault(this.checked)">'+
       '<label for="sb-default" style="font-size:var(--fs-sm);color:var(--text2);cursor:pointer">sidebar collapsed by default</label>'+
+    '</div>'+
+    '<div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:12px">'+
+      '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px">Period Tracker</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
+        '<input type="checkbox" id="period-toggle"'+((DATA.period&&DATA.period.enabled)?' checked':'')+' style="width:auto;margin:0;accent-color:var(--accent)" onchange="DATA.period.enabled=this.checked;render()">'+
+        '<label for="period-toggle" style="font-size:var(--fs-sm);color:var(--text2);cursor:pointer">enable period tracker</label>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<span style="font-size:var(--fs-sm);color:var(--text2)">default duration</span>'+
+        '<input type="number" min="1" max="14" value="'+((DATA.period&&DATA.period.defaultLength)||5)+'" style="width:50px;border:1px solid var(--border);border-radius:var(--radius);padding:4px 6px;font-family:var(--mono);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none;text-align:center" onchange="DATA.period.defaultLength=Math.max(1,parseInt(this.value)||5);autoSave()">'+
+        '<span style="font-size:var(--fs-xs);color:var(--text3)">days</span>'+
+      '</div>'+
     '</div>'+
     '<button class="modal-btn ghost" onclick="closeModal()">done</button>'
   );
@@ -409,6 +455,7 @@ function nav(dir){
   else if(view==='month') cursor.setMonth(cursor.getMonth()+dir);
   else if(view==='year') cursor.setFullYear(cursor.getFullYear()+dir);
   else if(view==='finance') cursor.setMonth(cursor.getMonth()+dir);
+  else if(view==='period') cursor.setFullYear(cursor.getFullYear()+dir);
   var cy=cursor.getFullYear();
   if(cy<MIN_YEAR){cursor=new Date(MIN_YEAR,0,1);}
   if(cy>MAX_YEAR){cursor=new Date(MAX_YEAR,11,31);}
@@ -422,6 +469,9 @@ function render(){
   const panel=document.getElementById('main-panel');
   const label=document.getElementById('period-label');
   panel.style.display='';panel.style.flexDirection='';
+  var pvbtn=document.getElementById('period-vbtn');
+  if(pvbtn) pvbtn.style.display=(DATA.period&&DATA.period.enabled)?'':'none';
+  if(view==='period'&&!(DATA.period&&DATA.period.enabled)) view='week';
   if(view==='week'){
     const mon=getMon(new Date(cursor)),sun=new Date(mon);sun.setDate(sun.getDate()+6);
     label.textContent=MS[mon.getMonth()]+' '+mon.getDate()+' – '+MS[sun.getMonth()]+' '+sun.getDate()+' '+mon.getFullYear();
@@ -438,6 +488,9 @@ function render(){
   }else if(view==='finance'){
     label.textContent=MONTHS[cursor.getMonth()]+' '+cursor.getFullYear();
     renderFinance(panel,cursor.getFullYear(),cursor.getMonth());
+  }else if(view==='period'){
+    label.textContent='period · '+cursor.getFullYear();
+    renderPeriod(panel,cursor.getFullYear());
   }
   renderSidebar();
   autoSave();
@@ -1347,6 +1400,389 @@ function renderFinance(panel,y,m){
     '</div>';
 }
 
+// ── PERIOD TRACKER ────────────────────────────────────────────────────
+function _pdSymKey(){
+  if(!Object.keys(_periodSymKey).length)
+    SYMPTOM_CATS.forEach(function(c){c.items.forEach(function(s){_periodSymKey[s.key]=s.en;});});
+  return _periodSymKey;
+}
+function getPeriodEntries(){
+  return((DATA.period&&DATA.period.entries)||[]).slice().sort(function(a,b){return a.start.localeCompare(b.start);});
+}
+function periodCycles(){
+  var e=getPeriodEntries();if(e.length<2)return[];
+  var recent=e.slice(-7);
+  var c=[];
+  for(var i=1;i<recent.length;i++){
+    var a=new Date(recent[i-1].start+'T00:00:00'),b=new Date(recent[i].start+'T00:00:00');
+    c.push(Math.round((b-a)/86400000));
+  }
+  return c;
+}
+function periodStats(){
+  var c=periodCycles();if(!c.length)return null;
+  var sorted=c.slice().sort(function(a,b){return a-b;});
+  var min=sorted[0],max=sorted[sorted.length-1];
+  var avg=c.reduce(function(s,v){return s+v;},0)/c.length;
+  var med=sorted[Math.floor(sorted.length/2)];
+  return{min:min,max:max,avg:Math.round(avg*10)/10,med:med,count:c.length};
+}
+function periodWindow(){
+  var e=getPeriodEntries();if(!e.length)return null;
+  var st=periodStats();if(!st)return null;
+  var last=new Date(e[e.length-1].start+'T00:00:00');
+  var earliest=new Date(last);earliest.setDate(earliest.getDate()+st.min);
+  var latest=new Date(last);latest.setDate(latest.getDate()+st.max);
+  return{earliest:earliest,latest:latest};
+}
+function periodActiveDaysSet(){
+  var set=new Set();
+  getPeriodEntries().forEach(function(e){
+    var s=new Date(e.start+'T00:00:00');
+    var len=e.length||(DATA.period.defaultLength||5);
+    for(var d=0;d<len;d++){var day=new Date(s);day.setDate(s.getDate()+d);set.add(fd(day));}
+  });
+  return set;
+}
+function periodWindowDaysSet(){
+  var win=periodWindow();if(!win)return new Set();
+  var set=new Set();
+  var cur=new Date(win.earliest);
+  while(cur<=win.latest){set.add(fd(cur));cur.setDate(cur.getDate()+1);}
+  return set;
+}
+function getPeriodSymptomLog(dateKey){
+  return(DATA.period.symptomLogs||[]).find(function(l){return l.date===dateKey;})||null;
+}
+function computePatternInsight(){
+  var entries=getPeriodEntries();if(entries.length<3)return null;
+  var symptomCount={},windowCount=0;
+  entries.forEach(function(e){
+    var startDate=new Date(e.start+'T00:00:00');
+    var windowLogs=(DATA.period.symptomLogs||[]).filter(function(log){
+      var diff=Math.round((startDate-new Date(log.date+'T00:00:00'))/86400000);
+      return diff>=1&&diff<=7;
+    });
+    if(windowLogs.length){
+      windowCount++;
+      var seen={};
+      windowLogs.forEach(function(log){(log.symptoms||[]).forEach(function(s){seen[s]=true;});});
+      Object.keys(seen).forEach(function(s){symptomCount[s]=(symptomCount[s]||0)+1;});
+    }
+  });
+  if(windowCount<3)return null;
+  var threshold=windowCount*0.5;
+  var frequent=Object.keys(symptomCount).filter(function(s){return symptomCount[s]>=threshold;});
+  return frequent.length?frequent:null;
+}
+function openPeriodModal(dateKey){
+  var entries=getPeriodEntries();
+  var existing=entries.find(function(e){return e.start===dateKey;});
+  var len=existing?existing.length:(DATA.period.defaultLength||5);
+  var d=new Date(dateKey+'T00:00:00');
+  var dlabel=DAYS[(d.getDay()+6)%7]+' '+d.getDate()+' '+MS[d.getMonth()]+' '+d.getFullYear();
+  var inp='width:100%;border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-family:var(--mono);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none;box-sizing:border-box';
+  openModal(
+    '<div class="modal-title">'+(existing?'edit period entry':'log period start')+'</div>'+
+    '<div style="font-size:var(--fs-sm);color:var(--text2);margin-bottom:14px">'+dlabel+'</div>'+
+    '<div style="margin-bottom:16px">'+
+      '<div style="font-size:var(--fs-sm);color:var(--text2);margin-bottom:6px">duration (days)</div>'+
+      '<input id="pd-len" type="number" min="1" max="14" step="1" value="'+len+'" style="'+inp+'">'+
+    '</div>'+
+    '<div class="modal-row">'+
+      '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
+      (existing?'<button class="modal-btn ghost" style="border-color:var(--bad);color:var(--bad)" onclick="deletePeriodEntry(\''+dateKey+'\');closeModal()">delete</button>':'')+
+      '<button class="modal-btn primary" onclick="savePeriodEntry(\''+dateKey+'\',document.getElementById(\'pd-len\').value)">save</button>'+
+    '</div>'
+  );
+}
+function deletePeriodEntry(dateKey){
+  if(DATA.period&&DATA.period.entries)
+    DATA.period.entries=DATA.period.entries.filter(function(e){return e.start!==dateKey;});
+  autoSave();render();
+}
+function savePeriodEntry(dateKey,len){
+  if(!DATA.period.entries)DATA.period.entries=[];
+  var length=Math.max(1,parseInt(len)||DATA.period.defaultLength||5);
+  var idx=DATA.period.entries.findIndex(function(e){return e.start===dateKey;});
+  if(idx>=0)DATA.period.entries[idx].length=length;
+  else DATA.period.entries.push({id:uid(),start:dateKey,length:length});
+  autoSave();closeModal();render();
+}
+function openSymptomLogModal(dateKey){
+  if(!dateKey)dateKey=fd(today);
+  var existing=getPeriodSymptomLog(dateKey);
+  var selSymptoms=existing?(existing.symptoms||[]):[];
+  var selFlow=existing?(existing.flow||''):'';
+  var d=new Date(dateKey+'T00:00:00');
+  var dlabel=MS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+  var inp='border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-family:var(--mono);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none;box-sizing:border-box';
+  var flowHtml=FLOW_LEVELS.map(function(f){
+    return '<button type="button" class="pd-chip'+(selFlow===f.key?' pd-chip-active':'')+'" id="pfl-'+f.key+'" onclick="pdToggleFlow(\''+f.key+'\')">'+f.en+'</button>';
+  }).join('');
+  var symHtml=SYMPTOM_CATS.map(function(cat){
+    return '<div class="pd-sym-cat-label">'+cat.label+'</div>'+
+      '<div class="pd-chip-row">'+
+        cat.items.map(function(s){
+          return '<button type="button" class="pd-chip'+(selSymptoms.includes(s.key)?' pd-chip-active':'')+'" id="psy-'+s.key+'" onclick="pdToggleSym(\''+s.key+'\')">'+s.en+'</button>';
+        }).join('')+
+      '</div>';
+  }).join('');
+  openModal(
+    '<div class="modal-title">log symptoms · '+dlabel+'</div>'+
+    '<div class="pd-sym-cat-label">Flow</div>'+
+    '<div class="pd-chip-row" style="margin-bottom:12px">'+flowHtml+'</div>'+
+    '<div style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:10px">'+symHtml+'</div>'+
+    '<div class="modal-row" style="margin-top:14px">'+
+      '<button class="modal-btn ghost" onclick="closeModal()">cancel</button>'+
+      (existing?'<button class="modal-btn ghost" style="border-color:var(--bad);color:var(--bad)" onclick="deleteSymptomLog(\''+dateKey+'\');closeModal()">delete</button>':'')+
+      '<button class="modal-btn primary" onclick="saveSymptomLog(\''+dateKey+'\')">save</button>'+
+    '</div>'
+  );
+}
+function pdToggleFlow(key){
+  document.querySelectorAll('.pd-chip[id^="pfl-"]').forEach(function(el){el.classList.remove('pd-chip-active');});
+  var el=document.getElementById('pfl-'+key);
+  if(el)el.classList.toggle('pd-chip-active');
+}
+function pdToggleSym(key){var el=document.getElementById('psy-'+key);if(el)el.classList.toggle('pd-chip-active');}
+function saveSymptomLog(dateKey){
+  var symptoms=[];
+  SYMPTOM_CATS.forEach(function(cat){
+    cat.items.forEach(function(s){var el=document.getElementById('psy-'+s.key);if(el&&el.classList.contains('pd-chip-active'))symptoms.push(s.key);});
+  });
+  var flow='';
+  FLOW_LEVELS.forEach(function(f){var el=document.getElementById('pfl-'+f.key);if(el&&el.classList.contains('pd-chip-active'))flow=f.key;});
+  if(!DATA.period.symptomLogs)DATA.period.symptomLogs=[];
+  var now=new Date();
+  var timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  var entry={id:uid(),date:dateKey,time:timeStr,flow:flow,symptoms:symptoms};
+  var idx=DATA.period.symptomLogs.findIndex(function(l){return l.date===dateKey;});
+  if(idx>=0)DATA.period.symptomLogs[idx]=entry;else DATA.period.symptomLogs.push(entry);
+  autoSave();closeModal();render();
+}
+function deleteSymptomLog(dateKey){
+  if(DATA.period&&DATA.period.symptomLogs)
+    DATA.period.symptomLogs=DATA.period.symptomLogs.filter(function(l){return l.date!==dateKey;});
+  autoSave();render();
+}
+function pdQuickFlow(dk,key){
+  if(!DATA.period.symptomLogs)DATA.period.symptomLogs=[];
+  var idx=DATA.period.symptomLogs.findIndex(function(l){return l.date===dk;});
+  var now=new Date();var ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  if(idx>=0){var cur=DATA.period.symptomLogs[idx].flow;DATA.period.symptomLogs[idx].flow=(cur===key?'':key);}
+  else DATA.period.symptomLogs.push({id:uid(),date:dk,time:ts,flow:key,symptoms:[]});
+  autoSave();render();
+}
+function pdQuickSym(dk,key){
+  if(!DATA.period.symptomLogs)DATA.period.symptomLogs=[];
+  var idx=DATA.period.symptomLogs.findIndex(function(l){return l.date===dk;});
+  var now=new Date();var ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  if(idx>=0){var syms=DATA.period.symptomLogs[idx].symptoms||[];var si=syms.indexOf(key);if(si>=0)syms.splice(si,1);else syms.push(key);DATA.period.symptomLogs[idx].symptoms=syms;}
+  else DATA.period.symptomLogs.push({id:uid(),date:dk,time:ts,flow:'',symptoms:[key]});
+  autoSave();render();
+}
+function pdDayClick(dk){
+  var entries=getPeriodEntries();
+  var activeDays=periodActiveDaysSet();
+  if(activeDays.has(dk)){
+    var hit=entries.find(function(e){
+      var s=new Date(e.start+'T00:00:00'),dDate=new Date(dk+'T00:00:00');
+      var end=new Date(s);end.setDate(s.getDate()+(e.length||(DATA.period.defaultLength||5))-1);
+      return dDate>=s&&dDate<=end;
+    });
+    if(hit){openPeriodModal(hit.start);return;}
+  }
+  openPeriodModal(dk);
+}
+function renderPeriodStatusHero(){
+  var entries=getPeriodEntries();
+  if(!entries.length){
+    return '<div class="pd-hero"><div style="font-size:var(--fs-xs);color:var(--text3);grid-column:1/-1">no periods logged yet — click any day to start tracking</div></div>';
+  }
+  var last=entries[entries.length-1];
+  var lastStart=new Date(last.start+'T00:00:00');
+  var lastEnd=new Date(lastStart);lastEnd.setDate(lastStart.getDate()+(last.length||5)-1);
+  var daysSince=Math.round((today-lastStart)/86400000);
+  var currentlyOn=today>=lastStart&&today<=lastEnd;
+  var win=periodWindow();var st=periodStats();
+  var col1='<div class="pd-hero-label">CYCLE STATUS</div>';
+  if(currentlyOn){
+    col1+='<div class="pd-hero-big">Day '+(daysSince+1)+'</div><div class="pd-hero-sub">of your period</div>';
+  }else{
+    col1+='<div class="pd-hero-big">Day '+(daysSince+1)+'</div><div class="pd-hero-sub">cycle '+entries.length+'</div>';
+  }
+  var col2='<div class="pd-hero-label">NEXT PERIOD</div>';
+  if(win){
+    var daysUntil=Math.round((win.earliest-today)/86400000);
+    var inWindow=today>=win.earliest&&today<=win.latest;
+    if(inWindow){
+      col2+='<div class="pd-hero-big" style="color:var(--accent)">in window</div>'+
+        '<div class="pd-hero-sub">est. '+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+' – '+MS[win.latest.getMonth()]+' '+win.latest.getDate()+'</div>';
+    }else if(daysUntil>0){
+      col2+='<div class="pd-hero-big">'+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+'</div>'+
+        '<div class="pd-hero-sub">in ~'+daysUntil+' days (est. thru '+MS[win.latest.getMonth()]+' '+win.latest.getDate()+')</div>';
+    }else{
+      col2+='<div class="pd-hero-big" style="color:var(--accent)">overdue</div>'+
+        '<div class="pd-hero-sub">window passed '+Math.abs(daysUntil)+' days ago</div>';
+    }
+  }else{
+    col2+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see prediction</div>';
+  }
+  var col3='<div class="pd-hero-label">CYCLE STATS · LAST 6</div>';
+  if(st){
+    col3+='<div class="pd-hero-big">'+st.med+'</div>'+
+      '<div class="pd-hero-sub">median days · range '+st.min+'–'+st.max+'</div>';
+  }else{
+    col3+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see stats</div>';
+  }
+  return '<div class="pd-hero">'+
+    '<div class="pd-hero-col">'+col1+'</div>'+
+    '<div class="pd-hero-col">'+col2+'</div>'+
+    '<div class="pd-hero-col">'+col3+'</div>'+
+  '</div>';
+}
+function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates){
+  var dim=new Date(y,m+1,0).getDate();
+  var dowOffset=(new Date(y,m,1).getDay()+6)%7;
+  var entries=getPeriodEntries();
+  var cycleLabel='';
+  var startInMonth=entries.find(function(e){var d=new Date(e.start+'T00:00:00');return d.getFullYear()===y&&d.getMonth()===m;});
+  if(startInMonth){
+    var idx=entries.findIndex(function(e){return e.start===startInMonth.start;});
+    if(idx>=0&&idx<entries.length-1){
+      var gap=Math.round((new Date(entries[idx+1].start+'T00:00:00')-new Date(startInMonth.start+'T00:00:00'))/86400000);
+      cycleLabel='cycle '+gap+'d';
+    }
+  }else{
+    for(var dd=1;dd<=dim;dd++){if(winDays.has(fd(new Date(y,m,dd)))){cycleLabel='predicted';break;}}
+  }
+  var dayHdrs=DAYS.map(function(d){return '<div class="pd-mc-dh">'+d[0]+'</div>';}).join('');
+  var cells='';
+  for(var i=0;i<dowOffset;i++)cells+='<div class="pd-mc-blank"></div>';
+  for(var d=1;d<=dim;d++){
+    var dk=fd(new Date(y,m,d));
+    var isPeriod=activeDays.has(dk),isStart=startDays.has(dk),isPred=!isPeriod&&winDays.has(dk);
+    var isTod=dk===fd(today),hasSym=symDates.has(dk);
+    var cls='pd-mc-day';
+    if(isPeriod)cls+=(isStart?' pd-mc-start':' pd-mc-period');
+    else if(isPred)cls+=' pd-mc-pred';
+    if(isTod)cls+=' pd-mc-today';
+    cells+='<div class="'+cls+'" onclick="pdDayClick(\''+dk+'\')">'+d+(hasSym?'<div class="pd-mc-sym-dot"></div>':'')+'</div>';
+  }
+  return '<div class="pd-month-card">'+
+    '<div class="pd-mc-header">'+
+      '<span class="pd-mc-month">'+MONTHS[m]+'</span>'+
+      (cycleLabel?'<span class="pd-mc-cycle'+(cycleLabel==='predicted'?' pd-mc-cycle-pred':'')+'">'+cycleLabel+'</span>':'')+
+    '</div>'+
+    '<div class="pd-mc-grid">'+dayHdrs+cells+'</div>'+
+  '</div>';
+}
+function renderCycleHistory(){
+  var entries=getPeriodEntries();
+  if(!entries.length)return '<div class="pd-ch-empty">no entries yet</div>';
+  var cycles=[];
+  for(var i=0;i<entries.length;i++){
+    var e=entries[i];var d=new Date(e.start+'T00:00:00');var cycleLen=null;
+    if(i<entries.length-1)cycleLen=Math.round((new Date(entries[i+1].start+'T00:00:00')-d)/86400000);
+    cycles.push({e:e,d:d,cycleLen:cycleLen});
+  }
+  var show=cycles.slice(-6);var win=periodWindow();
+  var allLens=show.filter(function(c){return c.cycleLen;}).map(function(c){return c.cycleLen;});
+  if(win){var predLen=Math.round((win.latest-new Date(show[show.length-1].e.start+'T00:00:00'))/86400000);allLens.push(predLen);}
+  var maxLen=allLens.length?Math.max.apply(null,allLens):35;
+  var rows=show.map(function(c,idx){
+    var isLast=idx===show.length-1&&!c.cycleLen;
+    var barLen=c.cycleLen||(win?Math.round((win.earliest-new Date(c.e.start+'T00:00:00'))/86400000):c.e.length||(DATA.period.defaultLength||5));
+    var pct=Math.min(100,barLen/maxLen*100);
+    var periodPct=Math.min(100,((c.e.length||(DATA.period.defaultLength||5))/barLen*100));
+    var label=MS[c.d.getMonth()]+' '+c.d.getDate();
+    var lenLabel=c.cycleLen?c.cycleLen+'d':(isLast&&win?'~'+Math.round((win.earliest-new Date(c.e.start+'T00:00:00'))/86400000)+'d est':'—');
+    var predBarPct=isLast&&win?Math.min(100,Math.round((win.latest-new Date(c.e.start+'T00:00:00'))/86400000)/maxLen*100):0;
+    return '<div class="pd-ch-row">'+
+      '<span class="pd-ch-label'+(isLast?' pd-ch-pred-label':'')+'">'+label+(isLast?'?':'')+'</span>'+
+      '<div class="pd-ch-bar-wrap">'+
+        (predBarPct?'<div class="pd-ch-bar-pred" style="width:'+predBarPct+'%"></div>':'')+
+        '<div class="pd-ch-bar" style="width:'+pct+'%"><div class="pd-ch-bar-period" style="width:'+periodPct+'%"></div></div>'+
+      '</div>'+
+      '<span class="pd-ch-len'+(isLast?' pd-ch-pred-label':'')+'">'+lenLabel+'</span>'+
+    '</div>';
+  }).join('');
+  return '<div class="pd-ch">'+
+    '<div class="pd-section-title">CYCLE HISTORY · LAST 6</div>'+
+    rows+'</div>';
+}
+function renderTodayLogCard(dk,log){
+  var d=new Date(dk+'T00:00:00');
+  var dlabel=MS[d.getMonth()].toUpperCase()+' '+d.getDate()+', '+d.getFullYear();
+  var selFlow=log?(log.flow||''):'';
+  var selSymptoms=log?(log.symptoms||[]):[];
+  var entries=getPeriodEntries();var lastEntry=entries.length?entries[entries.length-1]:null;
+  var cycleDayHtml='';
+  if(lastEntry){
+    var dayNum=Math.round((today-new Date(lastEntry.start+'T00:00:00'))/86400000)+1;
+    cycleDayHtml='<div class="pd-today-cycleday">Day <span style="color:var(--accent)">'+dayNum+'</span> of cycle</div>';
+  }
+  var keys=_pdSymKey();
+  var flowHtml='<div class="pd-sym-cat-label">FLOW</div>'+
+    '<div class="pd-chip-row">'+
+    FLOW_LEVELS.map(function(f){
+      return '<button type="button" class="pd-chip'+(selFlow===f.key?' pd-chip-active':'')+'" onclick="pdQuickFlow(\''+dk+'\',\''+f.key+'\')">'+f.en+'</button>';
+    }).join('')+'</div>';
+  var symSummary=selSymptoms.length
+    ?'<div class="pd-today-sym-summary">'+selSymptoms.map(function(k){return '<span class="pd-today-sym-chip">'+(keys[k]||k)+'</span>';}).join('')+'</div>'
+    :'<div style="font-size:var(--fs-xs);color:var(--text3);margin:6px 0 8px">no symptoms logged today</div>';
+  var activeDays=periodActiveDaysSet();var isTodayPeriod=activeDays.has(dk);
+  return '<div class="pd-today-card">'+
+    '<div class="pd-today-header">TODAY · <strong>'+dlabel+'</strong></div>'+
+    cycleDayHtml+
+    flowHtml+
+    '<div class="pd-sym-cat-label" style="margin-top:10px">SYMPTOMS</div>'+
+    symSummary+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+
+      '<button class="modal-btn ghost" style="font-size:var(--fs-xs)" onclick="openSymptomLogModal(\''+dk+'\')">log / edit symptoms</button>'+
+      (!isTodayPeriod?'<button class="modal-btn" style="font-size:var(--fs-xs)" onclick="openPeriodModal(\''+dk+'\')">log period</button>':'')+
+    '</div>'+
+  '</div>';
+}
+function renderPeriod(panel,y){
+  var activeDays=periodActiveDaysSet();
+  var winDays=periodWindowDaysSet();
+  var startDays=new Set(getPeriodEntries().map(function(e){return e.start;}));
+  var symDates=new Set((DATA.period.symptomLogs||[]).map(function(l){return l.date;}));
+  var heroHtml=renderPeriodStatusHero();
+  var yearHdr='<div class="pd-year-hdr">'+
+    '<div class="pd-legend">'+
+      '<span class="pd-leg"><span class="pd-leg-sw pd-leg-period"></span>Period</span>'+
+      '<span class="pd-leg"><span class="pd-leg-sw pd-leg-pred"></span>Predicted</span>'+
+      '<span class="pd-leg"><span class="pd-leg-sym-dot"></span>Symptoms</span>'+
+    '</div>'+
+    '<button class="modal-btn ghost" style="font-size:var(--fs-xs)" onclick="openSymptomLogModal(\''+fd(today)+'\')">+ log today\'s symptoms</button>'+
+  '</div>';
+  var monthCards='';
+  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates);
+  var yearGrid='<div class="pd-year-grid">'+monthCards+'</div>';
+  var todayLog=getPeriodSymptomLog(fd(today));
+  var insight=computePatternInsight();
+  var insightHtml='';
+  if(insight){
+    var keys=_pdSymKey();
+    insightHtml='<div class="pd-insight">'+
+      '<div style="font-weight:600;margin-bottom:4px">pattern detected</div>'+
+      '<div style="color:var(--text2)">you often experience these in the days before your period:</div>'+
+      '<div class="pd-insight-chips">'+insight.map(function(k){return '<span class="pd-insight-chip">'+(keys[k]||k)+'</span>';}).join('')+'</div>'+
+    '</div>';
+  }
+  panel.innerHTML=
+    heroHtml+
+    yearHdr+
+    yearGrid+
+    '<div class="pd-bottom">'+
+      '<div>'+renderTodayLogCard(fd(today),todayLog)+insightHtml+'</div>'+
+      '<div>'+renderCycleHistory()+'</div>'+
+    '</div>';
+}
+
 // ── SIDEBAR ───────────────────────────────────────────────────────────
 function renderSidebar(){
   const sc=document.getElementById('sidebar-body');
@@ -1723,6 +2159,9 @@ function startFresh(){
 function startApp(){
   DATA.slots={};
   if(!DATA.spendLog) DATA.spendLog={};
+  if(!DATA.period) DATA.period={enabled:false,entries:[],symptomLogs:[],defaultLength:5};
+  if(!DATA.period.symptomLogs) DATA.period.symptomLogs=[];
+  if(!DATA.period.entries) DATA.period.entries=[];
   // migrate old spend format {raw,val} → plain number
   Object.keys(DATA.spend||{}).forEach(function(dk){
     var sp=DATA.spend[dk];

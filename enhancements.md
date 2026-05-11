@@ -902,85 +902,48 @@ Migration: `if(!DATA.period) DATA.period={enabled:false,entries:[],symptomLogs:[
 
 ---
 
-**Primary view — Year strip (the main ask)**
+**Layout** (final design based on mockup):
 
-A dedicated "period" nav tab. Default view is the **year strip**, not a month calendar.
+1. **Status hero** — 3-column card at top: Cycle Status · Next Period · Cycle Stats (last 6)
+2. **12-month year grid** — 4×3 grid of month mini-calendars, nav ← year → to change year
+   - Each month card: month name + cycle length info, 7-col day grid
+   - Day states: period (pink filled), period start (dark pink), predicted (dashed outline), today (outline), symptom-logged (tiny dot)
+   - Click any day → log/edit period modal
+3. **Bottom row** — two columns:
+   - Left: Today's log card — flow level quick-chips + symptom summary + "log / edit symptoms" button
+   - Right: Cycle history bar chart (last 6 cycles)
+4. **Pattern insight card** — shown below today card once ≥3 cycles have symptom data in pre-period window
 
-Layout — two sections stacked:
+**Data model** — `DATA.period`:
+```js
+{
+  enabled: false,
+  defaultLength: 5,
+  entries: [{ id, start: "YYYY-MM-DD", length: N }],
+  symptomLogs: [{ id, date, time, flow, symptoms: [...keys] }]
+}
+```
 
-**1. Year strip** (top):
-- One row per year shown (current year + 1 prior year minimum; scroll or nav to see more)
-- Each row: year label on left, then a continuous 365-day bar
-- Period days filled with accent pink block; non-period days transparent
-- Start of each period: slightly darker leading edge or dot
-- Predicted window for next period: dashed outline block on the bar
-- Hovering/clicking a period block opens the edit modal for that entry
-- Clicking an empty day on the bar opens the "log new period" modal with that date pre-filled
+**Symptom categories and keys** (SYMPTOM_CATS constant in code):
+- **Mood**: mood_swings, irritability, sadness, crying_easily, anxiety, emotional_sensitivity, low_motivation, brain_fog
+- **Pain**: stomach_cramps, lower_abdominal_pain, back_pain, headache, migraine, breast_pain, pelvic_heaviness, body_aches, muscle_aches, joint_aches, leg_pain, shoulder_stiffness, neck_stiffness, jaw_pain, chest_tightness, heart_palpitations, skin_sensitivity, body_sore
+- **Physical**: fatigue, sleepiness, insomnia, difficulty_waking, bloating, gas, diarrhea, constipation, frequent_bowel, nausea, food_cravings, food_cravings_specific, appetite_changes, increased_appetite, acne, dry_skin, oily_skin, hair_loss, dizziness, lightheadedness, hot_flashes, cold_hands_feet, swelling, weight_fluctuation, clumsiness, sneezing, chills, feeling_feverish, mild_fever, malaise, acid_reflux, gum_sensitivity
 
-**2. Stats + log panel** (below strip):
-- **Status hero** (always visible at the top):
-  - "X days since your last period" (or "your period started X days ago" if currently in one)
-  - "next period in ~X days (est. [date range])" — prediction based on last 6 cycles' min/max
-  - "in window now" if today falls inside the predicted range
-- Cycle stats: shortest / average / longest (last 6 cycles)
-- Entry log table (reverse chronological): start date · duration · edit button
+**Flow levels** (FLOW_LEVELS): none, spotting, light, medium, heavy — single-select per day
 
-**3. Symptom log** (separate card below stats):
-- Chronological list of logged symptoms: date · time · symptom chips
-- "+ log symptoms" button — opens symptom picker modal (see below)
-- Pattern insight (shown once 2–3 months of symptom data exist): e.g. "you often log [cramps, fatigue] 1–3 days before your period starts" — derived by looking at symptom logs that fall in the N days before each recorded period start
+**Period logging modal**: start date pre-filled from click, duration input, delete if editing.
 
-**Secondary view — Month calendar** (reachable via a toggle button in the period tab):
-- Standard month grid; period days highlighted; click any day to log
-- Same as the branch implementation but kept as a secondary mode
+**Symptom logging modal**: full chip picker organized by category (Mood / Pain / Physical) in a scrollable inner pane + flow single-select at top. One log entry per date (upsert by date). Time field records when last updated.
 
----
+**Settings**: enable/disable toggle + default duration input — in existing settings modal under "Period Tracker" section.
 
-**Period logging modal** (open from year strip or month calendar):
-- Title: "log period" or "edit entry"
-- Start date (date input, pre-filled from click)
-- Duration in days (number input, default = `defaultLength`, range 1–14)
-- Delete button if editing existing entry
-- Save updates `DATA.period.entries` and calls `autoSave()`
+**Prediction**: based on last 6 cycles' min/max gap from the most recent start date. Shown as dashed circles in the month grid and as an estimated date range in the status hero.
 
-**Symptom logging modal** (open from "+ log symptoms" or from any day on the calendar):
-- Date: date input (default today)
-- Time: time input (default current time — this is the timestamp)
-- Symptom picker: grid of pill/chip buttons, one per symptom key; tap to toggle selected (highlighted in accent); multiple can be selected at once
-- Save appends to `DATA.period.symptomLogs` with `{id, date, time, symptoms:[...]}`
-- Symptom list: **user will provide the final list** — placeholder list in code until then
+**Pattern insight algorithm**: for each period start, look back 7 days for symptom logs; count frequency of each symptom key; surface keys present in ≥50% of pre-period windows; require ≥3 periods with at least one symptom log in their window.
 
----
+**Quick-toggle**: flow and symptoms on the today card save immediately to `DATA.period.symptomLogs` (upsert) without opening the modal.
 
-**Settings modal addition:**
-- Checkbox: "enable period tracker" — shows/hides the nav button
-- Number input: "default duration (days)" — updates `DATA.period.defaultLength`
-
----
-
-**What to reuse from the branch:**
-- CSS class names and styles (`.pd-*`) — they're well-structured
-- `getPeriodEntries()`, `periodCycles()`, `periodStats()`, `periodWindow()`, `periodActiveDays()` helper functions
-- The modal structure
-
-**What to build fresh:**
-- Year strip renderer (the branch has no year view)
-- Symptom picker modal + symptom log card + pattern insight logic
-- Prediction based on last 6 cycles only (branch uses all-time)
-- Status hero ("X days since last period", "next period in ~X days")
-- Keep the bug #57 spendLog fix intact — do NOT copy the branch's `startApp()` which removed it
-
-**Pattern insight algorithm (simple):**
-- For each recorded period start date, look back N days (e.g. 7 days)
-- Collect all symptomLog entries in that window
-- Count frequency of each symptom key across all periods
-- If a symptom appears in ≥50% of pre-period windows, surface it as a pattern
-- Show: "you often feel [chip] [chip] in the days before your period"
-- Only show once there are ≥3 period entries with symptom logs in their pre-window
-
----
-
-**Scope** — medium. Year strip is new work; rest can be adapted from branch.
+**Scope** — ✅ implemented.
 
 ---
 
@@ -1046,4 +1009,4 @@ Layout — two sections stacked:
 | 56 | Savings — Collapsible Currencies and Compact Government Bonds | ✅ |
 | 57 | Bug Fix — Spend Log Breakdown Missing After JSON Reload | ✅ |
 | 57b | Bug Fix — Week View Shows `+` Instead of Total for Imported LOG_CATS | ✅ |
-| 58 | Period Tracker — Year Strip + Symptom Log | 📋 spec |
+| 58 | Period Tracker — Year Strip + Symptom Log | ✅ |
