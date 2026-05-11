@@ -947,6 +947,91 @@ Migration: `if(!DATA.period) DATA.period={enabled:false,entries:[],symptomLogs:[
 
 ---
 
+## 59. Period Tracker — Travel-Aware Prediction
+
+Surface a warning when travel events from `DATA.events` overlap with or fall near the predicted period window, and optionally adjust the prediction to account for travel-related delays.
+
+**Context:** Travel stress commonly delays periods. The lifeOS events data already has a travel category (color `#D1B36A`). If the user has logged travel near their predicted window, they should be warned. If there's historical data showing their period ran late during travel cycles, that can be factored into the prediction range.
+
+---
+
+**Implementation plan:**
+
+**Step 1 — Extract travel events from DATA.events**
+
+Travel events are identified by color `#D1B36A` (the travel palette entry). Collect all `{date, text}` travel events from `DATA.events` by iterating all date keys and filtering by color:
+
+```js
+function getTravelDates() {
+  var TRAVEL_COLOR = '#D1B36A';
+  var dates = [];
+  Object.keys(DATA.events).forEach(function(dk) {
+    (DATA.events[dk] || []).forEach(function(e) {
+      if (e.color === TRAVEL_COLOR) dates.push(dk);
+    });
+  });
+  return new Set(dates); // set of "YYYY-MM-DD" strings
+}
+```
+
+**Step 2 — Detect travel overlap with predicted window**
+
+After computing `periodWindow()`, check if any travel date falls within a ±7-day buffer around the window (to catch travel that begins just before or ends just after):
+
+```js
+function getTravelNearWindow() {
+  var win = periodWindow();
+  if (!win) return null;
+  var buffer = 7;
+  var from = new Date(win.earliest); from.setDate(from.getDate() - buffer);
+  var to   = new Date(win.latest);   to.setDate(to.getDate() + buffer);
+  var travelDates = getTravelDates();
+  var hits = [];
+  var cur = new Date(from);
+  while (cur <= to) {
+    if (travelDates.has(fd(cur))) hits.push(fd(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return hits.length ? hits : null;
+}
+```
+
+**Step 3 — Historical travel delay calculation**
+
+For each past period entry, check if there were travel events in the 14 days before the period started (late-luteal phase). Compare those cycle lengths against cycles with no nearby travel:
+
+- travel cycles: cycle lengths where travel appeared in the 14 days before period start
+- normal cycles: all other cycle lengths
+- delay = avg(travel cycles) − avg(normal cycles)
+- If delay > 0 and at least 2 travel cycles exist, surface it
+
+**Step 4 — Display in the status hero**
+
+Add a callout card between the status hero and the year grid (only shown when travel is detected near the window):
+
+```
+✈ You have travel logged near your predicted window (Jun 3–8).
+  In past cycles with nearby travel, your period averaged +X days later.
+  Adjusted estimate: Jun 15–21.
+```
+
+- If < 2 historical travel cycles: show the warning only ("travel detected near your window — periods sometimes run late")
+- If ≥ 2 historical travel cycles: also show the adjusted range
+
+**Step 5 — Adjusted prediction (optional display)**
+
+The adjusted range adds the calculated delay to both `earliest` and `latest` from `periodWindow()`. It is shown as a secondary estimate in the callout — the main status hero still shows the unadjusted prediction so the user can compare.
+
+---
+
+**What NOT to do:**
+- Do not overwrite the main prediction — show the adjustment as a separate note only
+- Do not invent a delay if there's no travel data or only 1 travel cycle
+
+**Scope** — small-to-medium. No new data model changes needed; reads existing `DATA.events`.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -1010,3 +1095,4 @@ Migration: `if(!DATA.period) DATA.period={enabled:false,entries:[],symptomLogs:[
 | 57 | Bug Fix — Spend Log Breakdown Missing After JSON Reload | ✅ |
 | 57b | Bug Fix — Week View Shows `+` Instead of Total for Imported LOG_CATS | ✅ |
 | 58 | Period Tracker — Year Strip + Symptom Log | ✅ |
+| 59 | Period Tracker — Travel-Aware Prediction | 📋 spec |
