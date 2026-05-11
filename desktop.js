@@ -1339,14 +1339,14 @@ function renderFinance(panel,y,m){
     '<div class="fin-wrap">'+
       '<div class="fin-hero">'+
         '<div>'+
-          '<div class="fin-hero-lab">Balance · '+MONTHS[m]+' '+y+'</div>'+
-          '<div class="fin-hero-bal" style="color:'+balColor+'">¥'+t.balance.toLocaleString()+'</div>'+
-          '<div class="fin-hero-delta'+(delta>0?' up':delta<0?' dn':'')+'">'+
+          '<div class="fin-hero-label">Balance · '+MONTHS[m]+' '+y+'</div>'+
+          '<div class="fin-hero-balance" style="color:'+balColor+'">¥'+t.balance.toLocaleString()+'</div>'+
+          '<div class="fin-hero-delta'+(delta>0?' up':delta<0?' down':'')+'">'+
             (delta!==0?(delta>0?'+':'')+'¥'+Math.abs(delta).toLocaleString()+' vs '+MS[p1.m]:'no prior data')+
           '</div>'+
         '</div>'+
         '<div>'+
-          '<div class="fin-hero-lab">6-month trend</div>'+
+          '<div class="fin-hero-label">6-month trend</div>'+
           '<svg class="fin-spark" viewBox="0 0 200 60" height="46" preserveAspectRatio="none">'+
             '<path d="'+spPath+'" fill="none" stroke="'+spColor+'" stroke-width="1.5"/>'+
             '<path d="'+spFill+'" fill="'+spSoft+'" opacity=".6"/>'+
@@ -1356,7 +1356,7 @@ function renderFinance(panel,y,m){
           '</div>'+
         '</div>'+
         '<div>'+
-          '<div class="fin-hero-lab">Income ¥'+t.income.toLocaleString()+' → distribution</div>'+
+          '<div class="fin-hero-label">Income ¥'+t.income.toLocaleString()+' → distribution</div>'+
           '<div class="fin-prop">'+
             (t.income>0?
               '<i style="width:'+pCo+'%;background:var(--c-transport)" title="Commute ¥'+t.commute.toLocaleString()+'"></i>'+
