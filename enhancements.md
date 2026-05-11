@@ -1037,6 +1037,44 @@ The callout identifies which travel events triggered it (event text + dates) and
 
 ---
 
+## 60. Apple Health Period Import Script
+
+A standalone Python script (`apple_health_period_to_lifeos.py`) that converts an Apple Health export into lifeOS period entries.
+
+**How to get the export:**
+1. iPhone → Health app → profile picture → Export All Health Data
+2. AirDrop the `.zip` to Mac, unzip → `export.xml` is inside
+
+**What the script does:**
+1. Parses `export.xml` for `HKCategoryTypeIdentifierMenstrualFlow` records
+2. Groups consecutive days with flow > 0 into period entries `{start, length}`
+3. Maps Apple flow values to lifeOS flow levels:
+   - `HKCategoryValueMenstrualFlowUnspecified` → `light`
+   - `HKCategoryValueMenstrualFlowLight` → `light`
+   - `HKCategoryValueMenstrualFlowMedium` → `medium`
+   - `HKCategoryValueMenstrualFlowHeavy` → `heavy`
+4. Outputs a `lifeOS-period-import.json` file containing just the `period` block — ready to merge into an existing lifeOS save file
+
+**Usage:**
+```
+python3 apple_health_period_to_lifeos.py export.xml
+# outputs: lifeOS-period-import.json
+```
+
+**Merging into lifeOS:**
+Load your existing save in lifeOS, then the script output can either be:
+- Merged manually (open both JSONs, copy `period.entries` across), or
+- A future merge tool handles it automatically
+
+**Notes:**
+- Script is local-only, gitignored like `merge.html`
+- Does not overwrite existing lifeOS period entries — outputs a separate file for manual review
+- Symptom logs from Apple Health (if any) are not imported — Apple stores these differently and they don't map cleanly to lifeOS symptom keys
+
+**Scope** — small. Standalone script, no changes to app.js.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -1101,3 +1139,4 @@ The callout identifies which travel events triggered it (event text + dates) and
 | 57b | Bug Fix — Week View Shows `+` Instead of Total for Imported LOG_CATS | ✅ |
 | 58 | Period Tracker — Year Strip + Symptom Log | ✅ |
 | 59 | Period Tracker — Travel-Aware Prediction | 📋 spec |
+| 60 | Apple Health Period Import Script | 📋 spec |
