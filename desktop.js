@@ -1791,9 +1791,10 @@ function renderPeriodStatusHero(){
   }
   var col3='<div class="pd-hero-label">CYCLE STATS'+(st&&st.sigma>3?' · <span style="color:var(--accent)">irregular</span>':'')+'</div>';
   if(st){
+    var sigmaLabel=st.sigma<=2?'low':st.sigma>3?'high':'';
     col3+='<div class="pd-hero-big">'+st.med+'</div>'+
       '<div class="pd-hero-sub">median days · range '+st.min+'–'+st.max+'</div>'+
-      '<div class="pd-hero-sub">σ '+st.sigma+'</div>';
+      '<div class="pd-hero-sub">σ '+st.sigma+(sigmaLabel?' · '+sigmaLabel:'')+'</div>';
   }else{
     col3+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see stats</div>';
   }
