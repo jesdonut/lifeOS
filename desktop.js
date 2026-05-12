@@ -1635,7 +1635,7 @@ function renderPeriodStatusHero(){
   }else{
     col2+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see prediction</div>';
   }
-  var col3='<div class="pd-hero-label">CYCLE STATS · LAST 6 MONTHS</div>';
+  var col3='<div class="pd-hero-label">CYCLE STATS</div>';
   if(st){
     col3+='<div class="pd-hero-big">'+st.med+'</div>'+
       '<div class="pd-hero-sub">median days · range '+st.min+'–'+st.max+'</div>';
