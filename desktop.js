@@ -1758,7 +1758,7 @@ function pdDayClick(dk){
 function renderPeriodStatusHero(){
   var entries=getPeriodEntries();
   if(!entries.length){
-    return '<div class="pd-hero"><div style="font-size:var(--fs-xs);color:var(--text3);grid-column:1/-1">no periods logged yet — click any day to start tracking</div></div>';
+    return '<div class="pd-hero"><div style="font-size:var(--fs-xs);color:var(--text3)">no periods logged yet — click any day to start tracking</div></div>';
   }
   var last=entries[entries.length-1];
   var lastStart=new Date(last.start+'T00:00:00');
@@ -1766,42 +1766,40 @@ function renderPeriodStatusHero(){
   var daysSince=Math.round((today-lastStart)/86400000);
   var currentlyOn=today>=lastStart&&today<=lastEnd;
   var win=periodWindow();var st=periodStats();
-  var col1='<div class="pd-hero-label">CYCLE STATUS</div>';
-  if(currentlyOn){
-    col1+='<div class="pd-hero-big">Day '+(daysSince+1)+'</div><div class="pd-hero-sub">of your period</div>';
-  }else{
-    col1+='<div class="pd-hero-big">Day '+(daysSince+1)+'</div><div class="pd-hero-sub">cycle '+entries.length+'</div>';
-  }
-  var col2='<div class="pd-hero-label">NEXT PERIOD</div>';
+  // row 1: cycle day
+  var r1big='Day '+(daysSince+1);
+  var r1meta=currentlyOn?'of your period':'cycle '+entries.length;
+  // row 2: next period
+  var r2big,r2meta;
   if(win){
     var daysUntil=Math.round((win.earliest-today)/86400000);
     var inWindow=today>=win.earliest&&today<=win.latest;
     if(inWindow){
-      col2+='<div class="pd-hero-big" style="color:var(--accent)">in window</div>'+
-        '<div class="pd-hero-sub">est. '+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+' – '+MS[win.latest.getMonth()]+' '+win.latest.getDate()+'</div>';
+      r2big='<span style="color:var(--accent)">in window</span>';
+      r2meta='est. '+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+' – '+MS[win.latest.getMonth()]+' '+win.latest.getDate();
     }else if(daysUntil>0){
-      col2+='<div class="pd-hero-big">'+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+'</div>'+
-        '<div class="pd-hero-sub">in ~'+daysUntil+' days (est. thru '+MS[win.latest.getMonth()]+' '+win.latest.getDate()+')</div>';
+      r2big=MS[win.earliest.getMonth()]+' '+win.earliest.getDate();
+      r2meta='next period · in ~'+daysUntil+' days · est. thru '+MS[win.latest.getMonth()]+' '+win.latest.getDate();
     }else{
-      col2+='<div class="pd-hero-big" style="color:var(--accent)">overdue</div>'+
-        '<div class="pd-hero-sub">window passed '+Math.abs(daysUntil)+' days ago</div>';
+      r2big='<span style="color:var(--accent)">overdue</span>';
+      r2meta='window passed '+Math.abs(daysUntil)+' days ago';
     }
-  }else{
-    col2+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see prediction</div>';
-  }
-  var col3='<div class="pd-hero-label">CYCLE STATS'+(st&&st.sigma>3?' · <span style="color:var(--accent)">irregular</span>':'')+'</div>';
+  }else{r2big='—';r2meta='log 2+ periods to see prediction';}
+  // row 3: stats
+  var r3big,r3meta;
   if(st){
     var sigmaLabel=st.sigma<=2?'low':st.sigma>3?'high':'';
-    col3+='<div class="pd-hero-big">'+st.med+'</div>'+
-      '<div class="pd-hero-sub">median days · range '+st.min+'–'+st.max+'</div>'+
-      '<div class="pd-hero-sub">σ '+st.sigma+(sigmaLabel?' · '+sigmaLabel:'')+'</div>';
-  }else{
-    col3+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see stats</div>';
-  }
+    r3big=st.med+'d';
+    r3meta='median · range '+st.min+'–'+st.max+'d · σ '+st.sigma+(sigmaLabel?' · '+sigmaLabel:'');
+  }else{r3big='—';r3meta='log 2+ periods to see stats';}
+  var sigmaWarn=st&&st.sigma>3?' · <span style="color:var(--accent)">irregular</span>':'';
   return '<div class="pd-hero">'+
-    '<div class="pd-hero-col">'+col1+'</div>'+
-    '<div class="pd-hero-col">'+col2+'</div>'+
-    '<div class="pd-hero-col">'+col3+'</div>'+
+    '<div class="pd-hero-label">CYCLE STATUS'+sigmaWarn+'</div>'+
+    '<div class="cycle-stat-list">'+
+      '<div class="cycle-stat-row"><div class="cycle-stat-big">'+r1big+'</div><div class="cycle-stat-meta">'+r1meta+'</div></div>'+
+      '<div class="cycle-stat-row"><div class="cycle-stat-big">'+r2big+'</div><div class="cycle-stat-meta">'+r2meta+'</div></div>'+
+      '<div class="cycle-stat-row"><div class="cycle-stat-big">'+r3big+'</div><div class="cycle-stat-meta">'+r3meta+'</div></div>'+
+    '</div>'+
   '</div>';
 }
 function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive){
@@ -1867,7 +1865,7 @@ function renderCycleHistory(travelDates){
     var barLen=c.cycleLen||(win?Math.round((win.earliest-new Date(c.e.start+'T00:00:00'))/86400000):c.e.length||(DATA.period.defaultLength||5));
     var pct=Math.min(100,barLen/maxLen*100);
     var periodPct=Math.min(100,((c.e.length||(DATA.period.defaultLength||5))/barLen*100));
-    var label='start '+MS[c.d.getMonth()]+' '+c.d.getDate();
+    var label=MS[c.d.getMonth()]+' '+c.d.getDate();
     var lenLabel=c.cycleLen?c.cycleLen+'d':(isLast&&win?'~'+Math.round((win.earliest-new Date(c.e.start+'T00:00:00'))/86400000)+'d est':'—');
     var predBarPct=isLast&&win?Math.min(100,Math.round((win.latest-new Date(c.e.start+'T00:00:00'))/86400000)/maxLen*100):0;
     var hasTravelNear=false;
@@ -1875,7 +1873,7 @@ function renderCycleHistory(travelDates){
       var startMs=c.d.getTime();
       for(var b=1;b<=14;b++){var bd=new Date(startMs-b*86400000);if(travelDates.has(fd(bd))){hasTravelNear=true;break;}}
     }
-    return '<div class="pd-ch-row">'+
+    return '<div class="pd-ch-row'+(isLast?' pd-ch-row-est':'')+'">'+
       '<span class="pd-ch-label'+(isLast?' pd-ch-pred-label':'')+'">'+label+(isLast?'?':'')+'</span>'+
       '<div class="pd-ch-bar-wrap">'+
         (predBarPct?'<div class="pd-ch-bar-pred" style="width:'+predBarPct+'%"></div>':'')+
