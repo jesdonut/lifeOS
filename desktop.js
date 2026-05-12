@@ -1500,6 +1500,81 @@ function computePatternInsight(){
   var frequent=Object.keys(symptomCount).filter(function(s){return symptomCount[s]>=threshold;});
   return frequent.length?frequent:null;
 }
+function getBbtBaseline(){
+  var entries=getPeriodEntries();if(!entries.length)return null;
+  var lastStart=new Date(entries[entries.length-1].start+'T00:00:00');
+  var fw=getFertileWindow();
+  var preOvEnd=fw?new Date(fw.ovulationDay+'T00:00:00'):new Date(lastStart);preOvEnd.setDate(preOvEnd.getDate()+13);
+  var logs=(DATA.period.symptomLogs||[]).filter(function(l){
+    var d=new Date(l.date+'T00:00:00');
+    return l.bbt&&d>=lastStart&&d<preOvEnd;
+  });
+  if(!logs.length)return null;
+  return logs.reduce(function(s,l){return s+l.bbt;},0)/logs.length;
+}
+function pdSaveBbt(dk,val){
+  var v=parseFloat(val);
+  if(!DATA.period.symptomLogs)DATA.period.symptomLogs=[];
+  var idx=DATA.period.symptomLogs.findIndex(function(l){return l.date===dk;});
+  var now=new Date();var ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  if(idx>=0){DATA.period.symptomLogs[idx].bbt=isNaN(v)?null:v;}
+  else if(!isNaN(v))DATA.period.symptomLogs.push({id:uid(),date:dk,time:ts,flow:'',symptoms:[],bbt:v});
+  autoSave();
+}
+function renderBbtChart(){
+  var entries=getPeriodEntries();if(!entries.length)return '';
+  var last=entries[entries.length-1];
+  var lastStart=new Date(last.start+'T00:00:00');
+  var logs=(DATA.period.symptomLogs||[]).filter(function(l){
+    return l.bbt&&new Date(l.date+'T00:00:00')>=lastStart;
+  }).sort(function(a,b){return a.date<b.date?-1:1;});
+  if(!logs.length)return '';
+  var baseline=getBbtBaseline();
+  var fw=getFertileWindow();var ovDay=fw?fw.ovulationDay:null;
+  var temps=logs.map(function(l){return l.bbt;});
+  var minT=Math.min.apply(null,temps)-0.3;var maxT=Math.max.apply(null,temps)+0.3;
+  var W=400,H=80,padL=32,padR=8,padT=8,padB=18;
+  var innerW=W-padL-padR,innerH=H-padT-padB;
+  function tx(i){return padL+i/(Math.max(logs.length-1,1))*innerW;}
+  function ty(v){return padT+innerH-(v-minT)/(maxT-minT)*innerH;}
+  var hasShift=false;
+  var shiftIdx=-1;
+  if(baseline){
+    var above=0;
+    for(var i=0;i<logs.length;i++){
+      if(logs[i].bbt>=baseline+0.2)above++;else above=0;
+      if(above>=3){shiftIdx=i-2;hasShift=true;break;}
+    }
+  }
+  var polyPre='',polyPost='';
+  logs.forEach(function(l,i){
+    var x=tx(i),y=ty(l.bbt);
+    var isPost=hasShift&&i>=shiftIdx;
+    if(isPost)polyPost+=(polyPost?'L':'M')+x+' '+y;
+    else polyPre+=(polyPre?'L':'M')+x+' '+y;
+  });
+  var baselineLine=baseline?'<line x1="'+padL+'" y1="'+ty(baseline)+'" x2="'+(W-padR)+'" y2="'+ty(baseline)+'" stroke="#c4a0aa" stroke-width="1" stroke-dasharray="3,3"/>':'';
+  var dots=logs.map(function(l,i){
+    var isPost=hasShift&&i>=shiftIdx;
+    return '<circle cx="'+tx(i)+'" cy="'+ty(l.bbt)+'" r="3" fill="'+(isPost?'#7a5cb8':'var(--accent)')+'" />';
+  }).join('');
+  var yLabels=[minT+0.15,maxT-0.15].map(function(v){return '<text x="'+(padL-4)+'" y="'+(ty(v)+4)+'" text-anchor="end" font-size="9" fill="#c4a0aa">'+v.toFixed(1)+'</text>';}).join('');
+  var xLabels=logs.map(function(l,i){
+    if(i%(Math.ceil(logs.length/4))!==0&&i!==logs.length-1)return '';
+    var d=new Date(l.date+'T00:00:00');
+    return '<text x="'+tx(i)+'" y="'+(H-2)+'" text-anchor="middle" font-size="9" fill="#c4a0aa">'+MS[d.getMonth()]+' '+d.getDate()+'</text>';
+  }).join('');
+  var title='BBT THIS CYCLE'+(hasShift?' · THERMAL SHIFT DETECTED':'');
+  return '<div class="pd-bbt-chart">'+
+    '<div class="pd-section-title">'+title+'</div>'+
+    '<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="display:block;overflow:visible">'+
+      baselineLine+
+      (polyPre?'<path d="'+polyPre+'" fill="none" stroke="var(--accent)" stroke-width="1.5"/>':'')+
+      (polyPost?'<path d="'+polyPost+'" fill="none" stroke="#7a5cb8" stroke-width="1.5"/>':'')+
+      dots+yLabels+xLabels+
+    '</svg>'+
+  '</div>';
+}
 function getTravelDates(){
   var TRAVEL_COLOR='#D1B36A';
   var dates=[];
@@ -1722,10 +1797,20 @@ function renderPeriodStatusHero(){
   }else{
     col3+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see stats</div>';
   }
+  var todayBbt=getPeriodSymptomLog(fd(today));
+  var bbtBaseline=getBbtBaseline();
+  var col4='<div class="pd-hero-label">BASAL TEMP · TODAY</div>';
+  if(todayBbt&&todayBbt.bbt){
+    col4+='<div class="pd-hero-big">'+todayBbt.bbt.toFixed(2)+'</div>';
+    if(bbtBaseline){var delta=Math.round((todayBbt.bbt-bbtBaseline)*100)/100;col4+='<div class="pd-hero-sub" style="color:'+(delta>0?'var(--accent)':'var(--text3)')+'">'+( delta>0?'+':'')+delta+' vs baseline</div>';}
+  }else{
+    col4+='<div class="pd-hero-big" style="color:var(--text3)">—</div>';
+  }
   return '<div class="pd-hero">'+
     '<div class="pd-hero-col">'+col1+'</div>'+
     '<div class="pd-hero-col">'+col2+'</div>'+
     '<div class="pd-hero-col">'+col3+'</div>'+
+    '<div class="pd-hero-col">'+col4+'</div>'+
   '</div>';
 }
 function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive){
@@ -1846,12 +1931,23 @@ function renderTodayLogCard(dk,log,insightHtml){
     '<div class="pd-sym-cat-label" style="margin-top:6px">PAIN</div><div class="pd-chip-row">'+makeChipRow('pain',TODAY_CARD_SYMS.pain,false)+'</div>'+
     '<div class="pd-sym-cat-label" style="margin-top:6px">PHYSICAL</div><div class="pd-chip-row">'+makeChipRow('physical',TODAY_CARD_SYMS.physical,false)+'</div>'+
     '<div class="pd-sym-cat-label" style="margin-top:6px">DISCHARGE</div><div class="pd-chip-row">'+makeChipRow('discharge',TODAY_CARD_SYMS.discharge,true)+'</div>';
+  var curBbt=log&&log.bbt?log.bbt:'';
+  var bbtBaseline=getBbtBaseline();
+  var bbtDeltaHtml='';
+  if(curBbt&&bbtBaseline){var delta=Math.round((curBbt-bbtBaseline)*100)/100;bbtDeltaHtml='<span style="color:'+(delta>0?'var(--accent)':'var(--text3)')+'"> '+(delta>0?'+':'')+delta+' vs baseline</span>';}
+  var bbtHtml='<div class="pd-sym-cat-label" style="margin-top:6px">BASAL TEMP</div>'+
+    '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'+
+      '<input id="pd-bbt-input" type="number" step="0.01" min="35" max="42" placeholder="36.00" value="'+curBbt+'" style="width:80px;border:1px solid var(--border);border-radius:var(--radius);padding:4px 8px;font-family:var(--mono);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none" onblur="pdSaveBbt(\''+dk+'\',this.value)">'+
+      '<span style="font-size:var(--fs-xs);color:var(--text3)">°C</span>'+
+      bbtDeltaHtml+
+    '</div>';
   var activeDays=periodActiveDaysSet();var isTodayPeriod=activeDays.has(dk);
   return '<div class="pd-today-card">'+
     '<div class="pd-today-header">TODAY · <strong>'+dlabel+'</strong></div>'+
     cycleDayHtml+
     flowHtml+
     symRows+
+    bbtHtml+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center">'+
       '<button class="pd-more-sym-link" onclick="openSymptomLogModal(\''+dk+'\')">more symptoms →</button>'+
       (!isTodayPeriod?'<button class="modal-btn" style="font-size:var(--fs-xs)" onclick="openPeriodModal(\''+dk+'\')">log period</button>':'')+
@@ -1901,11 +1997,13 @@ function renderPeriod(panel,y){
       '<div class="pd-insight-chips">'+insight.map(function(k){return '<span class="pd-insight-chip">'+(keys[k]||k)+'</span>';}).join('')+'</div>'+
     '</div>';
   }
+  var bbtChartHtml=renderBbtChart();
   panel.innerHTML=
     '<div class="pd-stats-row">'+
       heroHtml+
-      renderCycleHistory(travelDates)+
+      (bbtChartHtml||renderCycleHistory(travelDates))+
     '</div>'+
+    (bbtChartHtml?renderCycleHistory(travelDates):'')+
     travelCallout+
     renderTodayLogCard(fd(today),todayLog,insightHtml)+
     yearHdr+

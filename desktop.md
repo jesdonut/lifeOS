@@ -1293,7 +1293,7 @@ The full modal (opened via "more symptoms →") remains unchanged and shows all 
 | 60 | Apple Health Period Import Script | ✅ (_local only) |
 | 61 | Bug Fix — Period: Past Day Click Opens Symptom Modal | ✅ |
 | 62 | Period — Fertile Window + Ovulation Day Visualization | ✅ |
-| 63 | Period — BBT (Basal Body Temperature) Tracking | 📋 spec |
+| 63 | Period — BBT (Basal Body Temperature) Tracking | ✅ |
 | 64 | Period — Discharge Symptom Category | ✅ |
 | 65 | Period — Travel Day Visualization in Month Grid | ✅ |
 | 66 | Period — Today Card Full Symptom Panel | ✅ |
