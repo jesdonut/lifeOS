@@ -390,19 +390,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .pd-insight-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .pd-insight-chip{background:var(--accent);color:#fff;border-radius:12px;padding:2px 8px;font-size:var(--fs-xs);font-weight:500}
 /* period today card — dashboard layout */
-.period-dashboard-grid{display:flex;flex-direction:column;gap:12px}
-.period-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px 20px}
-.period-header-card{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.period-dashboard-grid{display:flex;flex-direction:column;gap:10px}
+.period-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px 16px}
+.period-header-card{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .pd-tc-header-left{flex:1;min-width:0}
-.log-period-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--sans);font-size:var(--fs-sm);font-weight:600;padding:8px 20px;min-width:140px;max-width:180px;flex-shrink:0;white-space:nowrap}
+.log-period-btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--sans);font-size:var(--fs-xs);font-weight:600;padding:6px 14px;min-width:110px;max-width:150px;flex-shrink:0;white-space:nowrap}
 .log-period-btn:hover{opacity:.85}
-.pd-tc-title{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:600;font-family:var(--mono);margin-bottom:10px}
-.symptom-group{margin-top:10px}
-.symptom-group-title{font-size:var(--fs-xs);color:var(--text3);margin-bottom:5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
-.cycle-details-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:10px}
+.pd-tc-title{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:600;font-family:var(--mono);margin-bottom:8px}
+.symptom-group{margin-top:8px}
+.symptom-group-title{font-size:var(--fs-xs);color:var(--text3);margin-bottom:4px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em}
+.cycle-details-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+.pd-row-2{display:grid;grid-template-columns:2fr 3fr;gap:10px}
+.pd-row-3{display:grid;grid-template-columns:2fr 1fr;gap:10px;align-items:start}
 .pd-pattern-card .pd-insight{font-size:var(--fs-xs);color:var(--text)}
 @media(max-width:700px){
   .period-header-card{flex-direction:column;align-items:flex-start}
-  .log-period-btn{width:100%;min-width:0;max-width:none}
-  .cycle-details-grid{grid-template-columns:1fr}
+  .log-period-btn{width:100%!important;min-width:0;max-width:none}
+  .cycle-details-grid,.pd-row-2,.pd-row-3{grid-template-columns:1fr}
 }

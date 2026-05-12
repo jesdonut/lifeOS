@@ -1950,11 +1950,14 @@ function renderTodayLogCard(dk,log,insightHtml){
       '<div><div class="symptom-group-title">Basal temp</div>'+bbtInput+'</div>'+
     '</div>'+
   '</div>';
-  // pattern detected card
-  var patternCard=insightHtml?'<div class="period-card pd-pattern-card">'+insightHtml+'</div>':'';
+  // row 2: flow + cycle details; row 3: symptoms (+ pattern if available)
+  var row2='<div class="pd-row-2">'+flowCard+cycleDetailsCard+'</div>';
+  var row3=insightHtml
+    ?'<div class="pd-row-3">'+symptomsCard+'<div class="period-card pd-pattern-card">'+insightHtml+'</div></div>'
+    :symptomsCard;
   return '<div class="pd-today-card">'+
     '<div class="period-dashboard-grid">'+
-      headerCard+flowCard+symptomsCard+cycleDetailsCard+patternCard+
+      headerCard+row2+row3+
     '</div>'+
   '</div>';
 }
