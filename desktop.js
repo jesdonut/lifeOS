@@ -1768,38 +1768,49 @@ function renderPeriodStatusHero(){
   var win=periodWindow();var st=periodStats();
   // row 1: cycle day
   var r1big='Day '+(daysSince+1);
-  var r1meta=currentlyOn?'of your period':'cycle '+entries.length;
+  var r1meta=currentlyOn?'Currently on your period':'Current cycle';
+  var r1note='cycle '+entries.length;
   // row 2: next period
-  var r2big,r2meta;
+  var r2big,r2meta,r2note='';
   if(win){
     var daysUntil=Math.round((win.earliest-today)/86400000);
     var inWindow=today>=win.earliest&&today<=win.latest;
     if(inWindow){
       r2big='<span style="color:var(--accent)">in window</span>';
-      r2meta='est. '+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+' – '+MS[win.latest.getMonth()]+' '+win.latest.getDate();
+      r2meta='Your period is expected now';
+      r2note='est. '+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+' – '+MS[win.latest.getMonth()]+' '+win.latest.getDate();
     }else if(daysUntil>0){
       r2big=MS[win.earliest.getMonth()]+' '+win.earliest.getDate();
-      r2meta='next period · in ~'+daysUntil+' days · est. thru '+MS[win.latest.getMonth()]+' '+win.latest.getDate();
+      r2meta='Next period expected in ~'+daysUntil+(daysUntil===1?' day':' days');
+      r2note='Estimated end: '+MS[win.latest.getMonth()]+' '+win.latest.getDate();
     }else{
       r2big='<span style="color:var(--accent)">overdue</span>';
-      r2meta='window passed '+Math.abs(daysUntil)+' days ago';
+      r2meta='Window passed '+Math.abs(daysUntil)+' days ago';
     }
-  }else{r2big='—';r2meta='log 2+ periods to see prediction';}
+  }else{r2big='—';r2meta='Log 2+ periods to see prediction';}
   // row 3: stats
-  var r3big,r3meta;
+  var r3big,r3meta,r3note='',footerNote='';
   if(st){
-    var sigmaLabel=st.sigma<=2?'low':st.sigma>3?'high':'';
-    r3big=st.med+'d';
-    r3meta='median · range '+st.min+'–'+st.max+'d · σ '+st.sigma+(sigmaLabel?' · '+sigmaLabel:'');
-  }else{r3big='—';r3meta='log 2+ periods to see stats';}
+    r3big=st.med+' days';
+    r3meta='Your usual cycle length';
+    r3note='Recent range: '+st.min+'–'+st.max+' days · Usually varies by ~'+Math.round(st.sigma)+' days';
+    footerNote='<div class="cycle-stat-footer">Cycles can naturally vary a little. Your recent cycles are around '+st.min+'–'+st.max+' days.</div>';
+  }else{r3big='—';r3meta='Log 2+ periods to see stats';}
   var sigmaWarn=st&&st.sigma>3?' · <span style="color:var(--accent)">irregular</span>':'';
+  function makeRow(big,meta,note){
+    return '<div class="cycle-stat-row">'+
+      '<div class="cycle-stat-big">'+big+'</div>'+
+      '<div class="cycle-stat-meta"><div>'+meta+'</div>'+(note?'<div class="cycle-stat-note">'+note+'</div>':'')+
+      '</div></div>';
+  }
   return '<div class="pd-hero">'+
     '<div class="pd-section-title">CYCLE STATUS'+sigmaWarn+'</div>'+
     '<div class="cycle-stat-list">'+
-      '<div class="cycle-stat-row"><div class="cycle-stat-big">'+r1big+'</div><div class="cycle-stat-meta">'+r1meta+'</div></div>'+
-      '<div class="cycle-stat-row"><div class="cycle-stat-big">'+r2big+'</div><div class="cycle-stat-meta">'+r2meta+'</div></div>'+
-      '<div class="cycle-stat-row"><div class="cycle-stat-big">'+r3big+'</div><div class="cycle-stat-meta">'+r3meta+'</div></div>'+
+      makeRow(r1big,r1meta,r1note)+
+      makeRow(r2big,r2meta,r2note)+
+      makeRow(r3big,r3meta,r3note)+
     '</div>'+
+    footerNote+
   '</div>';
 }
 function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive){
