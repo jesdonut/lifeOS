@@ -1894,7 +1894,9 @@ function renderTodayLogCard(dk,log,insightHtml){
   var selFlow=log?(log.flow||''):'';
   var selSymptoms=log?(log.symptoms||[]):[];
   var entries=getPeriodEntries();var lastEntry=entries.length?entries[entries.length-1]:null;
-  var cycleDayHtml='';
+  var activeDays=periodActiveDaysSet();var isTodayPeriod=activeDays.has(dk);
+  // header card
+  var headerLeft='<div class="pd-today-header">TODAY · <strong>'+dlabel+'</strong></div>';
   if(lastEntry){
     var dayNum=Math.round((today-new Date(lastEntry.start+'T00:00:00'))/86400000)+1;
     var fw2=getFertileWindow();
@@ -1903,49 +1905,57 @@ function renderTodayLogCard(dk,log,insightHtml){
       if(dk===fw2.ovulationDay)fertBadge=' <span class="pd-fertile-badge pd-fertile-badge-ov">OVULATION</span>';
       else if(fw2.fertileDays.has(dk))fertBadge=' <span class="pd-fertile-badge">FERTILE WINDOW</span>';
     }
-    cycleDayHtml='<div class="pd-today-cycleday">Day <span style="color:var(--accent)">'+dayNum+'</span> of cycle'+fertBadge+'</div>';
+    headerLeft+='<div class="pd-today-cycleday">Day <span style="color:var(--accent)">'+dayNum+'</span> of cycle'+fertBadge+'</div>';
   }
+  var logPeriodBtn=!isTodayPeriod?'<button class="log-period-btn" onclick="openPeriodModal(\''+dk+'\')">log period</button>':'';
+  var headerCard='<div class="period-card period-header-card"><div class="pd-tc-header-left">'+headerLeft+'</div>'+logPeriodBtn+'</div>';
+  // flow card
   var keys=_pdSymKey();
-  var flowHtml='<div class="pd-sym-cat-label">FLOW</div>'+
+  var flowCard='<div class="period-card">'+
+    '<div class="pd-tc-title">FLOW</div>'+
     '<div class="pd-chip-row">'+
     FLOW_LEVELS.map(function(f){
       return '<button type="button" class="pd-chip'+(selFlow===f.key?' pd-chip-active':'')+'" onclick="pdQuickFlow(\''+dk+'\',\''+f.key+'\')">'+f.en+'</button>';
-    }).join('')+'</div>';
+    }).join('')+
+    '</div></div>';
   function makeChipRow(catKey,arr,isSingle){
     return arr.map(function(k){
       var fn=isSingle?'pdQuickDischarge':'pdQuickSym';
       return '<button type="button" class="pd-chip'+(selSymptoms.indexOf(k)>=0?' pd-chip-active':'')+'" onclick="'+fn+'(\''+dk+'\',\''+k+'\')">'+( keys[k]||k)+'</button>';
     }).join('');
   }
+  // symptoms card — grouped by Mood / Pain / Physical
+  var symptomsCard='<div class="period-card">'+
+    '<div class="pd-tc-title">SYMPTOMS</div>'+
+    '<div class="symptom-group"><div class="symptom-group-title">Mood</div><div class="pd-chip-row">'+makeChipRow('mood',TODAY_CARD_SYMS.mood,false)+'</div></div>'+
+    '<div class="symptom-group"><div class="symptom-group-title">Pain</div><div class="pd-chip-row">'+makeChipRow('pain',TODAY_CARD_SYMS.pain,false)+'</div></div>'+
+    '<div class="symptom-group"><div class="symptom-group-title">Physical</div><div class="pd-chip-row">'+makeChipRow('physical',TODAY_CARD_SYMS.physical,false)+'</div></div>'+
+    '<div style="margin-top:12px"><button class="pd-more-sym-link" onclick="openSymptomLogModal(\''+dk+'\')">more symptoms →</button></div>'+
+  '</div>';
+  // bbt
   var curBbt=log&&log.bbt?log.bbt:'';
   var bbtBaseline=getBbtBaseline();
   var bbtDeltaHtml='';
   if(curBbt&&bbtBaseline){var delta=Math.round((curBbt-bbtBaseline)*100)/100;bbtDeltaHtml='<span style="color:'+(delta>0?'var(--accent)':'var(--text3)')+'"> '+(delta>0?'+':'')+delta+' vs baseline</span>';}
-  var bbtHtml='<div class="pd-sym-cat-label" style="margin-top:6px">BASAL TEMP</div>'+
-    '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'+
-      '<input id="pd-bbt-input" type="number" step="0.01" min="35" max="42" placeholder="36.00" value="'+curBbt+'" style="width:80px;border:1px solid var(--border);border-radius:var(--radius);padding:4px 8px;font-family:var(--mono);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none" onblur="pdSaveBbt(\''+dk+'\',this.value)">'+
-      '<span style="font-size:var(--fs-xs);color:var(--text3)">°C</span>'+
-      bbtDeltaHtml+
-    '</div>';
-  var col1=
-    flowHtml+
-    '<div class="pd-sym-cat-label" style="margin-top:8px">MOOD</div><div class="pd-chip-row">'+makeChipRow('mood',TODAY_CARD_SYMS.mood,false)+'</div>'+
-    '<div class="pd-sym-cat-label" style="margin-top:6px">PAIN</div><div class="pd-chip-row">'+makeChipRow('pain',TODAY_CARD_SYMS.pain,false)+'</div>';
-  var col2=
-    '<div class="pd-sym-cat-label">PHYSICAL</div><div class="pd-chip-row">'+makeChipRow('physical',TODAY_CARD_SYMS.physical,false)+'</div>'+
-    '<div class="pd-sym-cat-label" style="margin-top:6px">DISCHARGE</div><div class="pd-chip-row">'+makeChipRow('discharge',TODAY_CARD_SYMS.discharge,true)+'</div>'+
-    bbtHtml;
-  var symRows='<div class="pd-today-cols"><div class="pd-today-col">'+col1+'</div><div class="pd-today-col">'+col2+'</div></div>';
-  var activeDays=periodActiveDaysSet();var isTodayPeriod=activeDays.has(dk);
-  return '<div class="pd-today-card">'+
-    '<div class="pd-today-header">TODAY · <strong>'+dlabel+'</strong></div>'+
-    cycleDayHtml+
-    symRows+
-    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center">'+
-      '<button class="pd-more-sym-link" onclick="openSymptomLogModal(\''+dk+'\')">more symptoms →</button>'+
-      (!isTodayPeriod?'<button class="modal-btn" style="font-size:var(--fs-xs)" onclick="openPeriodModal(\''+dk+'\')">log period</button>':'')+
+  var bbtInput='<div style="display:flex;align-items:center;gap:6px;margin-top:6px">'+
+    '<input id="pd-bbt-input" type="number" step="0.01" min="35" max="42" placeholder="36.00" value="'+curBbt+'" style="width:80px;border:1px solid var(--border);border-radius:var(--radius);padding:4px 8px;font-family:var(--mono);font-size:var(--fs-sm);background:var(--surface2);color:var(--text);outline:none" onblur="pdSaveBbt(\''+dk+'\',this.value)">'+
+    '<span style="font-size:var(--fs-xs);color:var(--text3)">°C</span>'+
+    bbtDeltaHtml+
+  '</div>';
+  // cycle details card — discharge + bbt side by side
+  var cycleDetailsCard='<div class="period-card">'+
+    '<div class="pd-tc-title">CYCLE DETAILS</div>'+
+    '<div class="cycle-details-grid">'+
+      '<div><div class="symptom-group-title">Discharge</div><div class="pd-chip-row" style="margin-top:6px">'+makeChipRow('discharge',TODAY_CARD_SYMS.discharge,true)+'</div></div>'+
+      '<div><div class="symptom-group-title">Basal temp</div>'+bbtInput+'</div>'+
     '</div>'+
-    (insightHtml||'')+
+  '</div>';
+  // pattern detected card
+  var patternCard=insightHtml?'<div class="period-card pd-pattern-card">'+insightHtml+'</div>':'';
+  return '<div class="pd-today-card">'+
+    '<div class="period-dashboard-grid">'+
+      headerCard+flowCard+symptomsCard+cycleDetailsCard+patternCard+
+    '</div>'+
   '</div>';
 }
 function renderPeriod(panel,y){

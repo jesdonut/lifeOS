@@ -1226,6 +1226,30 @@ The full modal (opened via "more symptoms →") remains unchanged and shows all 
 
 ---
 
+---
+
+## 67. Period — Today Card Dashboard Refactor
+
+Refactor the today card into a polished dashboard of compact inner cards rather than one flat container.
+
+**Layout:**
+- Outer wrapper (`.pd-today-card`) — pale pink accent-light background, accent border, 20px border-radius.
+- Inner vertical stack (`.period-dashboard-grid`) — flex column, 12px gap.
+- Each section is a `.period-card` — white surface background, subtle border, 20px border-radius, 18px 20px padding.
+
+**Cards (top to bottom):**
+1. **Header card** (`.period-header-card`) — date label + "Day X of cycle" on left; "log period" button (`.log-period-btn`) pinned right; button is 140–180px, not full-width.
+2. **Flow card** — FLOW label + chip row.
+3. **Symptoms card** — SYMPTOMS label + three grouped sub-sections (Mood / Pain / Physical) with `.symptom-group` + `.symptom-group-title`; "more symptoms →" link at bottom.
+4. **Cycle details card** — CYCLE DETAILS label + two-column grid (`.cycle-details-grid`): Discharge chips left, Basal temp input right.
+5. **Pattern detected card** (`.pd-pattern-card`) — wraps existing `insightHtml`; compact, no extra background since `.period-card` provides it.
+
+**Selected chip style** — filled accent background, white text, bold (`.pd-chip-active`).
+
+**Responsive** — under 700px: header stacks vertically, log period button goes full-width, cycle details grid becomes single column.
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -1297,3 +1321,4 @@ The full modal (opened via "more symptoms →") remains unchanged and shows all 
 | 64 | Period — Discharge Symptom Category | ✅ |
 | 65 | Period — Travel Day Visualization in Month Grid | ✅ |
 | 66 | Period — Today Card Full Symptom Panel | ✅ |
+| 67 | Period — Today Card Dashboard Refactor | ✅ |
