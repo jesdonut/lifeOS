@@ -1794,7 +1794,7 @@ function renderPeriodStatusHero(){
   }else{r3big='—';r3meta='log 2+ periods to see stats';}
   var sigmaWarn=st&&st.sigma>3?' · <span style="color:var(--accent)">irregular</span>':'';
   return '<div class="pd-hero">'+
-    '<div class="pd-hero-label">CYCLE STATUS'+sigmaWarn+'</div>'+
+    '<div class="pd-section-title">CYCLE STATUS'+sigmaWarn+'</div>'+
     '<div class="cycle-stat-list">'+
       '<div class="cycle-stat-row"><div class="cycle-stat-big">'+r1big+'</div><div class="cycle-stat-meta">'+r1meta+'</div></div>'+
       '<div class="cycle-stat-row"><div class="cycle-stat-big">'+r2big+'</div><div class="cycle-stat-meta">'+r2meta+'</div></div>'+
