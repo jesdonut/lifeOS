@@ -64,6 +64,11 @@ const SYMPTOM_CATS=[
     {key:'feeling_feverish',en:'Feverish'},{key:'mild_fever',en:'Mild fever'},{key:'malaise',en:'Malaise'},
     {key:'acid_reflux',en:'Acid reflux'},{key:'gum_sensitivity',en:'Gum sensitive'},
   ]},
+  {key:'discharge',label:'Discharge',singleSelect:true,items:[
+    {key:'discharge_dry',en:'dry'},{key:'discharge_sticky',en:'sticky'},
+    {key:'discharge_creamy',en:'creamy'},{key:'discharge_watery',en:'watery'},
+    {key:'discharge_eggwhite',en:'egg-white'},
+  ]},
 ];
 const FLOW_LEVELS=[
   {key:'none',en:'none'},{key:'spotting',en:'spotting'},{key:'light',en:'light'},
@@ -1430,7 +1435,9 @@ function periodStats(){
   var min=sorted[0],max=sorted[sorted.length-1];
   var avg=c.reduce(function(s,v){return s+v;},0)/c.length;
   var med=sorted[Math.floor(sorted.length/2)];
-  return{min:min,max:max,avg:Math.round(avg*10)/10,med:med,count:c.length};
+  var variance=c.reduce(function(s,v){return s+(v-avg)*(v-avg);},0)/c.length;
+  var sigma=Math.round(Math.sqrt(variance)*10)/10;
+  return{min:min,max:max,avg:Math.round(avg*10)/10,med:med,sigma:sigma,count:c.length};
 }
 function periodWindow(){
   var e=getPeriodEntries();if(!e.length)return null;
@@ -1456,6 +1463,13 @@ function periodWindowDaysSet(){
   while(cur<=win.latest){set.add(fd(cur));cur.setDate(cur.getDate()+1);}
   return set;
 }
+function getFertileWindow(){
+  var win=periodWindow();if(!win)return null;
+  var ov=new Date(win.earliest);ov.setDate(ov.getDate()-14);
+  var fertile=new Set();
+  for(var i=4;i>=0;i--){var d=new Date(ov);d.setDate(d.getDate()-i);fertile.add(fd(d));}
+  return {ovulationDay:fd(ov),fertileDays:fertile};
+}
 function getPeriodSymptomLog(dateKey){
   return(DATA.period.symptomLogs||[]).find(function(l){return l.date===dateKey;})||null;
 }
@@ -1479,6 +1493,14 @@ function computePatternInsight(){
   var threshold=windowCount*0.5;
   var frequent=Object.keys(symptomCount).filter(function(s){return symptomCount[s]>=threshold;});
   return frequent.length?frequent:null;
+}
+function getTravelDates(){
+  var TRAVEL_COLOR='#D1B36A';
+  var dates=[];
+  Object.keys(DATA.events||{}).forEach(function(dk){
+    (DATA.events[dk]||[]).forEach(function(e){if(e.color===TRAVEL_COLOR)dates.push(dk);});
+  });
+  return new Set(dates);
 }
 function openPeriodModal(dateKey){
   var entries=getPeriodEntries();
@@ -1529,7 +1551,8 @@ function openSymptomLogModal(dateKey){
     return '<div class="pd-sym-cat-label">'+cat.label+'</div>'+
       '<div class="pd-chip-row">'+
         cat.items.map(function(s){
-          return '<button type="button" class="pd-chip'+(selSymptoms.includes(s.key)?' pd-chip-active':'')+'" id="psy-'+s.key+'" onclick="pdToggleSym(\''+s.key+'\')">'+s.en+'</button>';
+          var fn=cat.singleSelect?'pdToggleDischarge':'pdToggleSym';
+          return '<button type="button" class="pd-chip'+(selSymptoms.includes(s.key)?' pd-chip-active':'')+'" id="psy-'+s.key+'" onclick="'+fn+'(\''+s.key+'\')">'+s.en+'</button>';
         }).join('')+
       '</div>';
   }).join('');
@@ -1552,6 +1575,12 @@ function pdToggleFlow(key){
   if(el)el.classList.toggle('pd-chip-active');
 }
 function pdToggleSym(key){var el=document.getElementById('psy-'+key);if(el)el.classList.toggle('pd-chip-active');}
+function pdToggleDischarge(key){
+  var el=document.getElementById('psy-'+key);
+  var wasActive=el&&el.classList.contains('pd-chip-active');
+  SYMPTOM_CATS.find(function(c){return c.key==='discharge';}).items.forEach(function(s){var e=document.getElementById('psy-'+s.key);if(e)e.classList.remove('pd-chip-active');});
+  if(el&&!wasActive)el.classList.add('pd-chip-active');
+}
 function saveSymptomLog(dateKey){
   var symptoms=[];
   SYMPTOM_CATS.forEach(function(cat){
@@ -1635,10 +1664,11 @@ function renderPeriodStatusHero(){
   }else{
     col2+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see prediction</div>';
   }
-  var col3='<div class="pd-hero-label">CYCLE STATS</div>';
+  var col3='<div class="pd-hero-label">CYCLE STATS'+(st&&st.sigma>3?' · <span style="color:var(--accent)">irregular</span>':'')+'</div>';
   if(st){
     col3+='<div class="pd-hero-big">'+st.med+'</div>'+
-      '<div class="pd-hero-sub">median days · range '+st.min+'–'+st.max+'</div>';
+      '<div class="pd-hero-sub">median days · range '+st.min+'–'+st.max+'</div>'+
+      '<div class="pd-hero-sub">σ '+st.sigma+'</div>';
   }else{
     col3+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see stats</div>';
   }
@@ -1648,45 +1678,52 @@ function renderPeriodStatusHero(){
     '<div class="pd-hero-col">'+col3+'</div>'+
   '</div>';
 }
-function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap){
+function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay){
   var dim=new Date(y,m+1,0).getDate();
   var dowOffset=(new Date(y,m,1).getDay()+6)%7;
   var entries=getPeriodEntries();
-  var cycleLabel='';
+  var cycleLabel='';var hasPeriodActivity=false;var hasTravel=false;
   var startInMonth=entries.find(function(e){var d=new Date(e.start+'T00:00:00');return d.getFullYear()===y&&d.getMonth()===m;});
   if(startInMonth){
+    hasPeriodActivity=true;
     var idx=entries.findIndex(function(e){return e.start===startInMonth.start;});
     if(idx>=0&&idx<entries.length-1){
       var gap=Math.round((new Date(entries[idx+1].start+'T00:00:00')-new Date(startInMonth.start+'T00:00:00'))/86400000);
       cycleLabel='cycle '+gap+'d';
     }
   }else{
-    for(var dd=1;dd<=dim;dd++){if(winDays.has(fd(new Date(y,m,dd)))){cycleLabel='predicted';break;}}
+    for(var dd=1;dd<=dim;dd++){if(winDays.has(fd(new Date(y,m,dd)))){hasPeriodActivity=true;cycleLabel='predicted';break;}}
   }
+  if(travelDates){for(var td=1;td<=dim;td++){if(travelDates.has(fd(new Date(y,m,td)))){hasTravel=true;break;}}}
   var dayHdrs=DAYS.map(function(d){return '<div class="pd-mc-dh">'+d[0]+'</div>';}).join('');
   var cells='';
   for(var i=0;i<dowOffset;i++)cells+='<div class="pd-mc-blank"></div>';
   for(var d=1;d<=dim;d++){
     var dk=fd(new Date(y,m,d));
     var isPeriod=activeDays.has(dk),isStart=startDays.has(dk),isPred=!isPeriod&&winDays.has(dk);
-    var isTod=dk===fd(today),hasSym=symDates.has(dk);
+    var isFertile=!isPeriod&&fertileDays&&fertileDays.has(dk),isOv=!isPeriod&&dk===ovulationDay;
+    var isTod=dk===fd(today),hasSym=symDates.has(dk),isTravel=travelDates&&travelDates.has(dk);
     var isBeforeMin=y<2017;
     var cls='pd-mc-day';
     if(isBeforeMin)cls+=' pd-mc-disabled';
     else if(isPeriod){if(isStart)cls+=' pd-mc-start';else{var fl=(flowMap&&flowMap[dk]);cls+=fl?' pd-mc-flow-'+fl:' pd-mc-period';}}
     else if(isPred)cls+=' pd-mc-pred';
+    else if(isOv)cls+=' pd-mc-ovulation';
+    else if(isFertile)cls+=' pd-mc-fertile';
     if(isTod)cls+=' pd-mc-today';
-    cells+='<div class="'+cls+'"'+(isBeforeMin?'':' onclick="pdDayClick(\''+dk+'\')"')+'>'+d+(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'')+'</div>';
+    var dots=(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'')+(isTravel&&!isBeforeMin?'<div class="pd-mc-travel-dot"></div>':'');
+    cells+='<div class="'+cls+'"'+(isBeforeMin?'':' onclick="pdDayClick(\''+dk+'\')"')+'>'+d+dots+'</div>';
   }
+  var cycleLabelFull=cycleLabel+(cycleLabel&&hasTravel&&hasPeriodActivity?' · ✈':(!cycleLabel&&hasTravel&&hasPeriodActivity?'✈':''));
   return '<div class="pd-month-card">'+
     '<div class="pd-mc-header">'+
       '<span class="pd-mc-month">'+MONTHS[m]+'</span>'+
-      (cycleLabel?'<span class="pd-mc-cycle'+(cycleLabel==='predicted'?' pd-mc-cycle-pred':'')+'">'+cycleLabel+'</span>':'')+
+      (cycleLabelFull?'<span class="pd-mc-cycle'+(cycleLabel==='predicted'?' pd-mc-cycle-pred':'')+'">'+cycleLabelFull+'</span>':'')+
     '</div>'+
     '<div class="pd-mc-grid">'+dayHdrs+cells+'</div>'+
   '</div>';
 }
-function renderCycleHistory(){
+function renderCycleHistory(travelDates){
   var entries=getPeriodEntries();
   if(!entries.length)return '<div class="pd-ch-empty">no entries yet</div>';
   var cycles=[];
@@ -1707,13 +1744,18 @@ function renderCycleHistory(){
     var label='start '+MS[c.d.getMonth()]+' '+c.d.getDate();
     var lenLabel=c.cycleLen?c.cycleLen+'d':(isLast&&win?'~'+Math.round((win.earliest-new Date(c.e.start+'T00:00:00'))/86400000)+'d est':'—');
     var predBarPct=isLast&&win?Math.min(100,Math.round((win.latest-new Date(c.e.start+'T00:00:00'))/86400000)/maxLen*100):0;
+    var hasTravelNear=false;
+    if(travelDates){
+      var startMs=c.d.getTime();
+      for(var b=1;b<=14;b++){var bd=new Date(startMs-b*86400000);if(travelDates.has(fd(bd))){hasTravelNear=true;break;}}
+    }
     return '<div class="pd-ch-row">'+
       '<span class="pd-ch-label'+(isLast?' pd-ch-pred-label':'')+'">'+label+(isLast?'?':'')+'</span>'+
       '<div class="pd-ch-bar-wrap">'+
         (predBarPct?'<div class="pd-ch-bar-pred" style="width:'+predBarPct+'%"></div>':'')+
         '<div class="pd-ch-bar" style="width:'+pct+'%"><div class="pd-ch-bar-period" style="width:'+periodPct+'%"></div></div>'+
       '</div>'+
-      '<span class="pd-ch-len'+(isLast?' pd-ch-pred-label':'')+'">'+lenLabel+'</span>'+
+      '<span class="pd-ch-len'+(isLast?' pd-ch-pred-label':'')+'">'+lenLabel+(hasTravelNear?' <span class="pd-ch-travel-icon">✈</span>':'')+'</span>'+
     '</div>';
   }).join('');
   return '<div class="pd-ch">'+
@@ -1729,7 +1771,13 @@ function renderTodayLogCard(dk,log,insightHtml){
   var cycleDayHtml='';
   if(lastEntry){
     var dayNum=Math.round((today-new Date(lastEntry.start+'T00:00:00'))/86400000)+1;
-    cycleDayHtml='<div class="pd-today-cycleday">Day <span style="color:var(--accent)">'+dayNum+'</span> of cycle</div>';
+    var fw2=getFertileWindow();
+    var fertBadge='';
+    if(fw2){
+      if(dk===fw2.ovulationDay)fertBadge=' <span class="pd-fertile-badge pd-fertile-badge-ov">OVULATION</span>';
+      else if(fw2.fertileDays.has(dk))fertBadge=' <span class="pd-fertile-badge">FERTILE WINDOW</span>';
+    }
+    cycleDayHtml='<div class="pd-today-cycleday">Day <span style="color:var(--accent)">'+dayNum+'</span> of cycle'+fertBadge+'</div>';
   }
   var keys=_pdSymKey();
   var flowHtml='<div class="pd-sym-cat-label">FLOW</div>'+
@@ -1760,16 +1808,23 @@ function renderPeriod(panel,y){
   var startDays=new Set(getPeriodEntries().map(function(e){return e.start;}));
   var symDates=new Set((DATA.period.symptomLogs||[]).map(function(l){return l.date;}));
   var flowMap={};(DATA.period.symptomLogs||[]).forEach(function(l){if(l.flow&&l.flow!=='none')flowMap[l.date]=l.flow;});
+  var travelDates=getTravelDates();
+  var fw=getFertileWindow();
+  var fertileDays=fw?fw.fertileDays:null;
+  var ovulationDay=fw?fw.ovulationDay:null;
   var heroHtml=renderPeriodStatusHero();
   var yearHdr='<div class="pd-year-hdr">'+
     '<div class="pd-legend">'+
       '<span class="pd-leg"><span class="pd-leg-sw pd-leg-period"></span>Period</span>'+
       '<span class="pd-leg"><span class="pd-leg-sw pd-leg-pred"></span>Predicted</span>'+
+      '<span class="pd-leg"><span class="pd-leg-sw pd-leg-fertile"></span>Fertile</span>'+
+      '<span class="pd-leg"><span class="pd-leg-sw pd-leg-ovulation"></span>Ovulation</span>'+
       '<span class="pd-leg"><span class="pd-leg-sym-dot"></span>Symptoms</span>'+
+      '<span class="pd-leg"><span class="pd-leg-travel-dot"></span>Travel</span>'+
     '</div>'+
   '</div>';
   var monthCards='';
-  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap);
+  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay);
   var yearGrid='<div class="pd-year-grid">'+monthCards+'</div>';
   var todayLog=getPeriodSymptomLog(fd(today));
   var insight=computePatternInsight();
@@ -1785,7 +1840,7 @@ function renderPeriod(panel,y){
   panel.innerHTML=
     '<div class="pd-stats-row">'+
       heroHtml+
-      renderCycleHistory()+
+      renderCycleHistory(travelDates)+
     '</div>'+
     renderTodayLogCard(fd(today),todayLog,insightHtml)+
     yearHdr+
