@@ -57,7 +57,7 @@ const SYMPTOM_CATS=[
     {key:'diarrhea',en:'Diarrhea'},{key:'constipation',en:'Constipation'},{key:'frequent_bowel',en:'Frequent bowel'},
     {key:'nausea',en:'Nausea'},{key:'food_cravings',en:'Cravings'},{key:'food_cravings_specific',en:'Sweet/salty/carbs'},
     {key:'appetite_changes',en:'Appetite changes'},{key:'increased_appetite',en:'Very hungry'},
-    {key:'acne',en:'Acne'},{key:'dry_skin',en:'Dry skin'},{key:'oily_skin',en:'Oily skin'},{key:'hair_loss',en:'Hair loss'},
+    {key:'acne',en:'Acne'},{key:'dry_skin',en:'Dry skin'},{key:'oily_skin',en:'Oily skin'},{key:'itchy',en:'Itchy'},{key:'hair_loss',en:'Hair loss'},
     {key:'dizziness',en:'Dizzy'},{key:'lightheadedness',en:'Lightheaded'},{key:'hot_flashes',en:'Hot flashes'},
     {key:'cold_hands_feet',en:'Cold extremities'},{key:'swelling',en:'Swelling'},{key:'weight_fluctuation',en:'Weight change'},
     {key:'clumsiness',en:'Clumsy'},{key:'sneezing',en:'Sneezing'},{key:'chills',en:'Chills'},
@@ -73,7 +73,7 @@ const SYMPTOM_CATS=[
 const TODAY_CARD_SYMS={
   mood:['mood_swings','irritability','sadness','anxiety','low_motivation','brain_fog'],
   pain:['stomach_cramps','back_pain','headache','breast_pain','body_aches'],
-  physical:['fatigue','bloating','nausea','food_cravings','insomnia'],
+  physical:['fatigue','bloating','nausea','food_cravings','insomnia','itchy'],
   discharge:['discharge_dry','discharge_sticky','discharge_creamy','discharge_watery','discharge_eggwhite']
 };
 const FLOW_LEVELS=[
