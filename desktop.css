@@ -330,6 +330,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .pd-mc-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border-radius:50%;position:relative;font-family:var(--mono);color:var(--text2)}
 .pd-mc-day:hover{background:var(--surface2)}
 .pd-mc-period{background:var(--accent-light)!important;color:var(--accent)!important;font-weight:600}
+.pd-mc-flow-spotting{background:#fde8ee!important;color:var(--accent)!important;font-weight:600}
+.pd-mc-flow-light{background:#f9c0cb!important;color:#8a2040!important;font-weight:600}
+.pd-mc-flow-medium{background:#f49aab!important;color:#fff!important;font-weight:600}
+.pd-mc-flow-heavy{background:#e86585!important;color:#fff!important;font-weight:700}
 .pd-mc-start{background:var(--accent)!important;color:#fff!important;font-weight:700}
 .pd-mc-pred{border:1px dashed var(--accent);color:var(--accent)}
 .pd-mc-today{outline:2px solid var(--text);outline-offset:-1px}

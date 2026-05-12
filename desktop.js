@@ -1648,7 +1648,7 @@ function renderPeriodStatusHero(){
     '<div class="pd-hero-col">'+col3+'</div>'+
   '</div>';
 }
-function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates){
+function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap){
   var dim=new Date(y,m+1,0).getDate();
   var dowOffset=(new Date(y,m,1).getDay()+6)%7;
   var entries=getPeriodEntries();
@@ -1673,7 +1673,7 @@ function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates){
     var isBeforeMin=y<2017;
     var cls='pd-mc-day';
     if(isBeforeMin)cls+=' pd-mc-disabled';
-    else if(isPeriod)cls+=(isStart?' pd-mc-start':' pd-mc-period');
+    else if(isPeriod){if(isStart)cls+=' pd-mc-start';else{var fl=(flowMap&&flowMap[dk]);cls+=fl?' pd-mc-flow-'+fl:' pd-mc-period';}}
     else if(isPred)cls+=' pd-mc-pred';
     if(isTod)cls+=' pd-mc-today';
     cells+='<div class="'+cls+'"'+(isBeforeMin?'':' onclick="pdDayClick(\''+dk+'\')"')+'>'+d+(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'')+'</div>';
@@ -1758,6 +1758,7 @@ function renderPeriod(panel,y){
   var winDays=periodWindowDaysSet();
   var startDays=new Set(getPeriodEntries().map(function(e){return e.start;}));
   var symDates=new Set((DATA.period.symptomLogs||[]).map(function(l){return l.date;}));
+  var flowMap={};(DATA.period.symptomLogs||[]).forEach(function(l){if(l.flow&&l.flow!=='none')flowMap[l.date]=l.flow;});
   var heroHtml=renderPeriodStatusHero();
   var yearHdr='<div class="pd-year-hdr">'+
     '<div class="pd-legend">'+
@@ -1768,7 +1769,7 @@ function renderPeriod(panel,y){
     '<button class="modal-btn ghost" style="font-size:var(--fs-xs)" onclick="openSymptomLogModal(\''+fd(today)+'\')">+ log today\'s symptoms</button>'+
   '</div>';
   var monthCards='';
-  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates);
+  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap);
   var yearGrid='<div class="pd-year-grid">'+monthCards+'</div>';
   var todayLog=getPeriodSymptomLog(fd(today));
   var insight=computePatternInsight();
