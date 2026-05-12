@@ -1926,11 +1926,15 @@ function renderTodayLogCard(dk,log,insightHtml){
       return '<button type="button" class="pd-chip'+(selSymptoms.indexOf(k)>=0?' pd-chip-active':'')+'" onclick="'+fn+'(\''+dk+'\',\''+k+'\')">'+( keys[k]||k)+'</button>';
     }).join('');
   }
-  var symRows=
+  var col1=
+    flowHtml+
     '<div class="pd-sym-cat-label" style="margin-top:8px">MOOD</div><div class="pd-chip-row">'+makeChipRow('mood',TODAY_CARD_SYMS.mood,false)+'</div>'+
-    '<div class="pd-sym-cat-label" style="margin-top:6px">PAIN</div><div class="pd-chip-row">'+makeChipRow('pain',TODAY_CARD_SYMS.pain,false)+'</div>'+
-    '<div class="pd-sym-cat-label" style="margin-top:6px">PHYSICAL</div><div class="pd-chip-row">'+makeChipRow('physical',TODAY_CARD_SYMS.physical,false)+'</div>'+
-    '<div class="pd-sym-cat-label" style="margin-top:6px">DISCHARGE</div><div class="pd-chip-row">'+makeChipRow('discharge',TODAY_CARD_SYMS.discharge,true)+'</div>';
+    '<div class="pd-sym-cat-label" style="margin-top:6px">PAIN</div><div class="pd-chip-row">'+makeChipRow('pain',TODAY_CARD_SYMS.pain,false)+'</div>';
+  var col2=
+    '<div class="pd-sym-cat-label">PHYSICAL</div><div class="pd-chip-row">'+makeChipRow('physical',TODAY_CARD_SYMS.physical,false)+'</div>'+
+    '<div class="pd-sym-cat-label" style="margin-top:6px">DISCHARGE</div><div class="pd-chip-row">'+makeChipRow('discharge',TODAY_CARD_SYMS.discharge,true)+'</div>'+
+    bbtHtml;
+  var symRows='<div class="pd-today-cols"><div class="pd-today-col">'+col1+'</div><div class="pd-today-col">'+col2+'</div></div>';
   var curBbt=log&&log.bbt?log.bbt:'';
   var bbtBaseline=getBbtBaseline();
   var bbtDeltaHtml='';
@@ -1945,9 +1949,7 @@ function renderTodayLogCard(dk,log,insightHtml){
   return '<div class="pd-today-card">'+
     '<div class="pd-today-header">TODAY · <strong>'+dlabel+'</strong></div>'+
     cycleDayHtml+
-    flowHtml+
     symRows+
-    bbtHtml+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center">'+
       '<button class="pd-more-sym-link" onclick="openSymptomLogModal(\''+dk+'\')">more symptoms →</button>'+
       (!isTodayPeriod?'<button class="modal-btn" style="font-size:var(--fs-xs)" onclick="openPeriodModal(\''+dk+'\')">log period</button>':'')+

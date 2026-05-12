@@ -371,6 +371,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .pd-chip-active{background:var(--accent-light)!important;border-color:var(--accent)!important;color:var(--accent)!important;font-weight:500}
 .pd-today-sym-summary{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px}
 .pd-more-sym-link{background:none;border:none;color:var(--text3);font-size:var(--fs-xs);cursor:pointer;padding:0;font-family:var(--sans);text-decoration:underline;text-underline-offset:2px}.pd-more-sym-link:hover{color:var(--text2)}
+.pd-today-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:8px}
+.pd-today-col{min-width:0}
 .pd-today-sym-chip{background:var(--accent-light);border:1px solid var(--accent);color:var(--accent);border-radius:12px;padding:2px 8px;font-size:var(--fs-xs)}
 .pd-ch{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
 .pd-bbt-chart{flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;padding-bottom:8px}
