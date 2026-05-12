@@ -1784,12 +1784,12 @@ function renderPeriod(panel,y){
   }
   panel.innerHTML=
     heroHtml+
-    yearHdr+
-    yearGrid+
     '<div class="pd-bottom">'+
       '<div>'+renderTodayLogCard(fd(today),todayLog)+insightHtml+'</div>'+
       '<div>'+renderCycleHistory()+'</div>'+
-    '</div>';
+    '</div>'+
+    yearHdr+
+    yearGrid;
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────
