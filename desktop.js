@@ -70,6 +70,12 @@ const SYMPTOM_CATS=[
     {key:'discharge_eggwhite',en:'egg-white'},
   ]},
 ];
+const TODAY_CARD_SYMS={
+  mood:['mood_swings','irritability','sadness','anxiety','low_motivation','brain_fog'],
+  pain:['stomach_cramps','back_pain','headache','breast_pain','body_aches'],
+  physical:['fatigue','bloating','nausea','food_cravings','insomnia'],
+  discharge:['discharge_dry','discharge_sticky','discharge_creamy','discharge_watery','discharge_eggwhite']
+};
 const FLOW_LEVELS=[
   {key:'none',en:'none'},{key:'spotting',en:'spotting'},{key:'light',en:'light'},
   {key:'medium',en:'medium'},{key:'heavy',en:'heavy'},
@@ -1617,6 +1623,22 @@ function pdQuickSym(dk,key){
   else DATA.period.symptomLogs.push({id:uid(),date:dk,time:ts,flow:'',symptoms:[key]});
   autoSave();render();
 }
+function pdQuickDischarge(dk,key){
+  if(!DATA.period.symptomLogs)DATA.period.symptomLogs=[];
+  var DKEYS=TODAY_CARD_SYMS.discharge;
+  var idx=DATA.period.symptomLogs.findIndex(function(l){return l.date===dk;});
+  var now=new Date();var ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  if(idx>=0){
+    var syms=DATA.period.symptomLogs[idx].symptoms||[];
+    var wasSelected=syms.indexOf(key)>=0;
+    syms=syms.filter(function(k){return DKEYS.indexOf(k)<0;});
+    if(!wasSelected)syms.push(key);
+    DATA.period.symptomLogs[idx].symptoms=syms;
+  }else{
+    DATA.period.symptomLogs.push({id:uid(),date:dk,time:ts,flow:'',symptoms:[key]});
+  }
+  autoSave();render();
+}
 function pdDayClick(dk){
   var entries=getPeriodEntries();
   var activeDays=periodActiveDaysSet();
@@ -1785,18 +1807,25 @@ function renderTodayLogCard(dk,log,insightHtml){
     FLOW_LEVELS.map(function(f){
       return '<button type="button" class="pd-chip'+(selFlow===f.key?' pd-chip-active':'')+'" onclick="pdQuickFlow(\''+dk+'\',\''+f.key+'\')">'+f.en+'</button>';
     }).join('')+'</div>';
-  var symSummary=selSymptoms.length
-    ?'<div class="pd-today-sym-summary">'+selSymptoms.map(function(k){return '<span class="pd-today-sym-chip">'+(keys[k]||k)+'</span>';}).join('')+'</div>'
-    :'<div style="font-size:var(--fs-xs);color:var(--text3);margin:6px 0 8px">no symptoms logged today</div>';
+  function makeChipRow(catKey,arr,isSingle){
+    return arr.map(function(k){
+      var fn=isSingle?'pdQuickDischarge':'pdQuickSym';
+      return '<button type="button" class="pd-chip'+(selSymptoms.indexOf(k)>=0?' pd-chip-active':'')+'" onclick="'+fn+'(\''+dk+'\',\''+k+'\')">'+( keys[k]||k)+'</button>';
+    }).join('');
+  }
+  var symRows=
+    '<div class="pd-sym-cat-label" style="margin-top:8px">MOOD</div><div class="pd-chip-row">'+makeChipRow('mood',TODAY_CARD_SYMS.mood,false)+'</div>'+
+    '<div class="pd-sym-cat-label" style="margin-top:6px">PAIN</div><div class="pd-chip-row">'+makeChipRow('pain',TODAY_CARD_SYMS.pain,false)+'</div>'+
+    '<div class="pd-sym-cat-label" style="margin-top:6px">PHYSICAL</div><div class="pd-chip-row">'+makeChipRow('physical',TODAY_CARD_SYMS.physical,false)+'</div>'+
+    '<div class="pd-sym-cat-label" style="margin-top:6px">DISCHARGE</div><div class="pd-chip-row">'+makeChipRow('discharge',TODAY_CARD_SYMS.discharge,true)+'</div>';
   var activeDays=periodActiveDaysSet();var isTodayPeriod=activeDays.has(dk);
   return '<div class="pd-today-card">'+
     '<div class="pd-today-header">TODAY · <strong>'+dlabel+'</strong></div>'+
     cycleDayHtml+
     flowHtml+
-    '<div class="pd-sym-cat-label" style="margin-top:10px">SYMPTOMS</div>'+
-    symSummary+
-    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+
-      '<button class="modal-btn ghost" style="font-size:var(--fs-xs)" onclick="openSymptomLogModal(\''+dk+'\')">log / edit symptoms</button>'+
+    symRows+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center">'+
+      '<button class="pd-more-sym-link" onclick="openSymptomLogModal(\''+dk+'\')">more symptoms →</button>'+
       (!isTodayPeriod?'<button class="modal-btn" style="font-size:var(--fs-xs)" onclick="openPeriodModal(\''+dk+'\')">log period</button>':'')+
     '</div>'+
     (insightHtml||'')+
