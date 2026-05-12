@@ -1867,7 +1867,7 @@ function renderCycleHistory(travelDates){
     if(i<entries.length-1)cycleLen=Math.round((new Date(entries[i+1].start+'T00:00:00')-d)/86400000);
     cycles.push({e:e,d:d,cycleLen:cycleLen});
   }
-  var show=cycles.slice(-6);var win=periodWindow();
+  var show=cycles.slice(-8);var win=periodWindow();
   var allLens=show.filter(function(c){return c.cycleLen;}).map(function(c){return c.cycleLen;});
   if(win){var predLen=Math.round((win.latest-new Date(show[show.length-1].e.start+'T00:00:00'))/86400000);allLens.push(predLen);}
   var maxLen=allLens.length?Math.max.apply(null,allLens):35;
@@ -1894,7 +1894,7 @@ function renderCycleHistory(travelDates){
     '</div>';
   }).join('');
   return '<div class="pd-ch">'+
-    '<div class="pd-section-title">LAST 6 MONTHS</div>'+
+    '<div class="pd-section-title">LAST 8 CYCLES</div>'+
     rows+'</div>';
 }
 function renderTodayLogCard(dk,log,insightHtml){
