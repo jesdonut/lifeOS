@@ -371,6 +371,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .pd-chip-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important;font-weight:700!important}
 .pd-today-sym-summary{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px}
 .pd-more-sym-link{background:none;border:none;color:var(--text3);font-size:var(--fs-xs);cursor:pointer;padding:0;font-family:var(--sans);text-decoration:underline;text-underline-offset:2px}.pd-more-sym-link:hover{color:var(--text2)}
+.pd-log-sym-btn{background:none;border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius);padding:5px 14px;font-size:var(--fs-xs);font-weight:600;font-family:var(--sans);cursor:pointer}.pd-log-sym-btn:hover{background:var(--accent-light)}
 .pd-today-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:8px}
 .pd-today-col{min-width:0}
 .pd-today-sym-chip{background:var(--accent-light);border:1px solid var(--accent);color:var(--accent);border-radius:12px;padding:2px 8px;font-size:var(--fs-xs)}

@@ -1928,7 +1928,7 @@ function renderTodayLogCard(dk,log,insightHtml){
     '<div class="symptom-group"><div class="symptom-group-title">Mood</div><div class="pd-chip-row">'+makeChipRow('mood',TODAY_CARD_SYMS.mood,false)+'</div></div>'+
     '<div class="symptom-group"><div class="symptom-group-title">Pain</div><div class="pd-chip-row">'+makeChipRow('pain',TODAY_CARD_SYMS.pain,false)+'</div></div>'+
     '<div class="symptom-group"><div class="symptom-group-title">Physical</div><div class="pd-chip-row">'+makeChipRow('physical',TODAY_CARD_SYMS.physical,false)+'</div></div>'+
-    '<div style="margin-top:12px"><button class="pd-more-sym-link" onclick="openSymptomLogModal(\''+dk+'\')">more symptoms →</button></div>'+
+    '<div style="margin-top:12px"><button class="pd-log-sym-btn" onclick="openSymptomLogModal(\''+dk+'\')">log symptoms</button></div>'+
   '</div>';
   // bbt
   var curBbt=log&&log.bbt?log.bbt:'';
