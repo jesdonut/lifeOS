@@ -1720,7 +1720,7 @@ function renderCycleHistory(){
     '<div class="pd-section-title">LAST 6 MONTHS</div>'+
     rows+'</div>';
 }
-function renderTodayLogCard(dk,log){
+function renderTodayLogCard(dk,log,insightHtml){
   var d=new Date(dk+'T00:00:00');
   var dlabel=MS[d.getMonth()].toUpperCase()+' '+d.getDate()+', '+d.getFullYear();
   var selFlow=log?(log.flow||''):'';
@@ -1751,6 +1751,7 @@ function renderTodayLogCard(dk,log){
       '<button class="modal-btn ghost" style="font-size:var(--fs-xs)" onclick="openSymptomLogModal(\''+dk+'\')">log / edit symptoms</button>'+
       (!isTodayPeriod?'<button class="modal-btn" style="font-size:var(--fs-xs)" onclick="openPeriodModal(\''+dk+'\')">log period</button>':'')+
     '</div>'+
+    (insightHtml||'')+
   '</div>';
 }
 function renderPeriod(panel,y){
@@ -1786,10 +1787,7 @@ function renderPeriod(panel,y){
       heroHtml+
       renderCycleHistory()+
     '</div>'+
-    '<div class="pd-today-section">'+
-      renderTodayLogCard(fd(today),todayLog)+
-      insightHtml+
-    '</div>'+
+    renderTodayLogCard(fd(today),todayLog,insightHtml)+
     yearHdr+
     yearGrid;
 }
