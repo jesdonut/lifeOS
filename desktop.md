@@ -1289,11 +1289,11 @@ The full modal (opened via "more symptoms →") remains unchanged and shows all 
 | 57 | Bug Fix — Spend Log Breakdown Missing After JSON Reload | ✅ |
 | 57b | Bug Fix — Week View Shows `+` Instead of Total for Imported LOG_CATS | ✅ |
 | 58 | Period Tracker — Year Strip + Symptom Log | ✅ |
-| 59 | Period Tracker — Travel-Aware Prediction | 📋 spec |
-| 60 | Apple Health Period Import Script | 📋 spec |
+| 59 | Period Tracker — Travel-Aware Prediction | ✅ |
+| 60 | Apple Health Period Import Script | ✅ (_local only) |
 | 61 | Bug Fix — Period: Past Day Click Opens Symptom Modal | ✅ |
-| 62 | Period — Fertile Window + Ovulation Day Visualization | 📋 spec |
+| 62 | Period — Fertile Window + Ovulation Day Visualization | ✅ |
 | 63 | Period — BBT (Basal Body Temperature) Tracking | 📋 spec |
-| 64 | Period — Discharge Symptom Category | 📋 spec |
-| 65 | Period — Travel Day Visualization in Month Grid | 📋 spec |
-| 66 | Period — Today Card Full Symptom Panel | 📋 spec |
+| 64 | Period — Discharge Symptom Category | ✅ |
+| 65 | Period — Travel Day Visualization in Month Grid | ✅ |
+| 66 | Period — Today Card Full Symptom Panel | ✅ |

@@ -1508,6 +1508,34 @@ function getTravelDates(){
   });
   return new Set(dates);
 }
+function getTravelAdjustedWindow(){
+  var travelDates=getTravelDates();
+  var entries=getPeriodEntries();
+  if(entries.length<5)return null;
+  var travelCycles=[],normalCycles=[];
+  for(var i=0;i<entries.length-1;i++){
+    var startMs=new Date(entries[i].start+'T00:00:00').getTime();
+    var hasTravel=false;
+    for(var b=1;b<=14;b++){if(travelDates.has(fd(new Date(startMs-b*86400000)))){hasTravel=true;break;}}
+    var cycleLen=Math.round((new Date(entries[i+1].start+'T00:00:00').getTime()-startMs)/86400000);
+    if(hasTravel)travelCycles.push(cycleLen);else normalCycles.push(cycleLen);
+  }
+  if(travelCycles.length<3||!normalCycles.length)return null;
+  var travelAvg=travelCycles.reduce(function(s,v){return s+v;},0)/travelCycles.length;
+  var normalAvg=normalCycles.reduce(function(s,v){return s+v;},0)/normalCycles.length;
+  var delay=Math.round(travelAvg-normalAvg);
+  if(delay<=0)return null;
+  var win=periodWindow();if(!win)return null;
+  var buffer=7;
+  var from=new Date(win.earliest);from.setDate(from.getDate()-buffer);
+  var to=new Date(win.latest);to.setDate(to.getDate()+buffer);
+  var hits=[];var cur=new Date(from);
+  while(cur<=to){if(travelDates.has(fd(cur)))hits.push(fd(cur));cur.setDate(cur.getDate()+1);}
+  if(!hits.length)return null;
+  var adjEarliest=new Date(win.earliest);adjEarliest.setDate(adjEarliest.getDate()+delay);
+  var adjLatest=new Date(win.latest);adjLatest.setDate(adjLatest.getDate()+delay);
+  return{earliest:adjEarliest,latest:adjLatest,delay:delay,hits:hits};
+}
 function openPeriodModal(dateKey){
   var entries=getPeriodEntries();
   var existing=entries.find(function(e){return e.start===dateKey;});
@@ -1700,7 +1728,7 @@ function renderPeriodStatusHero(){
     '<div class="pd-hero-col">'+col3+'</div>'+
   '</div>';
 }
-function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay){
+function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive){
   var dim=new Date(y,m+1,0).getDate();
   var dowOffset=(new Date(y,m,1).getDay()+6)%7;
   var entries=getPeriodEntries();
@@ -1729,7 +1757,7 @@ function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap
     var cls='pd-mc-day';
     if(isBeforeMin)cls+=' pd-mc-disabled';
     else if(isPeriod){if(isStart)cls+=' pd-mc-start';else{var fl=(flowMap&&flowMap[dk]);cls+=fl?' pd-mc-flow-'+fl:' pd-mc-period';}}
-    else if(isPred)cls+=' pd-mc-pred';
+    else if(isPred)cls+=travelAdjActive?' pd-mc-pred-travel':' pd-mc-pred';
     else if(isOv)cls+=' pd-mc-ovulation';
     else if(isFertile)cls+=' pd-mc-fertile';
     if(isTod)cls+=' pd-mc-today';
@@ -1833,7 +1861,9 @@ function renderTodayLogCard(dk,log,insightHtml){
 }
 function renderPeriod(panel,y){
   var activeDays=periodActiveDaysSet();
-  var winDays=periodWindowDaysSet();
+  var travelAdj=getTravelAdjustedWindow();
+  var travelAdjActive=!!travelAdj;
+  var winDays=travelAdjActive?(function(){var s=new Set();var cur=new Date(travelAdj.earliest);while(cur<=travelAdj.latest){s.add(fd(cur));cur.setDate(cur.getDate()+1);}return s;})():periodWindowDaysSet();
   var startDays=new Set(getPeriodEntries().map(function(e){return e.start;}));
   var symDates=new Set((DATA.period.symptomLogs||[]).map(function(l){return l.date;}));
   var flowMap={};(DATA.period.symptomLogs||[]).forEach(function(l){if(l.flow&&l.flow!=='none')flowMap[l.date]=l.flow;});
@@ -1853,11 +1883,16 @@ function renderPeriod(panel,y){
     '</div>'+
   '</div>';
   var monthCards='';
-  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay);
+  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive);
   var yearGrid='<div class="pd-year-grid">'+monthCards+'</div>';
   var todayLog=getPeriodSymptomLog(fd(today));
   var insight=computePatternInsight();
   var insightHtml='';
+  var travelCallout='';
+  if(travelAdj){
+    var adjMS=MS[travelAdj.earliest.getMonth()];
+    travelCallout='<div class="pd-travel-callout">✈ travel detected near your window — based on past patterns, your period may be ~'+travelAdj.delay+' day'+(travelAdj.delay>1?'s':'')+' later than usual. est. '+adjMS+' '+travelAdj.earliest.getDate()+'–'+MS[travelAdj.latest.getMonth()]+' '+travelAdj.latest.getDate()+'</div>';
+  }
   if(insight){
     var keys=_pdSymKey();
     insightHtml='<div class="pd-insight">'+
@@ -1871,6 +1906,7 @@ function renderPeriod(panel,y){
       heroHtml+
       renderCycleHistory(travelDates)+
     '</div>'+
+    travelCallout+
     renderTodayLogCard(fd(today),todayLog,insightHtml)+
     yearHdr+
     yearGrid;
