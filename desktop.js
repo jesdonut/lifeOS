@@ -1797,20 +1797,10 @@ function renderPeriodStatusHero(){
   }else{
     col3+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see stats</div>';
   }
-  var todayBbt=getPeriodSymptomLog(fd(today));
-  var bbtBaseline=getBbtBaseline();
-  var col4='<div class="pd-hero-label">BASAL TEMP · TODAY</div>';
-  if(todayBbt&&todayBbt.bbt){
-    col4+='<div class="pd-hero-big">'+todayBbt.bbt.toFixed(2)+'</div>';
-    if(bbtBaseline){var delta=Math.round((todayBbt.bbt-bbtBaseline)*100)/100;col4+='<div class="pd-hero-sub" style="color:'+(delta>0?'var(--accent)':'var(--text3)')+'">'+( delta>0?'+':'')+delta+' vs baseline</div>';}
-  }else{
-    col4+='<div class="pd-hero-big" style="color:var(--text3)">—</div>';
-  }
   return '<div class="pd-hero">'+
     '<div class="pd-hero-col">'+col1+'</div>'+
     '<div class="pd-hero-col">'+col2+'</div>'+
     '<div class="pd-hero-col">'+col3+'</div>'+
-    '<div class="pd-hero-col">'+col4+'</div>'+
   '</div>';
 }
 function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive){
