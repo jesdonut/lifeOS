@@ -1635,7 +1635,7 @@ function renderPeriodStatusHero(){
   }else{
     col2+='<div class="pd-hero-sub" style="margin-top:4px">log 2+ periods to see prediction</div>';
   }
-  var col3='<div class="pd-hero-label">CYCLE STATS · LAST 6</div>';
+  var col3='<div class="pd-hero-label">CYCLE STATS · LAST 6 MONTHS</div>';
   if(st){
     col3+='<div class="pd-hero-big">'+st.med+'</div>'+
       '<div class="pd-hero-sub">median days · range '+st.min+'–'+st.max+'</div>';
@@ -1704,7 +1704,7 @@ function renderCycleHistory(){
     var barLen=c.cycleLen||(win?Math.round((win.earliest-new Date(c.e.start+'T00:00:00'))/86400000):c.e.length||(DATA.period.defaultLength||5));
     var pct=Math.min(100,barLen/maxLen*100);
     var periodPct=Math.min(100,((c.e.length||(DATA.period.defaultLength||5))/barLen*100));
-    var label=MS[c.d.getMonth()]+' '+c.d.getDate();
+    var label='start '+MS[c.d.getMonth()]+' '+c.d.getDate();
     var lenLabel=c.cycleLen?c.cycleLen+'d':(isLast&&win?'~'+Math.round((win.earliest-new Date(c.e.start+'T00:00:00'))/86400000)+'d est':'—');
     var predBarPct=isLast&&win?Math.min(100,Math.round((win.latest-new Date(c.e.start+'T00:00:00'))/86400000)/maxLen*100):0;
     return '<div class="pd-ch-row">'+
@@ -1717,7 +1717,7 @@ function renderCycleHistory(){
     '</div>';
   }).join('');
   return '<div class="pd-ch">'+
-    '<div class="pd-section-title">CYCLE HISTORY · LAST 6</div>'+
+    '<div class="pd-section-title">LAST 6 MONTHS</div>'+
     rows+'</div>';
 }
 function renderTodayLogCard(dk,log){
@@ -1766,7 +1766,6 @@ function renderPeriod(panel,y){
       '<span class="pd-leg"><span class="pd-leg-sw pd-leg-pred"></span>Predicted</span>'+
       '<span class="pd-leg"><span class="pd-leg-sym-dot"></span>Symptoms</span>'+
     '</div>'+
-    '<button class="modal-btn ghost" style="font-size:var(--fs-xs)" onclick="openSymptomLogModal(\''+fd(today)+'\')">+ log today\'s symptoms</button>'+
   '</div>';
   var monthCards='';
   for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap);
@@ -1783,10 +1782,13 @@ function renderPeriod(panel,y){
     '</div>';
   }
   panel.innerHTML=
-    heroHtml+
-    '<div class="pd-bottom">'+
-      '<div>'+renderTodayLogCard(fd(today),todayLog)+insightHtml+'</div>'+
-      '<div>'+renderCycleHistory()+'</div>'+
+    '<div class="pd-stats-row">'+
+      heroHtml+
+      renderCycleHistory()+
+    '</div>'+
+    '<div class="pd-today-section">'+
+      renderTodayLogCard(fd(today),todayLog)+
+      insightHtml+
     '</div>'+
     yearHdr+
     yearGrid;
