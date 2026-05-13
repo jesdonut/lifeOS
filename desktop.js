@@ -1773,8 +1773,9 @@ function renderPeriodStatusHero(){
   // row 2: next period
   var r2big,r2meta,r2note='';
   if(win){
-    var daysUntil=Math.round((win.earliest-today)/86400000);
-    var inWindow=today>=win.earliest&&today<=win.latest;
+    var todayMid=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    var daysUntil=Math.round((win.earliest-todayMid)/86400000);
+    var inWindow=todayMid>=win.earliest&&todayMid<=win.latest;
     if(inWindow){
       r2big='<span style="color:var(--accent)">in window</span>';
       r2meta='Your period is expected now';
@@ -1784,9 +1785,9 @@ function renderPeriodStatusHero(){
       r2meta='Next period expected in ~'+daysUntil+(daysUntil===1?' day':' days');
       r2note='Estimated end: '+MS[win.latest.getMonth()]+' '+win.latest.getDate();
     }else{
-      var daysLate=Math.round((today-win.latest)/86400000);
+      var daysLate=Math.round((todayMid-win.latest)/86400000);
       r2big='<span style="color:var(--accent)">-'+daysLate+'</span>';
-      r2meta=daysLate===0?'Last day of expected window has passed':'Period is '+daysLate+' day'+(daysLate===1?'':' s')+' late';
+      r2meta='Period is '+daysLate+' day'+(daysLate===1?'':' s')+' past expected window';
       r2note='Window was '+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+'–'+MS[win.latest.getMonth()]+' '+win.latest.getDate();
     }
   }else{r2big='—';r2meta='Log 2+ periods to see prediction';}
