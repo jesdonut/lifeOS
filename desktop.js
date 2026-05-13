@@ -604,7 +604,8 @@ function renderMonth(panel,d){
     cells+=
       '<div class="mc'+(isTod?' today-mc':'')+(other?' other':'')+'" onclick="jumpWeek(\''+ckey+'\')">'+
         '<div class="mc-num">'+cd+'</div>'+
-        evts.slice(0,2).map(function(e){return '<div class="mc-item" style="background:'+e.color+'18;color:'+e.color+';cursor:pointer" onclick="event.stopPropagation();openEditEventModal(\''+ckey+'\',\''+e.id+'\')">'+e.text+'</div>';}).join('')+
+        evts.slice(0,3).map(function(e){return '<div class="mc-item" style="background:'+e.color+'18;color:'+e.color+';cursor:pointer" onclick="event.stopPropagation();openEditEventModal(\''+ckey+'\',\''+e.id+'\')">'+e.text+'</div>';}).join('')+
+        (evts.length>3?'<div class="mc-more">+'+(evts.length-3)+' more</div>':'')+
         tasks.slice(0,1).map(function(t){return '<div class="mc-item" style="background:#e8e0f5;color:#9b7ec8">'+t.text+'</div>';}).join('')+
         (spend?'<div class="mc-spend">'+fmtSpend(spend)+'</div>':'')+
       '</div>';
