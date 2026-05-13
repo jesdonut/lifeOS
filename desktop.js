@@ -1784,8 +1784,10 @@ function renderPeriodStatusHero(){
       r2meta='Next period expected in ~'+daysUntil+(daysUntil===1?' day':' days');
       r2note='Estimated end: '+MS[win.latest.getMonth()]+' '+win.latest.getDate();
     }else{
-      r2big='<span style="color:var(--accent)">overdue</span>';
-      r2meta='Window passed '+Math.abs(daysUntil)+' days ago';
+      var daysLate=Math.round((today-win.latest)/86400000);
+      r2big='<span style="color:var(--accent)">-'+daysLate+'</span>';
+      r2meta=daysLate===0?'Last day of expected window has passed':'Period is '+daysLate+' day'+(daysLate===1?'':' s')+' late';
+      r2note='Window was '+MS[win.earliest.getMonth()]+' '+win.earliest.getDate()+'–'+MS[win.latest.getMonth()]+' '+win.latest.getDate();
     }
   }else{r2big='—';r2meta='Log 2+ periods to see prediction';}
   // row 3: stats
