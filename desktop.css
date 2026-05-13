@@ -104,11 +104,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .wc-slot{font-size:var(--fs-xs);color:var(--text2);line-height:1.4;padding:1px 0}
 
 /* MONTH */
-.month-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.month-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
 .mh-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.07em;color:var(--text2);text-align:center;padding:4px 0;font-weight:500}
-.mc{background:var(--surface);border:1px solid var(--border);border-radius:4px;min-height:80px;padding:5px;cursor:pointer;transition:border-color .1s}.mc:hover{border-color:var(--border2)}.mc.today-mc{border-color:var(--accent);border-width:1.5px}.mc.other{opacity:.3}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:4px;min-height:80px;padding:5px;cursor:pointer;transition:border-color .1s;overflow:hidden}.mc:hover{border-color:var(--border2)}.mc.today-mc{border-color:var(--accent);border-width:1.5px}.mc.other{opacity:.3}
 .mc-num{font-family:var(--mono);font-size:var(--fs-xs);font-weight:500;margin-bottom:2px}
-.mc-item{font-size:var(--fs-xs);border-radius:2px;padding:1px 4px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-item{font-size:var(--fs-xs);border-radius:2px;padding:1px 4px;margin-bottom:1px;word-break:break-word;line-height:1.3}
 .mc-spend{font-family:var(--mono);font-size:var(--fs-xs);color:var(--text3);margin-top:2px}
 
 
