@@ -29,7 +29,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 
 /* LAYOUT */
 .app-shell{display:flex;flex:1;overflow:hidden}
-.panel{flex:1;overflow-y:auto;padding:14px}
+.panel{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;min-height:0}
 .sidebar{width:250px;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease}
 .sidebar.collapsed{width:28px}
 .sidebar.collapsed .sidebar-body{display:none}
@@ -104,7 +104,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .wc-slot{font-size:var(--fs-xs);color:var(--text2);line-height:1.4;padding:1px 0}
 
 /* MONTH */
-.month-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.month-wrap{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.month-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:1fr;gap:2px;flex:1;min-height:0}
 .mh-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.07em;color:var(--text2);text-align:center;padding:4px 0;font-weight:500}
 .mc{background:var(--surface);border:1px solid var(--border);border-radius:4px;min-height:80px;padding:5px;cursor:pointer;transition:border-color .1s;overflow:hidden}.mc:hover{border-color:var(--border2)}.mc.today-mc{border-color:var(--accent);border-width:1.5px}.mc.other{opacity:.3}
 .mc-num{font-family:var(--mono);font-size:var(--fs-xs);font-weight:500;margin-bottom:2px}

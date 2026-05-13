@@ -611,8 +611,8 @@ function renderMonth(panel,d){
   }
 
   panel.innerHTML=
-    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">'+
-      '<div style="display:flex;justify-content:flex-end;padding:8px 10px;border-bottom:1px solid var(--border)">'+
+    '<div class="month-wrap">'+
+      '<div style="display:flex;justify-content:flex-end;padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0">'+
         '<button onclick="openAddEventModal()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:3px 12px;font-size:var(--fs-xs);color:var(--text2);cursor:pointer">+ add event</button>'+
       '</div>'+
       '<div class="month-cal-grid">'+cells+'</div>'+
