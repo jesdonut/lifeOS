@@ -1470,6 +1470,20 @@ function periodWindowDaysSet(){
   while(cur<=win.latest){set.add(fd(cur));cur.setDate(cur.getDate()+1);}
   return set;
 }
+function futurePeriodWindowsDaysSet(){
+  var e=getPeriodEntries();var st=periodStats();
+  if(!e.length||!st)return new Set();
+  var last=new Date(e[e.length-1].start+'T00:00:00');
+  var set=new Set();
+  for(var i=2;i<=6;i++){
+    var shift=(i-1)*st.med;
+    var earliest=new Date(last);earliest.setDate(last.getDate()+st.min+shift);
+    var latest=new Date(last);latest.setDate(last.getDate()+st.max+shift);
+    var cur=new Date(earliest);
+    while(cur<=latest){set.add(fd(cur));cur.setDate(cur.getDate()+1);}
+  }
+  return set;
+}
 function getFertileWindow(){
   var win=periodWindow();if(!win)return null;
   var ov=new Date(win.earliest);ov.setDate(ov.getDate()-14);
@@ -1817,7 +1831,7 @@ function renderPeriodStatusHero(){
     footerNote+
   '</div>';
 }
-function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive){
+function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive,futurePredDays){
   var dim=new Date(y,m+1,0).getDate();
   var dowOffset=(new Date(y,m,1).getDay()+6)%7;
   var entries=getPeriodEntries();
@@ -1831,7 +1845,11 @@ function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap
       cycleLabel='cycle '+gap+'d';
     }
   }else{
-    for(var dd=1;dd<=dim;dd++){if(winDays.has(fd(new Date(y,m,dd)))){hasPeriodActivity=true;cycleLabel='predicted';break;}}
+    for(var dd=1;dd<=dim;dd++){
+      var ddk=fd(new Date(y,m,dd));
+      if(winDays.has(ddk)){hasPeriodActivity=true;cycleLabel='predicted';break;}
+      if(futurePredDays&&futurePredDays.has(ddk)){hasPeriodActivity=true;cycleLabel='predicted';break;}
+    }
   }
   if(travelDates){for(var td=1;td<=dim;td++){if(travelDates.has(fd(new Date(y,m,td)))){hasTravel=true;break;}}}
   var dayHdrs=DAYS.map(function(d){return '<div class="pd-mc-dh">'+d[0]+'</div>';}).join('');
@@ -1840,6 +1858,7 @@ function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap
   for(var d=1;d<=dim;d++){
     var dk=fd(new Date(y,m,d));
     var isPeriod=activeDays.has(dk),isStart=startDays.has(dk),isPred=!isPeriod&&winDays.has(dk);
+    var isFuturePred=!isPeriod&&!isPred&&futurePredDays&&futurePredDays.has(dk);
     var isFertile=!isPeriod&&fertileDays&&fertileDays.has(dk),isOv=!isPeriod&&dk===ovulationDay;
     var isTod=dk===fd(today),hasSym=symDates.has(dk),isTravel=travelDates&&travelDates.has(dk);
     var isBeforeMin=y<2017;
@@ -1847,10 +1866,12 @@ function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap
     if(isBeforeMin)cls+=' pd-mc-disabled';
     else if(isPeriod){if(isStart)cls+=' pd-mc-start';else{var fl=(flowMap&&flowMap[dk]);cls+=fl?' pd-mc-flow-'+fl:' pd-mc-period';}}
     else if(isPred)cls+=travelAdjActive?' pd-mc-pred-travel':' pd-mc-pred';
+    else if(isFuturePred)cls+=' pd-mc-pred-far';
     else if(isOv)cls+=' pd-mc-ovulation';
     else if(isFertile)cls+=' pd-mc-fertile';
+    if(isTravel&&!isBeforeMin&&!isPeriod)cls+=' pd-mc-travel-day';
     if(isTod)cls+=' pd-mc-today';
-    var dots=(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'')+(isTravel&&!isBeforeMin?'<div class="pd-mc-travel-dot"></div>':'');
+    var dots=(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'')+(isTravel&&!isBeforeMin&&isPeriod?'<div class="pd-mc-travel-dot"></div>':'');
     cells+='<div class="'+cls+'"'+(isBeforeMin?'':' onclick="pdDayClick(\''+dk+'\')"')+'>'+d+dots+'</div>';
   }
   var cycleLabelFull=cycleLabel+(cycleLabel&&hasTravel&&hasPeriodActivity?' · ✈':(!cycleLabel&&hasTravel&&hasPeriodActivity?'✈':''));
@@ -1991,14 +2012,16 @@ function renderPeriod(panel,y){
     '<div class="pd-legend">'+
       '<span class="pd-leg"><span class="pd-leg-sw pd-leg-period"></span>Period</span>'+
       '<span class="pd-leg"><span class="pd-leg-sw pd-leg-pred"></span>Predicted</span>'+
+      '<span class="pd-leg"><span class="pd-leg-sw pd-leg-pred-far"></span>Future</span>'+
+      '<span class="pd-leg"><span class="pd-leg-travel-sq"></span>Travel</span>'+
       '<span class="pd-leg"><span class="pd-leg-sw pd-leg-fertile"></span>Fertile</span>'+
       '<span class="pd-leg"><span class="pd-leg-sw pd-leg-ovulation"></span>Ovulation</span>'+
       '<span class="pd-leg"><span class="pd-leg-sym-dot"></span>Symptoms</span>'+
-      '<span class="pd-leg"><span class="pd-leg-travel-dot"></span>Travel</span>'+
     '</div>'+
   '</div>';
+  var futurePredDays=futurePeriodWindowsDaysSet();
   var monthCards='';
-  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive);
+  for(var m=0;m<12;m++)monthCards+=renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap,travelDates,fertileDays,ovulationDay,travelAdjActive,futurePredDays);
   var yearGrid='<div class="pd-year-grid">'+monthCards+'</div>';
   var todayLog=getPeriodSymptomLog(fd(today));
   var insight=computePatternInsight();
