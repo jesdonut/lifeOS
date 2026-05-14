@@ -1869,9 +1869,9 @@ function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap
     else if(isFuturePred)cls+=' pd-mc-pred-far';
     else if(isOv)cls+=' pd-mc-ovulation';
     else if(isFertile)cls+=' pd-mc-fertile';
-    if(isTravel&&!isBeforeMin&&!isPeriod)cls+=' pd-mc-travel-day';
+    if(isTravel&&!isBeforeMin)cls+=' pd-mc-travel-day';
     if(isTod)cls+=' pd-mc-today';
-    var dots=(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'')+(isTravel&&!isBeforeMin&&isPeriod?'<div class="pd-mc-travel-dot"></div>':'');
+    var dots=(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'');
     cells+='<div class="'+cls+'"'+(isBeforeMin?'':' onclick="pdDayClick(\''+dk+'\')"')+'>'+d+dots+'</div>';
   }
   var cycleLabelFull=cycleLabel+(cycleLabel&&hasTravel&&hasPeriodActivity?' · ✈':(!cycleLabel&&hasTravel&&hasPeriodActivity?'✈':''));

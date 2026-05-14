@@ -344,7 +344,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .pd-mc-pred{border:1.5px solid var(--accent)!important;color:var(--accent)!important;background:none!important;font-weight:600}
 .pd-mc-pred-travel{border:1.5px solid #D1B36A!important;color:#8a6820!important;background:none!important;font-weight:600}
 .pd-mc-pred-far{border:1px solid rgba(220,95,135,0.35)!important;color:rgba(220,95,135,0.55)!important;background:none!important}
-.pd-mc-travel-day{border:1.5px solid #D1B36A!important;border-radius:4px!important}
+.pd-mc-travel-day{border:1px solid #D1B36A!important;border-radius:4px!important}
+.pd-mc-period.pd-mc-travel-day,.pd-mc-start.pd-mc-travel-day,.pd-mc-flow-spotting.pd-mc-travel-day,.pd-mc-flow-light.pd-mc-travel-day,.pd-mc-flow-medium.pd-mc-travel-day,.pd-mc-flow-heavy.pd-mc-travel-day,.pd-mc-pred.pd-mc-travel-day,.pd-mc-pred-far.pd-mc-travel-day,.pd-mc-fertile.pd-mc-travel-day,.pd-mc-ovulation.pd-mc-travel-day{border-radius:50%!important;border:none!important;box-shadow:0 0 0 2px #D1B36A}
 .pd-travel-callout{background:#fdf5e0;border:1px solid #D1B36A;border-radius:var(--radius);padding:8px 12px;margin-bottom:10px;font-size:var(--fs-xs);color:var(--text)}
 .pd-mc-fertile{background:#e8e0f5!important;color:#7a5cb8!important;font-weight:600}
 .pd-mc-ovulation{background:#7a5cb8!important;color:#fff!important;font-weight:700}
