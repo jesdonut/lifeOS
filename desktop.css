@@ -309,6 +309,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .splash-btn{display:block;width:100%;padding:12px;border-radius:10px;font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer;margin-bottom:8px;border:none}
 .splash-btn.primary{background:var(--accent);color:#fff}
 .splash-btn.ghost{background:none;border:1px solid var(--border);color:var(--text2)}
+.splash-version{font-family:var(--mono);font-size:var(--fs-xs);color:var(--text3);margin-bottom:24px;letter-spacing:.04em}
 .splash-hint{margin-top:18px;font-size:var(--fs-xs);color:var(--text3);line-height:1.7}
 
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
