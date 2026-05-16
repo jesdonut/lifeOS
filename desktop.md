@@ -1250,6 +1250,39 @@ Refactor the today card into a polished dashboard of compact inner cards rather 
 
 ---
 
+## 68. Period — Calendar Visual Overhaul
+
+Multiple visual refinements to the period year-strip calendar.
+
+**Layout:**
+- Year grid changed from 3–4 columns to 6 per row (`.pd-year-grid: repeat(6,1fr)`).
+- Month card padding reduced to 8px.
+
+**Day cell structure — two-element layering:**
+Each calendar day is now two elements: outer `div.pd-mc-day` (square, handles travel border) + inner `span.pd-mc-inner` (circle, handles period/prediction fill and borders). This allows travel and period states to display simultaneously without CSS `border-radius` conflicts.
+
+- `.pd-mc-day` — `border-radius:4px`, no fill, no color. Hosts `pd-mc-travel-day` for the golden square border.
+- `.pd-mc-inner` — `border-radius:50%`, `color:var(--text2)`. Hosts all period state classes (start, flow, pred, pred-far, ovulation, fertile, today).
+- `.pd-mc-disabled` color delegated to `.pd-mc-disabled .pd-mc-inner`.
+
+**State styles:**
+- Today: bold text only, no ring (`.pd-mc-today` on inner span).
+- Predicted window: thin pink circle border, no fill (`.pd-mc-pred`).
+- Predicted + travel: outer golden square + gold-colored text inside, no inner circle border (`.pd-mc-pred-travel`).
+- Future predictions (cycles 2–6): faded pink circle border (`.pd-mc-pred-far`); computed by `futurePeriodWindowsDaysSet()` using median cycle offset.
+- Travel day: 1px golden square border on outer div (`.pd-mc-travel-day`).
+- Symptom dot: 5px (up from 3px).
+
+**Legend:** Added "Future" and travel square entries. Legend travel square uses 1px border.
+
+**Bug fixes:**
+- Overdue display: shows `-N days` number instead of text. Uses `todayMid` (midnight-normalized) to avoid JST timezone rounding errors near midnight.
+- Month calendar: `minmax(0,1fr)` columns + `overflow:hidden` on cells + `word-break:break-word` on event text — prevents SAT/SUN columns being cut off.
+- Month calendar height: panel is flex column, `.month-wrap` takes `flex:1`, grid uses `grid-auto-rows:1fr` to stretch rows to full height.
+- Event cap: 3 events shown per cell + `+N more` label (`.mc-more`).
+
+---
+
 ## Status
 
 | # | Feature | Status |
@@ -1322,3 +1355,4 @@ Refactor the today card into a polished dashboard of compact inner cards rather 
 | 65 | Period — Travel Day Visualization in Month Grid | ✅ |
 | 66 | Period — Today Card Full Symptom Panel | ✅ |
 | 67 | Period — Today Card Dashboard Refactor | ✅ |
+| 68 | Period — Calendar Visual Overhaul (6-per-row, layered travel+period, future predictions, overdue fix) | ✅ |

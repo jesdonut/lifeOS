@@ -1862,17 +1862,18 @@ function renderPeriodMonthCard(y,m,activeDays,winDays,startDays,symDates,flowMap
     var isFertile=!isPeriod&&fertileDays&&fertileDays.has(dk),isOv=!isPeriod&&dk===ovulationDay;
     var isTod=dk===fd(today),hasSym=symDates.has(dk),isTravel=travelDates&&travelDates.has(dk);
     var isBeforeMin=y<2017;
-    var cls='pd-mc-day';
-    if(isBeforeMin)cls+=' pd-mc-disabled';
-    else if(isPeriod){if(isStart)cls+=' pd-mc-start';else{var fl=(flowMap&&flowMap[dk]);cls+=fl?' pd-mc-flow-'+fl:' pd-mc-period';}}
-    else if(isPred)cls+=travelAdjActive?' pd-mc-pred-travel':' pd-mc-pred';
-    else if(isFuturePred)cls+=' pd-mc-pred-far';
-    else if(isOv)cls+=' pd-mc-ovulation';
-    else if(isFertile)cls+=' pd-mc-fertile';
-    if(isTravel&&!isBeforeMin)cls+=' pd-mc-travel-day';
-    if(isTod)cls+=' pd-mc-today';
+    var outerCls='pd-mc-day'+(isBeforeMin?' pd-mc-disabled':'')+(isTravel&&!isBeforeMin?' pd-mc-travel-day':'');
+    var innerCls='pd-mc-inner';
+    if(!isBeforeMin){
+      if(isPeriod){if(isStart)innerCls+=' pd-mc-start';else{var fl=(flowMap&&flowMap[dk]);innerCls+=fl?' pd-mc-flow-'+fl:' pd-mc-period';}}
+      else if(isPred){innerCls+=travelAdjActive?' pd-mc-pred-travel':' pd-mc-pred';}
+      else if(isFuturePred){innerCls+=' pd-mc-pred-far';}
+      else if(isOv){innerCls+=' pd-mc-ovulation';}
+      else if(isFertile){innerCls+=' pd-mc-fertile';}
+    }
+    if(isTod)innerCls+=' pd-mc-today';
     var dots=(hasSym&&!isBeforeMin?'<div class="pd-mc-sym-dot"></div>':'');
-    cells+='<div class="'+cls+'"'+(isBeforeMin?'':' onclick="pdDayClick(\''+dk+'\')"')+'>'+d+dots+'</div>';
+    cells+='<div class="'+outerCls+'"'+(isBeforeMin?'':' onclick="pdDayClick(\''+dk+'\')"')+'><span class="'+innerCls+'">'+d+'</span>'+dots+'</div>';
   }
   var cycleLabelFull=cycleLabel+(cycleLabel&&hasTravel&&hasPeriodActivity?' · ✈':(!cycleLabel&&hasTravel&&hasPeriodActivity?'✈':''));
   return '<div class="pd-month-card">'+

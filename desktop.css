@@ -333,8 +333,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .pd-mc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
 .pd-mc-dh{font-size:var(--fs-xs);color:var(--text3);text-align:center;padding:2px 0;font-family:var(--mono)}
 .pd-mc-blank{aspect-ratio:1}
-.pd-mc-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border-radius:50%;position:relative;font-family:var(--mono);color:var(--text2)}
-.pd-mc-day:hover{background:var(--surface2)}
+.pd-mc-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border-radius:4px;position:relative;font-family:var(--mono)}
+.pd-mc-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text2)}
+.pd-mc-day:hover .pd-mc-inner{background:var(--surface2)}
 .pd-mc-period{background:var(--accent-light)!important;color:var(--accent)!important;font-weight:600}
 .pd-mc-flow-spotting{background:#fde8ee!important;color:var(--accent)!important;font-weight:600}
 .pd-mc-flow-light{background:#f9c0cb!important;color:#8a2040!important;font-weight:600}
@@ -342,15 +343,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .pd-mc-flow-heavy{background:#e86585!important;color:#fff!important;font-weight:700}
 .pd-mc-start{background:var(--accent)!important;color:#fff!important;font-weight:700}
 .pd-mc-pred{border:1.5px solid var(--accent)!important;color:var(--accent)!important;background:none!important;font-weight:600}
-.pd-mc-pred-travel{border:1.5px solid #D1B36A!important;color:#8a6820!important;background:none!important;font-weight:600}
+.pd-mc-pred-travel{color:#8a6820!important;background:none!important;font-weight:600}
 .pd-mc-pred-far{border:1px solid rgba(220,95,135,0.35)!important;color:rgba(220,95,135,0.55)!important;background:none!important}
 .pd-mc-travel-day{border:1px solid #D1B36A!important;border-radius:4px!important}
-.pd-mc-period.pd-mc-travel-day,.pd-mc-start.pd-mc-travel-day,.pd-mc-flow-spotting.pd-mc-travel-day,.pd-mc-flow-light.pd-mc-travel-day,.pd-mc-flow-medium.pd-mc-travel-day,.pd-mc-flow-heavy.pd-mc-travel-day,.pd-mc-pred.pd-mc-travel-day,.pd-mc-pred-far.pd-mc-travel-day,.pd-mc-fertile.pd-mc-travel-day,.pd-mc-ovulation.pd-mc-travel-day{border-radius:50%!important;border:none!important;box-shadow:0 0 0 2px #D1B36A}
 .pd-travel-callout{background:#fdf5e0;border:1px solid #D1B36A;border-radius:var(--radius);padding:8px 12px;margin-bottom:10px;font-size:var(--fs-xs);color:var(--text)}
 .pd-mc-fertile{background:#e8e0f5!important;color:#7a5cb8!important;font-weight:600}
 .pd-mc-ovulation{background:#7a5cb8!important;color:#fff!important;font-weight:700}
 .pd-mc-today{font-weight:700;color:var(--text)!important}
-.pd-mc-disabled{color:var(--border);cursor:default;pointer-events:none}
+.pd-mc-disabled{cursor:default;pointer-events:none}
+.pd-mc-disabled .pd-mc-inner{color:var(--border)!important}
 .pd-mc-sym-dot{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:.8}
 .pd-mc-travel-dot{position:absolute;bottom:1px;left:calc(50% + 4px);width:3px;height:3px;border-radius:50%;background:#6ba3a8;opacity:.85}
 .pd-legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -359,7 +360,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:va
 .pd-leg-period{background:var(--accent)}
 .pd-leg-pred{background:none;border:1.5px solid var(--accent)}
 .pd-leg-pred-far{background:none;border:1px solid rgba(220,95,135,0.35)}
-.pd-leg-travel-sq{width:12px;height:12px;border:1.5px solid #D1B36A;border-radius:3px;flex-shrink:0}
+.pd-leg-travel-sq{width:12px;height:12px;border:1px solid #D1B36A;border-radius:3px;flex-shrink:0}
 .pd-leg-sym-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.7;flex-shrink:0}
 .pd-leg-travel-dot{width:6px;height:6px;border-radius:50%;background:#6ba3a8;flex-shrink:0}
 .pd-leg-fertile{background:#e8e0f5;border:1px solid #b59ee0}
