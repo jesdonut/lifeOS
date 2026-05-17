@@ -1021,7 +1021,9 @@ function renderSavings(panel){
     var total=bondTotalNet(b);
     var remaining=bondRemainingNet(b);
     var days=bondDaysToMaturity(b);
-    var daysLabel=days<=0?'matured':days===1?'1 day to maturity':days+' days to maturity';
+    var matD=new Date(b.maturityDate+'T00:00:00');
+    var matLabel=MS[matD.getMonth()]+' '+matD.getDate()+', '+matD.getFullYear();
+    var daysLabel=days<=0?'matured':matLabel+' · '+days+'d';
     var pct=total>0?Math.round(received/total*100):0;
     return '<div class="bond-card">'+
       '<div class="bond-card-head">'+
