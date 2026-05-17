@@ -1,5 +1,24 @@
-Copyright (c) 2026 jesdonut
+Copyright (c) 2026 jesdonut. All Rights Reserved.
 
-This project is personal and not licensed for redistribution,
-modification, or reuse in any form without explicit written
-permission from the author.
+This software and its source code are the exclusive property of the author.
+
+No part of this software may be reproduced, copied, modified, merged,
+published, distributed, sublicensed, sold, or used in any form — in whole
+or in part — without explicit written permission from the author.
+
+You may not:
+- Fork, clone, or mirror this repository for any purpose other than
+  personal reference
+- Use any part of this code in your own projects
+- Reverse engineer or derive works from this software
+- Remove or alter this license or any copyright notices
+
+This software is provided for personal use by the author only.
+It is shared publicly for transparency, not for reuse.
+
+For a licensable version of this project, see:
+https://github.com/jesdonut/lifeOS2.0
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+THE AUTHOR ACCEPTS NO LIABILITY FOR ANY DAMAGES ARISING FROM
+UNAUTHORIZED USE OF THIS SOFTWARE.

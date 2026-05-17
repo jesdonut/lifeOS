@@ -1,5 +1,7 @@
 # lifeOS
 
+> ⚠️ This is a personal-use repository. A public version is in development at [lifeOS 2.0](https://github.com/jesdonut/lifeOS2.0).
+
 A personal life planner that lives entirely in your browser. No accounts, no cloud, no installs — just open `index.html` and go.
 
 A mobile companion (`mobile.html`) is also live — optimised for on-the-go daily expense tracking. Opening the site on a phone auto-redirects to the mobile version.
@@ -111,7 +113,7 @@ A 7-column grid (Mon–Sun). Each column shows events, tasks, and a daily spend 
 
 ### Month
 
-A full calendar grid. Each day cell shows up to 2 events, 1 open task, and the daily spend total. Click any cell to jump to that week.
+A full calendar grid. Each day cell shows up to 3 events (+ "+N more"), 1 open task, and the daily spend total. Click any cell to jump to that week.
 
 ---
 
@@ -128,9 +130,7 @@ A redesigned multi-year view showing 5 years at a time.
 
 Years with no events collapse to a single line. Click to expand.
 
-**Planner grid** — the detailed 12-month mini-calendar (with clickable days and per-month goal rows) only appears for the currently focused year, and only for months that have at least one event.
-
-**Event colours** — each event carries its own colour chosen at creation. All views (week, month, year timeline) render events with a tinted background and coloured text using the event's colour directly. The 9 available colours and their labels:
+**Event colours** — each event carries its own colour chosen at creation. The 9 available colours and their labels:
 
 | Label | Hex | Year category |
 |---|---|---|
@@ -159,19 +159,6 @@ A monthly income and spending tracker. Navigate months with the **← →** arro
 - Left: accordion sections (Income open by default, others collapsed)
 - Right: per-month breakdown — Income, Commute, Food, Fixed, Necessities, Optional, Net for the current month; plus a **Total since Jan 2025** cumulative net at the bottom
 
-**Sections (in order):**
-
-| Section | Input type | Fields |
-|---|---|---|
-| **Income** | Manual | Salary, transport reimbursement, other income, mom pays; pre-May 2025: tax withheld (−), insurance (−); May 2025+: 7 split deductions (health, care, child-rearing, pension, employment, income tax, resident tax) |
-| **Commute** | Manual + Auto | 通勤定期券 commutation pass (manual) + 通勤費 daily commute spend (auto) |
-| **Food** | Auto from daily spend | 食べ物 |
-| **Fixed Monthly** | Manual | Rent, gas, water, electricity, phone, internet |
-| **Necessities** | Auto from daily spend | Transport (電車代金), paperwork, medical, daily (日常生活), NHI |
-| **Optional** | Auto from daily spend | Project/game, entertainment, clothes/hair |
-
-Auto sections pull directly from daily entries in the week view spend panel. Manual sections show a fill count and highlight entered fields with an accent border. All manual fields accept arithmetic expressions (e.g. `50000*2`).
-
 **Balance formula:** Income − Commute − Food − Fixed − Necessities − Optional
 
 ---
@@ -180,92 +167,24 @@ Auto sections pull directly from daily entries in the week view spend panel. Man
 
 A financial planning screen with three sections.
 
-**NISA tracker**
-- Hero strip: lifetime plan total + stacked progress bar (つみたて pink / 成長 navy), projected cap year, this year's total, average per year
-- Two-panel editor: つみたて 投資枠 (per-year monthly amount table) | 成長投資枠 (per-year lump sum table, collapses empty rows)
-- Compact config row: start year, start month, this year's monthly contribution | scrollable snapshot table
-- Snapshot table: chosen checkpoint years with cumulative totals and mini progress bars
-- Lifetime cap ¥18M — つみたて ¥1.2M/year · 成長 ¥2.4M/year · up to ¥3.6M/year combined
+**NISA tracker** — つみたて + 成長 investment tracking, projections to ¥18M lifetime cap.
 
-**Currencies**
-- Collapsible section. The header shows total held in both ¥ and Rp.
-- Visible currency cards: CNY, GBP, USD, MYR
-- IDR is kept internally for rate conversion and Indonesian bond/currency-lot calculations, but does not render as a card.
-- KRW and EUR values from older save files are preserved if present, but no longer render as cards.
-- Each currency card has two independent editable rate fields: `1 CODE = X ¥` and `1 CODE = Y Rp` — changing one does not affect the other
-- Equivalent shown as both ¥ and Rp on every card
-- **Purchase lots** — per-currency purchase rows tracking date, amount, total IDR cost, current rate, and P&L
-- Expanded section includes a **Total held** row showing both ¥ and Rp totals
+**Currencies** — CNY, GBP, USD, MYR cards with JPY and IDR equivalents. Purchase lot tracking with P&L.
 
-**Government bonds**
-- Collapsed by default. The header shows active/matured counts and total net monthly income.
-- Track Indonesian retail bonds (ORI, SR, ST, SBR, etc.)
-- Fields: series, face value, coupon rate, tax rate, settlement date, first coupon date, maturity date
-- Derived per bond: gross/net monthly coupon, total coupons earned, coupons remaining, months to maturity
-- Expanded active bonds render in a two-column grid; matured archive remains collapsed
-- Maturity dates appear in the **upcoming** sidebar tab
-
----
-
-## Sidebar
-
-The right-hand sidebar is always visible and has three tabs:
-
-| Tab | Content |
-|---|---|
-| **notes** | Free-text sticky notes with a timestamp. Add, edit inline, delete. |
-| **upcoming** | Unified feed sorted soonest first: countdown timers, events within 60 days, bond maturity dates, and goals for future months. |
-| **countdowns** | Add, edit, and delete named date trackers. Each entry has a label, date, optional yearly repeat, colour, and mode. |
-
----
-
-## Countdowns
-
-Each countdown has a **mode**:
-
-- **until** — counts down to a future date. Shows "in X days" or "today!". With yearly repeat, recurs annually.
-- **since** — tracks elapsed time from a past date. Shows "X days since", "X months since", or "X years Y mo since". With yearly repeat, switches to birthday/anniversary mode: "age X · turning Y in Z days".
-
-In the **upcoming** tab, `until` entries and `since + yearly` entries appear as future events. Plain `since` entries (one-off trackers) are excluded.
+**Government bonds** — Indonesian retail bonds (ORI, SR, ST, etc.). Monthly coupon tracking, maturity dates, progress bars. Maturity is one-way — once marked matured, cannot be reactivated.
 
 ---
 
 ### Period *(enable in Settings → Period Tracker)*
 
-A menstrual cycle tracker showing a full year at a glance.
-
-**Status hero** — 3-column card: Cycle Status (current day of cycle) · Next Period (predicted window) · Cycle Stats (median, range across last 6 cycles).
-
-**12-month year grid** — 4×3 grid of mini-calendars. Each day is clickable. Day states: period (pink), period start (dark pink), predicted window (dashed), today (outline), symptom-logged (dot). Navigate years with the **← →** arrows (clamped to 2017–2055).
-
-- Clicking a **period day** opens the period entry modal (edit duration / delete).
-- Clicking **any other day** opens the symptom log modal for that date, with a secondary "period start" button to log it as a period start if needed.
-
-**Today card** — flow level quick-chips (none / spotting / light / medium / heavy), symptom summary, and "log / edit symptoms" button. Changes save immediately without opening the full modal.
-
-**Cycle history** — bar chart of last 6 cycles showing period length vs total cycle length, with a predicted bar for the current cycle.
-
-**Pattern insight** — shown when ≥3 cycles have symptom logs in their pre-period window. Surfaces symptoms present in ≥50% of those windows.
-
-**Symptom log** — per-day log with 3 categories (Mood · Pain · Physical, 58 keys total) and a flow level. One entry per date, updated in place.
-
-**Settings** — enable/disable toggle + default period length (Settings modal → Period Tracker section).
+A menstrual cycle tracker showing a full year at a glance. 6 months per row, 5 future predictions, travel-aware prediction, fertile window, ovulation estimate, symptom logging, BBT tracking, flow levels.
 
 ---
 
-## Spend Categories
+## Sidebar
 
-Ten fixed categories used in the week view spend panel and aggregated into the Finance tab:
-
-| Key | Japanese | English | Finance group |
-|---|---|---|---|
-| `food` | 食べ物 | Food | Food |
-| `commute` | 通勤費 | Commute | Commute (transport group) |
-| `transport` | 電車代金 | Transport | Necessities |
-| `paperwork` | 書類仕事 | Paperwork | Necessities |
-| `medical` | メディカル | Medical | Necessities |
-| `necessities` | 日常生活 | Daily | Necessities |
-| `nhi` | 国民保険 | NHI | Necessities |
-| `project` | ゲーム/Project | Project/Game | Optional |
-| `fun` | エンターテインメント | Entertainment | Optional |
-| `clothes` | 服・髪 | Clothes/Hair | Optional |
+| Tab | Content |
+|---|---|
+| **notes** | Free-text sticky notes with a timestamp. |
+| **upcoming** | Unified feed: countdown timers, events within 60 days, bond maturity dates, goals for future months. |
+| **countdowns** | Named date trackers with until/since modes and optional yearly repeat. |
