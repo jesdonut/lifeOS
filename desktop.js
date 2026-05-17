@@ -1055,10 +1055,7 @@ function renderSavings(panel){
         '<span style="font-family:var(--mono);font-weight:500">'+b.series+'</span>'+
         '<span style="color:var(--text2)">Rp '+b.faceValue.toLocaleString()+'</span>'+
         '<span style="color:var(--text2)">earned Rp '+total.toLocaleString()+'</span>'+
-        '<div style="display:flex;gap:6px">'+
-          '<button onclick="toggleBondMatured(\''+b.id+'\')" style="font-size:var(--fs-xs);background:none;border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;color:var(--text2);font-family:var(--sans)">reactivate</button>'+
-          '<button onclick="deleteBond(\''+b.id+'\')" style="font-size:var(--fs-xs);background:none;border:none;cursor:pointer;color:var(--text3);padding:0 2px">×</button>'+
-        '</div>'+
+        '<button onclick="deleteBond(\''+b.id+'\')" style="font-size:var(--fs-xs);background:none;border:none;cursor:pointer;color:var(--text3);padding:0 2px">×</button>'+
       '</div>';
     }).join('')+
     '</details>':'';
@@ -2420,7 +2417,7 @@ function deleteBond(id){
 }
 function toggleBondMatured(id){
   var b=DATA.bonds.find(function(b){return b.id===id;});
-  if(b){b.matured=!b.matured;render();}
+  if(b&&!b.matured){b.matured=true;render();}
 }
 
 function startFresh(){
